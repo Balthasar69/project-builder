@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 export default function TeamManager({
   slug,
   mitglieder,
+  namen,
   istAdmin,
 }: {
   slug: string;
   mitglieder: string[];
+  namen: Record<string, string>;
   istAdmin: boolean;
 }) {
   const router = useRouter();
@@ -18,6 +20,10 @@ export default function TeamManager({
   const [error, setError] = useState<string | null>(null);
   const [hinweis, setHinweis] = useState<string | null>(null);
   const [erfolg, setErfolg] = useState<string | null>(null);
+
+  // Zeigt standardmäßig nur den Namen. Admins können auf den Namen klicken,
+  // um zusätzlich die hinterlegte E-Mail-Adresse einzublenden.
+  const [sichtbareEmail, setSichtbareEmail] = useState<string | null>(null);
 
   const [entfernenLaeuft, setEntfernenLaeuft] = useState<string | null>(null);
   const [entfernenFehler, setEntfernenFehler] = useState<string | null>(null);
@@ -80,24 +86,47 @@ export default function TeamManager({
   return (
     <div>
       <div className="mb-4 flex flex-col gap-2">
-        {mitglieder.map((m) => (
-          <div
-            key={m}
-            className="flex items-center justify-between rounded-md border border-line bg-surface px-4 py-2.5"
-          >
-            <span className="text-sm font-medium">{m}</span>
-            {istAdmin && (
-              <button
-                type="button"
-                onClick={() => entfernen(m)}
-                disabled={entfernenLaeuft === m}
-                className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-bad transition hover:text-accent-ink disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {entfernenLaeuft === m ? "Entfernt…" : "Entfernen"}
-              </button>
-            )}
-          </div>
-        ))}
+        {mitglieder.map((m) => {
+          const anzeigeName = namen[m] ?? m;
+          const hatEigenenNamen = anzeigeName !== m;
+          const emailSichtbar = !hatEigenenNamen || sichtbareEmail === m;
+          return (
+            <div
+              key={m}
+              className="flex items-center justify-between rounded-md border border-line bg-surface px-4 py-2.5"
+            >
+              <div className="flex flex-col">
+                {istAdmin && hatEigenenNamen ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSichtbareEmail(sichtbareEmail === m ? null : m)
+                    }
+                    className="text-left text-sm font-medium hover:text-accent"
+                    title="Anklicken, um die E-Mail-Adresse anzuzeigen"
+                  >
+                    {anzeigeName}
+                  </button>
+                ) : (
+                  <span className="text-sm font-medium">{anzeigeName}</span>
+                )}
+                {emailSichtbar && hatEigenenNamen && (
+                  <span className="font-mono text-xs text-ink-faint">{m}</span>
+                )}
+              </div>
+              {istAdmin && (
+                <button
+                  type="button"
+                  onClick={() => entfernen(m)}
+                  disabled={entfernenLaeuft === m}
+                  className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-bad transition hover:text-accent-ink disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {entfernenLaeuft === m ? "Entfernt…" : "Entfernen"}
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
       {entfernenFehler && (
         <p className="mb-3 text-sm text-bad">{entfernenFehler}</p>

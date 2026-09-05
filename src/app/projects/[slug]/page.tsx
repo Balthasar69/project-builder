@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { getProject } from "@/lib/data";
+import { getProject, getUserByEmail } from "@/lib/data";
 import { getSession, hatProjektZugriff, istKernteam } from "@/lib/auth";
 import { PHASES, STANDARD_HINWEISE } from "@/lib/types";
 import PhaseTracker from "@/components/PhaseTracker";
@@ -71,6 +71,19 @@ export default async function ProjectCockpit({
 
   const aktuellePhase = PHASES.find((p) => p.code === project.aktuellePhase);
   const darfHinweiseBearbeiten = istKernteam(session, project);
+
+  // Team-Liste (`mitglieder`) speichert nur E-Mail-Adressen – für die
+  // Anzeige "nur Namen" wird hier, falls die Person schon ein eigenes Konto
+  // hat, ihr Name nachgeschlagen. Ohne Konto (noch nicht registriert) bleibt
+  // die E-Mail-Adresse die einzig bekannte Bezeichnung.
+  const mitgliederNamen: Record<string, string> = Object.fromEntries(
+    await Promise.all(
+      project.mitglieder.map(async (email) => {
+        const user = await getUserByEmail(email);
+        return [email, user?.name ?? email] as const;
+      })
+    )
+  );
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
@@ -207,6 +220,7 @@ export default async function ProjectCockpit({
           <TeamManager
             slug={project.slug}
             mitglieder={project.mitglieder}
+            namen={mitgliederNamen}
             istAdmin={session.isAdmin}
           />
         </section>

@@ -29,6 +29,12 @@ export default function KernteamManager({
   const [entfernenLaeuft, setEntfernenLaeuft] = useState<string | null>(null);
   const [entfernenFehler, setEntfernenFehler] = useState<string | null>(null);
 
+  // Zeigt standardmäßig nur den Namen. Admins können auf den Namen klicken,
+  // um zusätzlich Rolle und E-Mail-Adresse einzublenden.
+  const [sichtbareDetails, setSichtbareDetails] = useState<string | null>(
+    null
+  );
+
   async function hinzufuegen(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -87,14 +93,38 @@ export default function KernteamManager({
   return (
     <div>
       <div className="mb-4 flex flex-col gap-2">
-        {kernteam.map((m) => (
-          <div
-            key={m.email ?? m.name}
-            className="flex items-center justify-between rounded-md border border-line bg-surface px-4 py-2.5"
-          >
-            <span className="text-sm font-medium">{m.name}</span>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-ink-muted">{m.rolle}</span>
+        {kernteam.map((m) => {
+          const schluessel = m.email ?? m.name;
+          const details = istAdmin && sichtbareDetails === schluessel;
+          return (
+            <div
+              key={schluessel}
+              className="flex items-center justify-between rounded-md border border-line bg-surface px-4 py-2.5"
+            >
+              <div className="flex flex-col">
+                {istAdmin ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSichtbareDetails(
+                        sichtbareDetails === schluessel ? null : schluessel
+                      )
+                    }
+                    className="text-left text-sm font-medium hover:text-accent"
+                    title="Anklicken, um Rolle und E-Mail-Adresse anzuzeigen"
+                  >
+                    {m.name}
+                  </button>
+                ) : (
+                  <span className="text-sm font-medium">{m.name}</span>
+                )}
+                {details && (
+                  <span className="text-xs text-ink-faint">
+                    {m.rolle}
+                    {m.email ? ` · ${m.email}` : ""}
+                  </span>
+                )}
+              </div>
               {istAdmin && m.email && (
                 <button
                   type="button"
@@ -106,8 +136,8 @@ export default function KernteamManager({
                 </button>
               )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       {entfernenFehler && (
         <p className="mb-3 text-sm text-bad">{entfernenFehler}</p>
