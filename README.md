@@ -753,6 +753,12 @@ fehlt. Ist Bitrix24 gerade nicht erreichbar oder das Projekt (noch) mit
 keiner Arbeitsgruppe verbunden, wird ganz normal ohne diesen Zusatz
 weitergemacht — die Generierung bricht deswegen nicht ab.
 
+**Korrektur: Projektbeschreibung wieder direkt unter dem Projektnamen
+(v0.45):** In v0.43 stand die Projektbeschreibung zusammen mit den
+KI-Fragen zum Projektstart unter Kernteam/Team. Die Projektbeschreibung
+steht jetzt wieder direkt unter dem Projektnamen, ganz oben auf der Seite
+— die KI-Fragen zum Projektstart bleiben wie in v0.43 unter Kernteam/Team.
+
 **Korrektur in v0.19:** In v0.18 wurden zwei technische Bitrix24-Codes
 ("Neu" und "Wartet auf Bearbeitung") noch unterschiedlich beschriftet
 ("Neu" bzw. "Ausstehend"), obwohl Bitrix24 selbst beide in seiner

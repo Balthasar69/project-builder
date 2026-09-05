@@ -142,6 +142,14 @@ export default async function ProjectCockpit({
       </h1>
       <p className="mb-3 text-ink-muted">{project.rolleImSystem}</p>
 
+      {/* Projektbeschreibung steht bewusst direkt unter dem Projektnamen –
+          noch vor der Schnellzugriff-Navigation. */}
+      <ProjectDescription
+        slug={project.slug}
+        beschreibung={project.beschreibung ?? ""}
+        darfBearbeiten={istKernteam(session, project)}
+      />
+
       {/* Schnellzugriff: springt direkt zu den vier Kernbereichen weiter
           unten auf derselben Seite (reine Sprungmarken, kein eigener
           Baustein) – soll neuen Nutzern auf einen Blick zeigen, worum es im
@@ -231,14 +239,9 @@ export default async function ProjectCockpit({
         </section>
       </div>
 
-      {/* Projektbeschreibung und die KI-Fragen zum Projektstart stehen
-          bewusst direkt unter Kernteam/Team – bevor es weiter unten um
-          Fortschritt, Bewertung und Aufgaben geht. */}
-      <ProjectDescription
-        slug={project.slug}
-        beschreibung={project.beschreibung ?? ""}
-        darfBearbeiten={istKernteam(session, project)}
-      />
+      {/* Die KI-Fragen zum Projektstart stehen bewusst direkt unter
+          Kernteam/Team – bevor es weiter unten um Fortschritt, Bewertung
+          und Aufgaben geht. */}
       <ProjektstartFragebogen
         slug={project.slug}
         kernteam={project.kernteam}
