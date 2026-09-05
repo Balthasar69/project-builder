@@ -73,14 +73,23 @@ export default async function ProjectCockpit({
   const darfHinweiseBearbeiten = istKernteam(session, project);
 
   // Team-Liste (`mitglieder`) speichert nur E-Mail-Adressen – für die
-  // Anzeige "nur Namen" wird hier, falls die Person schon ein eigenes Konto
-  // hat, ihr Name nachgeschlagen. Ohne Konto (noch nicht registriert) bleibt
-  // die E-Mail-Adresse die einzig bekannte Bezeichnung.
+  // Anzeige "nur Namen" wird hier ihr Name nachgeschlagen: zuerst über ein
+  // eigenes Konto (falls registriert), sonst über einen passenden
+  // Kernteam-Eintrag mit derselben E-Mail-Adresse (der Name ist dort ja
+  // schon hinterlegt, unabhängig von einem Konto). Nur wenn beides fehlt,
+  // bleibt die E-Mail-Adresse die einzig bekannte Bezeichnung.
+  const kernteamNamenNachEmail: Record<string, string> = Object.fromEntries(
+    project.kernteam
+      .filter((m) => !!m.email)
+      .map((m) => [m.email!.toLowerCase(), m.name] as const)
+  );
   const mitgliederNamen: Record<string, string> = Object.fromEntries(
     await Promise.all(
       project.mitglieder.map(async (email) => {
         const user = await getUserByEmail(email);
-        return [email, user?.name ?? email] as const;
+        const name =
+          user?.name ?? kernteamNamenNachEmail[email.toLowerCase()] ?? email;
+        return [email, name] as const;
       })
     )
   );

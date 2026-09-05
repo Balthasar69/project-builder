@@ -688,6 +688,13 @@ den Namen fahren (blendet sich beim Wegfahren automatisch wieder aus) oder
 auf den Namen klicken (bleibt dauerhaft sichtbar, bis erneut geklickt
 wird).
 
+**Korrektur: Team-Namen auch ohne eigenes Konto (v0.41):** Im Team wurde
+der Name einer Person bisher nur angezeigt, wenn sie bereits ein eigenes
+Konto hatte. Steht dieselbe E-Mail-Adresse aber schon mit Namen im
+Kernteam des Projekts, wird jetzt zusätzlich dieser Name verwendet — die
+rohe E-Mail-Adresse erscheint im Team nur noch, wenn wirklich nirgendwo
+ein Name dazu bekannt ist.
+
 **Korrektur in v0.19:** In v0.18 wurden zwei technische Bitrix24-Codes
 ("Neu" und "Wartet auf Bearbeitung") noch unterschiedlich beschriftet
 ("Neu" bzw. "Ausstehend"), obwohl Bitrix24 selbst beide in seiner
