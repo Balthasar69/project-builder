@@ -36,16 +36,18 @@ export default async function ProjectCockpit({
   if (!hatProjektZugriff(session, project)) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-16">
-        <div className="mb-8 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-x-3 gap-y-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <Brand />
             <span className="h-4 w-px bg-line" />
-            <span className="font-mono text-xs uppercase tracking-widest text-accent">
+            <span className="whitespace-nowrap font-mono text-xs uppercase tracking-widest text-accent">
               Projektcockpit
             </span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-ink-muted">{session.name}</span>
+            <span className="whitespace-nowrap text-sm text-ink-muted">
+              {session.name}
+            </span>
             <LogoutButton />
           </div>
         </div>
@@ -72,23 +74,25 @@ export default async function ProjectCockpit({
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
-      <div className="mb-10 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="mb-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <Brand size="gross" />
           <span className="h-6 w-px bg-line" />
-          <span className="font-mono text-sm uppercase tracking-widest text-accent">
+          <span className="whitespace-nowrap font-mono text-sm uppercase tracking-widest text-accent">
             Projektcockpit
           </span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <Link
             href="/"
-            className="font-mono text-sm uppercase tracking-wide text-ink-faint hover:text-ink"
+            className="whitespace-nowrap font-mono text-sm uppercase tracking-wide text-ink-faint hover:text-ink"
           >
             ← Alle Projekte
           </Link>
           <span className="h-4 w-px bg-line" />
-          <span className="text-sm text-ink-muted">{session.name}</span>
+          <span className="whitespace-nowrap text-sm text-ink-muted">
+            {session.name}
+          </span>
           <LogoutButton />
         </div>
       </div>
