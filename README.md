@@ -730,6 +730,14 @@ Der Ablauf:
 Der Admin kann eine laufende Runde jederzeit über „Fragebogen abbrechen"
 bzw. nach der Durchsicht über „Fertig, ausblenden" beenden.
 
+**Anordnung: Projektbeschreibung und KI-Fragen jetzt unter Team (v0.43):**
+Die Projektbeschreibung und der Bereich „Aufgaben von der KI vorschlagen
+lassen" standen bisher an unterschiedlichen Stellen der Seite (die
+Beschreibung ganz oben unter dem Projektnamen, die KI-Fragen weiter unten
+im Aufgaben-Bereich). Beide stehen jetzt zusammen direkt unter
+Kernteam/Team, bevor es weiter unten um Fortschritt, Bewertung und
+Aufgaben geht.
+
 **Korrektur in v0.19:** In v0.18 wurden zwei technische Bitrix24-Codes
 ("Neu" und "Wartet auf Bearbeitung") noch unterschiedlich beschriftet
 ("Neu" bzw. "Ausstehend"), obwohl Bitrix24 selbst beide in seiner

@@ -141,11 +141,6 @@ export default async function ProjectCockpit({
         {project.name}
       </h1>
       <p className="mb-3 text-ink-muted">{project.rolleImSystem}</p>
-      <ProjectDescription
-        slug={project.slug}
-        beschreibung={project.beschreibung ?? ""}
-        darfBearbeiten={istKernteam(session, project)}
-      />
 
       {/* Schnellzugriff: springt direkt zu den vier Kernbereichen weiter
           unten auf derselben Seite (reine Sprungmarken, kein eigener
@@ -235,6 +230,24 @@ export default async function ProjectCockpit({
           />
         </section>
       </div>
+
+      {/* Projektbeschreibung und die KI-Fragen zum Projektstart stehen
+          bewusst direkt unter Kernteam/Team – bevor es weiter unten um
+          Fortschritt, Bewertung und Aufgaben geht. */}
+      <ProjectDescription
+        slug={project.slug}
+        beschreibung={project.beschreibung ?? ""}
+        darfBearbeiten={istKernteam(session, project)}
+      />
+      <ProjektstartFragebogen
+        slug={project.slug}
+        kernteam={project.kernteam}
+        istAdmin={session.isAdmin}
+        istKernteam={istKernteam(session, project)}
+        sessionEmail={session.email}
+        fragebogen={project.projektstartFragebogen}
+        vorschlaege={project.aufgabenVorschlaege ?? []}
+      />
 
       <ProjectProgress
         aktuell={project.aktuellePhase}
@@ -359,15 +372,6 @@ export default async function ProjectCockpit({
           individuellerText={project.hinweise?.aufgaben ?? ""}
           standardText={STANDARD_HINWEISE.aufgaben}
           darfBearbeiten={darfHinweiseBearbeiten}
-        />
-        <ProjektstartFragebogen
-          slug={project.slug}
-          kernteam={project.kernteam}
-          istAdmin={session.isAdmin}
-          istKernteam={istKernteam(session, project)}
-          sessionEmail={session.email}
-          fragebogen={project.projektstartFragebogen}
-          vorschlaege={project.aufgabenVorschlaege ?? []}
         />
         <TaskBoard slug={project.slug} groupId={project.bitrix24.groupId} />
       </section>
