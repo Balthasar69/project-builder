@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createUser, getUserByEmail } from "@/lib/data";
-import { hashPassword } from "@/lib/auth";
+import { effektiverAdminStatus, hashPassword } from "@/lib/auth";
 import {
   createSessionToken,
   SESSION_COOKIE,
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     const token = await createSessionToken({
       email: user.email,
       name: user.name,
-      isAdmin: user.isAdmin,
+      isAdmin: effektiverAdminStatus(user.email, user.isAdmin),
     });
     const res = NextResponse.json({ ok: true });
     res.cookies.set(SESSION_COOKIE, token, {

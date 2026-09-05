@@ -49,13 +49,43 @@ function getSql() {
   return neon(url);
 }
 
+// Balthasar (Geschäftsführung) soll grundsätzlich in jedem Projekt Zugriff
+// und Bewertungsrecht haben — unabhängig davon, wer das Projekt angelegt
+// hat oder mit welchem (ggf. neuen/Test-)Konto gerade eingeloggt ist. Diese
+// E-Mail-Adresse wird deshalb beim Lesen jedes Projekts automatisch ins
+// Kernteam und in `mitglieder` ergänzt, falls sie dort noch fehlt (siehe
+// auch `effektiverAdminStatus` in auth.ts für die passenden Admin-Rechte
+// beim Login). Kein Datenbank-Update nötig: Wird ein Projekt danach ohnehin
+// gespeichert (z. B. weil jemand etwas anderes ändert), landet die Ergänzung
+// dabei automatisch dauerhaft in der Datenbank.
+const STANDARD_KERNTEAM_EMAIL = "management@balthasar-fleischmann.de";
+const STANDARD_KERNTEAM_MITGLIED: KernteamMitglied = {
+  name: "Balthasar Fleischmann",
+  rolle: "Geschäftsführung",
+  email: STANDARD_KERNTEAM_EMAIL,
+};
+
 // Ältere Projekt-Zeilen (vor v0.3) kennen `mitglieder` noch nicht – beim
 // Lesen ergänzen wir ein leeres Array, statt die Datenbank zu migrieren und
 // dabei bestehende Daten anzufassen.
 function normalizeProject(data: Project): Project {
+  const kernteam = data.kernteam ?? [];
+  const hatStandardMitglied = kernteam.some(
+    (m) => m.email?.toLowerCase() === STANDARD_KERNTEAM_EMAIL
+  );
+  const mitglieder = data.mitglieder ?? [];
+  const hatStandardZugriff = mitglieder
+    .map((e) => e.toLowerCase())
+    .includes(STANDARD_KERNTEAM_EMAIL);
+
   return {
     ...data,
-    mitglieder: data.mitglieder ?? [],
+    mitglieder: hatStandardZugriff
+      ? mitglieder
+      : [...mitglieder, STANDARD_KERNTEAM_EMAIL],
+    kernteam: hatStandardMitglied
+      ? kernteam
+      : [...kernteam, STANDARD_KERNTEAM_MITGLIED],
     beschreibung: data.beschreibung ?? "",
     hinweise: data.hinweise ?? {},
     ideen: data.ideen ?? [],

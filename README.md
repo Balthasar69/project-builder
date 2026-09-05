@@ -644,6 +644,31 @@ dieser Stelle lediglich eine klare Fehlermeldung – der Rest der App
 (Aufgaben, Notizen, Bewertung usw.) funktioniert davon vollkommen unberührt
 weiter.
 
+**Bearbeitung schließen (v0.36):** Der aufgeklappte „Mit KI bearbeiten"-
+Bereich einer Aufgabe hat jetzt ganz unten einen zusätzlichen Link
+„Bearbeitung schließen", der ihn wieder einklappt (zusätzlich zum
+Umschalten über den Kopf-Button selbst).
+
+**Balthasar automatisch in jedem Projekt als Admin/Kernteam (v0.36):**
+Zwei Ergänzungen sorgen dafür, dass die E-Mail-Adresse
+`management@balthasar-fleischmann.de` grundsätzlich in jedem Projekt volle
+Rechte hat — unabhängig davon, wer das Projekt angelegt hat oder mit
+welchem (ggf. neu registrierten Test-)Konto man gerade angemeldet ist:
+
+- Diese E-Mail-Adresse bekommt beim Anmelden/Registrieren automatisch
+  Admin-Rechte, unabhängig vom „is_admin"-Feld in der Datenbank
+  (`effektiverAdminStatus` in `src/lib/auth.ts`).
+- Sie wird beim Öffnen jedes Projekts automatisch ins Kernteam und in die
+  Mitgliederliste ergänzt, falls sie dort noch fehlt (`normalizeProject` in
+  `src/lib/data.ts`) — das betrifft auch schon bestehende, ältere Projekte,
+  nicht nur neu angelegte. Eine eigene Datenbank-Migration ist dafür nicht
+  nötig; sobald ein Projekt danach ohnehin einmal gespeichert wird, landet
+  die Ergänzung automatisch dauerhaft in der Datenbank.
+
+Wird diese E-Mail versehentlich aus dem Kernteam eines Projekts entfernt,
+erscheint sie beim nächsten Öffnen der Seite automatisch wieder — das ist
+so gewollt, kann aber verwirren, falls das nicht erwartet wird.
+
 **Korrektur in v0.19:** In v0.18 wurden zwei technische Bitrix24-Codes
 ("Neu" und "Wartet auf Bearbeitung") noch unterschiedlich beschriftet
 ("Neu" bzw. "Ausstehend"), obwohl Bitrix24 selbst beide in seiner
