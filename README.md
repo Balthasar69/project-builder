@@ -578,6 +578,20 @@ jeweiligen Bereich weiter unten auf derselben Seite springen:
 Die eigentlichen Bereiche selbst sind unverändert – die Buttons sind reine
 Sprungmarken, kein neuer Inhalt.
 
+**Automatische Veröffentlichung eingerichtet (ab v0.34):** Das Projekt ist
+jetzt mit einem GitHub-Repository verbunden, das wiederum mit Vercel
+verknüpft ist. Änderungen werden ab sofort automatisch veröffentlicht,
+sobald sie hochgeladen werden – der bisherige Terminal-Befehl
+(`npx vercel --prod`) ist dafür nicht mehr nötig.
+
+**Hinweistext bei unvollständiger Bewertung (v0.34):** Der Knopf „Meine
+Bewertung speichern" im Projekt-Check ist erst klickbar, wenn alle Fragen
+oben beantwortet wurden – eine Notiz allein reicht nicht aus, da eine
+Bewertung im Sinne der App immer alle Kriterien umfasst. Damit das nicht
+wie ein Fehler wirkt, steht jetzt direkt unter dem ausgegrauten Knopf ein
+kurzer Hinweis: „Bitte erst alle 5 Fragen oben beantworten, um speichern
+zu können."
+
 **Korrektur in v0.19:** In v0.18 wurden zwei technische Bitrix24-Codes
 ("Neu" und "Wartet auf Bearbeitung") noch unterschiedlich beschriftet
 ("Neu" bzw. "Ausstehend"), obwohl Bitrix24 selbst beide in seiner

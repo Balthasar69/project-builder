@@ -256,6 +256,13 @@ export default function ProjectCheckForm({
             </button>
           </div>
 
+          {!vollstaendig && (
+            <p className="mt-2 text-xs text-ink-faint">
+              Bitte erst alle {kriterien.length} Fragen oben beantworten, um
+              speichern zu können.
+            </p>
+          )}
+
           {error && <p className="mt-3 text-sm text-bad">{error}</p>}
 
           {meinResult && (
