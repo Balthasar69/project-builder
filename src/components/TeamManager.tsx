@@ -21,9 +21,12 @@ export default function TeamManager({
   const [hinweis, setHinweis] = useState<string | null>(null);
   const [erfolg, setErfolg] = useState<string | null>(null);
 
-  // Zeigt standardmäßig nur den Namen. Admins können auf den Namen klicken,
-  // um zusätzlich die hinterlegte E-Mail-Adresse einzublenden.
-  const [sichtbareEmail, setSichtbareEmail] = useState<string | null>(null);
+  // Zeigt standardmäßig nur den Namen. Admins können auf den Namen klicken
+  // (bleibt an, bis erneut geklickt) oder mit der Maus darüberfahren
+  // (blendet sich beim Wegfahren wieder aus), um die hinterlegte
+  // E-Mail-Adresse einzublenden.
+  const [klickEmail, setKlickEmail] = useState<string | null>(null);
+  const [hoverEmail, setHoverEmail] = useState<string | null>(null);
 
   const [entfernenLaeuft, setEntfernenLaeuft] = useState<string | null>(null);
   const [entfernenFehler, setEntfernenFehler] = useState<string | null>(null);
@@ -89,7 +92,9 @@ export default function TeamManager({
         {mitglieder.map((m) => {
           const anzeigeName = namen[m] ?? m;
           const hatEigenenNamen = anzeigeName !== m;
-          const emailSichtbar = !hatEigenenNamen || sichtbareEmail === m;
+          const emailSichtbar =
+            !hatEigenenNamen ||
+            (istAdmin && (klickEmail === m || hoverEmail === m));
           return (
             <div
               key={m}
@@ -100,10 +105,14 @@ export default function TeamManager({
                   <button
                     type="button"
                     onClick={() =>
-                      setSichtbareEmail(sichtbareEmail === m ? null : m)
+                      setKlickEmail(klickEmail === m ? null : m)
+                    }
+                    onMouseEnter={() => setHoverEmail(m)}
+                    onMouseLeave={() =>
+                      setHoverEmail((k) => (k === m ? null : k))
                     }
                     className="text-left text-sm font-medium hover:text-accent"
-                    title="Anklicken, um die E-Mail-Adresse anzuzeigen"
+                    title="Anklicken oder mit der Maus darüberfahren, um die E-Mail-Adresse anzuzeigen"
                   >
                     {anzeigeName}
                   </button>

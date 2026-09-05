@@ -674,15 +674,19 @@ Wird diese E-Mail versehentlich aus dem Kernteam eines Projekts entfernt,
 erscheint sie beim nächsten Öffnen der Seite automatisch wieder — das ist
 so gewollt, kann aber verwirren, falls das nicht erwartet wird.
 
-**Nur Namen anzeigen, Details per Klick für Admins (v0.39):** Kernteam und
-Team zeigen jetzt standardmäßig nur den Namen der Person — Rolle und
-E-Mail-Adresse sind ausgeblendet. Nur Admins können auf einen Namen
-klicken, um Rolle und E-Mail-Adresse (Kernteam) bzw. die E-Mail-Adresse
-(Team) zusätzlich einzublenden; ein erneuter Klick blendet sie wieder aus.
-Im Team wird dafür — sofern die Person bereits ein eigenes Konto hat — ihr
-Name nachgeschlagen; ohne eigenes Konto bleibt die E-Mail-Adresse die
-einzig bekannte Bezeichnung und wird direkt angezeigt (ein Klick würde hier
-nichts Neues zeigen).
+**Nur Namen anzeigen, Details per Klick für Admins (v0.39):** Im Team wird
+seitdem — sofern die Person bereits ein eigenes Konto hat — ihr Name statt
+der rohen E-Mail-Adresse angezeigt; ohne eigenes Konto bleibt die
+E-Mail-Adresse die einzig bekannte Bezeichnung.
+
+**Korrektur: Rolle bleibt sichtbar, E-Mail per Klick oder Drüberfahren
+(v0.40):** In v0.39 wurde im Kernteam versehentlich auch die Rolle
+ausgeblendet. Jetzt zeigen Kernteam und Team wie gewünscht Name und Rolle
+(Kernteam) immer an — nur die E-Mail-Adresse bleibt standardmäßig
+verborgen. Admins können sie auf zwei Arten einblenden: mit der Maus über
+den Namen fahren (blendet sich beim Wegfahren automatisch wieder aus) oder
+auf den Namen klicken (bleibt dauerhaft sichtbar, bis erneut geklickt
+wird).
 
 **Korrektur in v0.19:** In v0.18 wurden zwei technische Bitrix24-Codes
 ("Neu" und "Wartet auf Bearbeitung") noch unterschiedlich beschriftet

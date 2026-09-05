@@ -29,11 +29,12 @@ export default function KernteamManager({
   const [entfernenLaeuft, setEntfernenLaeuft] = useState<string | null>(null);
   const [entfernenFehler, setEntfernenFehler] = useState<string | null>(null);
 
-  // Zeigt standardmäßig nur den Namen. Admins können auf den Namen klicken,
-  // um zusätzlich Rolle und E-Mail-Adresse einzublenden.
-  const [sichtbareDetails, setSichtbareDetails] = useState<string | null>(
-    null
-  );
+  // Name und Rolle sind immer sichtbar. Nur Admins können zusätzlich die
+  // E-Mail-Adresse einblenden – per Klick auf den Namen (bleibt an, bis
+  // erneut geklickt) oder indem sie mit der Maus über den Namen fahren
+  // (blendet sich beim Wegfahren wieder aus).
+  const [klickDetails, setKlickDetails] = useState<string | null>(null);
+  const [hoverDetails, setHoverDetails] = useState<string | null>(null);
 
   async function hinzufuegen(e: FormEvent) {
     e.preventDefault();
@@ -95,33 +96,42 @@ export default function KernteamManager({
       <div className="mb-4 flex flex-col gap-2">
         {kernteam.map((m) => {
           const schluessel = m.email ?? m.name;
-          const details = istAdmin && sichtbareDetails === schluessel;
+          const emailSichtbar =
+            istAdmin &&
+            !!m.email &&
+            (klickDetails === schluessel || hoverDetails === schluessel);
           return (
             <div
               key={schluessel}
               className="flex items-center justify-between rounded-md border border-line bg-surface px-4 py-2.5"
             >
               <div className="flex flex-col">
-                {istAdmin ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSichtbareDetails(
-                        sichtbareDetails === schluessel ? null : schluessel
-                      )
-                    }
-                    className="text-left text-sm font-medium hover:text-accent"
-                    title="Anklicken, um Rolle und E-Mail-Adresse anzuzeigen"
-                  >
-                    {m.name}
-                  </button>
-                ) : (
-                  <span className="text-sm font-medium">{m.name}</span>
-                )}
-                {details && (
-                  <span className="text-xs text-ink-faint">
-                    {m.rolle}
-                    {m.email ? ` · ${m.email}` : ""}
+                <div className="flex items-baseline gap-3">
+                  {istAdmin && m.email ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setKlickDetails(
+                          klickDetails === schluessel ? null : schluessel
+                        )
+                      }
+                      onMouseEnter={() => setHoverDetails(schluessel)}
+                      onMouseLeave={() =>
+                        setHoverDetails((k) => (k === schluessel ? null : k))
+                      }
+                      className="text-left text-sm font-medium hover:text-accent"
+                      title="Anklicken oder mit der Maus darüberfahren, um die E-Mail-Adresse anzuzeigen"
+                    >
+                      {m.name}
+                    </button>
+                  ) : (
+                    <span className="text-sm font-medium">{m.name}</span>
+                  )}
+                  <span className="text-sm text-ink-muted">{m.rolle}</span>
+                </div>
+                {emailSichtbar && (
+                  <span className="font-mono text-xs text-ink-faint">
+                    {m.email}
                   </span>
                 )}
               </div>
