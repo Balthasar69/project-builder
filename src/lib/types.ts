@@ -381,6 +381,8 @@ export interface Project {
   checkVerlauf: CheckResult[];
   /** Kurz notierte Ideen, bevor sie eine echte (mit Bitrix24 synchronisierte) Aufgabe werden. */
   ideen?: Idee[];
+  /** Von Claude erstellte Hilfestellungen je Bitrix24-Aufgaben-ID (siehe `AufgabenAnalyse`). */
+  aufgabenAnalysen?: Record<string, AufgabenAnalyse>;
   bitrix24: {
     dealId: number;
     categoryId: number;
@@ -443,6 +445,19 @@ export interface TaskNote {
    */
   transcript?: string;
   erstelltAm: string;
+}
+
+/**
+ * Automatisch von Claude (Anthropic-API) erstellte Hilfestellung zu einer
+ * einzelnen Bitrix24-Aufgabe: wie sie sich einfacher erledigen lässt und
+ * wofür sie im Zusammenhang mit der aktuellen Projektphase gerade nützlich
+ * ist. Wird im Projekt selbst gespeichert (siehe `Project.aufgabenAnalysen`,
+ * ein Schlüssel je Bitrix24-Aufgaben-ID) — ein erneuter Klick auf „Mit KI
+ * bearbeiten" ersetzt eine vorhandene Einschätzung durch eine neue.
+ */
+export interface AufgabenAnalyse {
+  text: string;
+  erstelltAm: string; // ISO-Datum
 }
 
 /** Ein registrierter Zugang (echtes Konto pro Person, statt gemeinsamem Passwort). */

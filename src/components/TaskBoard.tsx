@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bitrix24Task } from "@/lib/types";
 import TaskNotes from "./TaskNotes";
+import TaskAnalyse from "./TaskAnalyse";
 
 // Fallback-Beschriftung für den älteren, technischen Bitrix24-Status
 // (Standard-Codes 1–7) – wird nur verwendet, wenn eine Aufgabe keine echte,
@@ -88,6 +89,7 @@ export default function TaskBoard({
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
   const [offenNotizen, setOffenNotizen] = useState<string | null>(null);
+  const [offeneAnalyse, setOffeneAnalyse] = useState<string | null>(null);
 
   async function ladeAufgaben() {
     setLoading(true);
@@ -226,6 +228,17 @@ export default function TaskBoard({
                   <button
                     type="button"
                     onClick={() =>
+                      setOffeneAnalyse((o) => (o === t.id ? null : t.id))
+                    }
+                    className="font-mono text-xs uppercase tracking-wide text-ink-faint hover:text-accent"
+                  >
+                    {offeneAnalyse === t.id
+                      ? "Mit KI bearbeiten ▲"
+                      : "Mit KI bearbeiten ▾"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
                       setOffenNotizen((o) => (o === t.id ? null : t.id))
                     }
                     className="font-mono text-xs uppercase tracking-wide text-ink-faint hover:text-accent"
@@ -234,6 +247,9 @@ export default function TaskBoard({
                   </button>
                 </div>
               </div>
+              {offeneAnalyse === t.id && (
+                <TaskAnalyse slug={slug} taskId={t.id} titel={t.title} />
+              )}
               {offenNotizen === t.id && <TaskNotes slug={slug} taskId={t.id} />}
             </div>
               );

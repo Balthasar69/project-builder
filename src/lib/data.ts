@@ -1,5 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import {
+  AufgabenAnalyse,
   BlockHinweisKey,
   CheckResult,
   Idee,
@@ -58,6 +59,7 @@ function normalizeProject(data: Project): Project {
     beschreibung: data.beschreibung ?? "",
     hinweise: data.hinweise ?? {},
     ideen: data.ideen ?? [],
+    aufgabenAnalysen: data.aufgabenAnalysen ?? {},
   };
 }
 
@@ -532,6 +534,35 @@ export async function markiereIdeeUebernommen(
   project.ideen = (project.ideen ?? []).map((i) =>
     i.id === ideeId ? { ...i, uebernommenAlsTaskId: bitrixTaskId } : i
   );
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/**
+ * Speichert die von Claude erstellte Hilfestellung zu einer einzelnen
+ * Bitrix24-Aufgabe (überschreibt eine vorhandene Einschätzung derselben
+ * Aufgabe, statt eine Historie zu führen — es geht um den aktuellen
+ * Denkanstoß, nicht um ein Protokoll).
+ */
+export async function setAufgabenAnalyse(
+  slug: string,
+  taskId: string,
+  analyse: AufgabenAnalyse
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  project.aufgabenAnalysen = {
+    ...(project.aufgabenAnalysen ?? {}),
+    [taskId]: analyse,
+  };
   project.aktualisiertAm = new Date().toISOString();
 
   const sql = getSql();
