@@ -1,12 +1,14 @@
 import { neon } from "@neondatabase/serverless";
 import {
   AufgabenAnalyse,
+  AufgabenVorschlag,
   BlockHinweisKey,
   CheckResult,
   Idee,
   KernteamMitglied,
   PhaseCode,
   Project,
+  ProjektArt,
   TaskNote,
   User,
 } from "./types";
@@ -114,6 +116,7 @@ function normalizeProject(data: Project): Project {
     hinweise: data.hinweise ?? {},
     ideen: data.ideen ?? [],
     aufgabenAnalysen: data.aufgabenAnalysen ?? {},
+    aufgabenVorschlaege: data.aufgabenVorschlaege ?? [],
   };
 }
 
@@ -617,6 +620,198 @@ export async function setAufgabenAnalyse(
     ...(project.aufgabenAnalysen ?? {}),
     [taskId]: analyse,
   };
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/**
+ * Startet einen neuen Projektstart-Fragebogen ("Aufgaben von der KI
+ * vorschlagen lassen") – nur Admins (Rechteprüfung sitzt in der API-Route).
+ * Ersetzt einen etwaigen vorherigen Fragebogen samt offener Vorschläge
+ * vollständig, statt ihn zu ergänzen – pro Projekt läuft immer nur eine
+ * Runde gleichzeitig.
+ */
+export async function starteProjektstartFragebogen(
+  slug: string,
+  params: { projektleiterEmail: string; projektleiterName: string }
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  project.projektstartFragebogen = {
+    projektleiterEmail: params.projektleiterEmail.trim().toLowerCase(),
+    projektleiterName: params.projektleiterName,
+    gestartetAm: new Date().toISOString(),
+  };
+  project.aufgabenVorschlaege = [];
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/** Bricht einen laufenden, noch nicht beantworteten Projektstart-Fragebogen ab (nur Admins). */
+export async function brichProjektstartFragebogenAb(slug: string): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  project.projektstartFragebogen = undefined;
+  project.aufgabenVorschlaege = [];
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/**
+ * Speichert die Antworten des Projektleiters auf den Projektstart-
+ * Fragebogen (Rechteprüfung – nur der zugewiesene Projektleiter oder ein
+ * Admin – sitzt in der API-Route). Die anschließende KI-Generierung der
+ * Aufgaben-Vorschläge erfolgt separat (siehe `setAufgabenVorschlaege` bzw.
+ * `setProjektstartFehler`), damit ein Fehlschlagen der KI die gespeicherten
+ * Antworten nicht gefährdet.
+ */
+export async function beantworteProjektstartFragebogen(
+  slug: string,
+  antworten: {
+    projektArt: ProjektArt;
+    zielsituation: string;
+    umsatzziel?: string;
+    liquiditaet?: string;
+    meilensteine: string;
+  }
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+  if (!project.projektstartFragebogen) {
+    throw new Error("Kein offener Projektstart-Fragebogen für dieses Projekt.");
+  }
+
+  project.projektstartFragebogen = {
+    ...project.projektstartFragebogen,
+    ...antworten,
+    beantwortetAm: new Date().toISOString(),
+    fehler: undefined,
+  };
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/** Speichert die von der KI generierten Aufgaben-Vorschläge nach dem Beantworten des Fragebogens. */
+export async function setAufgabenVorschlaege(
+  slug: string,
+  titel: string[]
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  project.aufgabenVorschlaege = titel.map(
+    (t): AufgabenVorschlag => ({ id: randomUUID(), titel: t })
+  );
+  if (project.projektstartFragebogen) {
+    project.projektstartFragebogen = {
+      ...project.projektstartFragebogen,
+      fehler: undefined,
+    };
+  }
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/** Hält fest, dass die KI-Generierung der Aufgaben-Vorschläge fehlgeschlagen ist (Antworten bleiben erhalten). */
+export async function setProjektstartFehler(
+  slug: string,
+  fehler: string
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+  if (project.projektstartFragebogen) {
+    project.projektstartFragebogen = {
+      ...project.projektstartFragebogen,
+      fehler,
+    };
+  }
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/** Entfernt einen noch nicht übernommenen Aufgaben-Vorschlag wieder (Rechteprüfung: Kernteam). */
+export async function entferneAufgabenVorschlag(
+  slug: string,
+  vorschlagId: string
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  project.aufgabenVorschlaege = (project.aufgabenVorschlaege ?? []).filter(
+    (v) => v.id !== vorschlagId
+  );
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/**
+ * Markiert einen Aufgaben-Vorschlag als übernommen, nachdem daraus in
+ * Bitrix24 eine echte Aufgabe angelegt wurde (siehe API-Route, die zuerst
+ * `createTask` aus `bitrix24.ts` aufruft und dann hier die Verknüpfung
+ * speichert) – analog zu `markiereIdeeUebernommen`.
+ */
+export async function markiereVorschlagUebernommen(
+  slug: string,
+  vorschlagId: string,
+  bitrixTaskId: string
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  project.aufgabenVorschlaege = (project.aufgabenVorschlaege ?? []).map((v) =>
+    v.id === vorschlagId ? { ...v, uebernommenAlsTaskId: bitrixTaskId } : v
+  );
   project.aktualisiertAm = new Date().toISOString();
 
   const sql = getSql();

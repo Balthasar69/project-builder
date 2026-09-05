@@ -10,6 +10,7 @@ import ProjectCheckForm from "@/components/ProjectCheckForm";
 import TeamManager from "@/components/TeamManager";
 import KernteamManager from "@/components/KernteamManager";
 import TaskBoard from "@/components/TaskBoard";
+import ProjektstartFragebogen from "@/components/ProjektstartFragebogen";
 import IdeenManager from "@/components/IdeenManager";
 import Brand from "@/components/Brand";
 import LogoutButton from "@/components/LogoutButton";
@@ -358,6 +359,15 @@ export default async function ProjectCockpit({
           individuellerText={project.hinweise?.aufgaben ?? ""}
           standardText={STANDARD_HINWEISE.aufgaben}
           darfBearbeiten={darfHinweiseBearbeiten}
+        />
+        <ProjektstartFragebogen
+          slug={project.slug}
+          kernteam={project.kernteam}
+          istAdmin={session.isAdmin}
+          istKernteam={istKernteam(session, project)}
+          sessionEmail={session.email}
+          fragebogen={project.projektstartFragebogen}
+          vorschlaege={project.aufgabenVorschlaege ?? []}
         />
         <TaskBoard slug={project.slug} groupId={project.bitrix24.groupId} />
       </section>

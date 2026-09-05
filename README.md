@@ -695,6 +695,41 @@ Kernteam des Projekts, wird jetzt zusätzlich dieser Name verwendet — die
 rohe E-Mail-Adresse erscheint im Team nur noch, wenn wirklich nirgendwo
 ein Name dazu bekannt ist.
 
+**Aufgaben von der KI vorschlagen lassen (v0.42):** Im Bereich „Aufgaben"
+steht jetzt ein neuer, rein optionaler Knopf „Aufgaben von der KI
+vorschlagen lassen" (nur für Admins sichtbar) — sowohl bei bestehenden
+Projekten nutzbar als auch immer wieder erneut für dasselbe Projekt.
+
+Der Ablauf:
+
+1. **Admin bestimmt den Projektleiter.** Ausgewählt wird eine Person aus
+   dem Kernteam — das kann auch der Admin selbst sein.
+2. **Diese Person beantwortet drei kurze Fragen** direkt im
+   Projektcockpit (kein E-Mail-Versand nötig — wer das Projekt öffnet,
+   während die Fragen noch offen sind, sieht stattdessen den Hinweis
+   „Fragebogen offen für … — wartet auf Antwort"):
+   - Ist dies ein Geschäftsprojekt oder ein privates/persönliches Projekt?
+   - Zielsituation: Was soll am Ende erreicht sein? (bei Geschäftsprojekten
+     zusätzlich: Umsatzziel und aktuelle/geplante Liquiditätslage)
+   - Meilensteine (ein Meilenstein pro Zeile).
+3. **Die KI leitet daraus 5 bis 10 konkrete Zwischenaufgaben ab** —
+   genau wie bei „Mit KI bearbeiten" bevorzugt über den kostenlosen
+   Groq-Zugang, ersatzweise über Claude/Anthropic, falls vorhanden (siehe
+   oben; dieselben Umgebungsvariablen `GROQ_API_KEY`/`ANTHROPIC_API_KEY`
+   werden hier mitgenutzt). Bei Geschäftsprojekten ist dabei ausdrücklich
+   mindestens eine Aufgabe zur Umsatzgenerierung und eine zur
+   Liquiditätsplanung mit dabei.
+4. **Die Vorschläge erscheinen zur Durchsicht**, nicht automatisch als
+   fertige Aufgaben — das gesamte Kernteam kann jeden Vorschlag vor der
+   Übernahme noch am Titel anpassen, einzeln „Übernehmen" (wird zu einer
+   echten Bitrix24-Aufgabe, genau wie bei „Ideen") oder „Verwerfen".
+   Schlägt die KI-Generierung fehl (z. B. Anbieter überlastet), bleiben die
+   Antworten erhalten und lassen sich über „Erneut versuchen" erneut
+   verarbeiten.
+
+Der Admin kann eine laufende Runde jederzeit über „Fragebogen abbrechen"
+bzw. nach der Durchsicht über „Fertig, ausblenden" beenden.
+
 **Korrektur in v0.19:** In v0.18 wurden zwei technische Bitrix24-Codes
 ("Neu" und "Wartet auf Bearbeitung") noch unterschiedlich beschriftet
 ("Neu" bzw. "Ausstehend"), obwohl Bitrix24 selbst beide in seiner

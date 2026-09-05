@@ -383,6 +383,10 @@ export interface Project {
   ideen?: Idee[];
   /** Von Claude erstellte Hilfestellungen je Bitrix24-Aufgaben-ID (siehe `AufgabenAnalyse`). */
   aufgabenAnalysen?: Record<string, AufgabenAnalyse>;
+  /** Laufender oder zuletzt abgeschlossener Projektstart-Fragebogen, siehe `ProjektstartFragebogen`. */
+  projektstartFragebogen?: ProjektstartFragebogen;
+  /** Von der KI aus dem Projektstart-Fragebogen abgeleitete, noch nicht durchgesehene Aufgaben-Vorschläge. */
+  aufgabenVorschlaege?: AufgabenVorschlag[];
   bitrix24: {
     dealId: number;
     categoryId: number;
@@ -458,6 +462,47 @@ export interface TaskNote {
 export interface AufgabenAnalyse {
   text: string;
   erstelltAm: string; // ISO-Datum
+}
+
+/** Ob ein Projekt geschäftlich oder privat/persönlich ist – entscheidet über
+ * die Fragen und den Schwerpunkt des Projektstart-Fragebogens (siehe unten). */
+export type ProjektArt = "geschaeft" | "privat";
+
+/**
+ * Vom Admin gestarteter Fragebogen zum Projektstart ("Aufgaben von der KI
+ * vorschlagen lassen"): legt fest, wer antwortet (`projektleiterEmail`,
+ * kann der Admin selbst sein) und hält die Antworten fest, sobald sie
+ * eingegangen sind. Erst nach dem Beantworten generiert die KI daraus
+ * Aufgaben-Vorschläge (siehe `Project.aufgabenVorschlaege`).
+ */
+export interface ProjektstartFragebogen {
+  projektleiterEmail: string;
+  projektleiterName: string;
+  gestartetAm: string; // ISO-Datum
+  projektArt?: ProjektArt;
+  zielsituation?: string;
+  /** Nur bei "geschaeft": Umsatzziel als Freitext. */
+  umsatzziel?: string;
+  /** Nur bei "geschaeft": aktuelle/geplante Liquiditätslage als Freitext. */
+  liquiditaet?: string;
+  /** Meilensteine als Freitext, ein Meilenstein pro Zeile. */
+  meilensteine?: string;
+  beantwortetAm?: string; // ISO-Datum
+  /** Gesetzt, falls die KI-Generierung nach dem Beantworten fehlgeschlagen ist. */
+  fehler?: string;
+}
+
+/**
+ * Ein von der KI aus dem Projektstart-Fragebogen abgeleiteter Aufgaben-
+ * Vorschlag – wartet auf Durchsicht durchs Kernteam, bevor daraus (wie bei
+ * `Idee`) eine echte Bitrix24-Aufgabe wird. Bewusst kein automatisches
+ * Übernehmen, da KI-Vorschläge nicht immer treffsicher sind.
+ */
+export interface AufgabenVorschlag {
+  id: string;
+  titel: string;
+  uebernommenAlsTaskId?: string;
+  verworfen?: boolean;
 }
 
 /** Ein registrierter Zugang (echtes Konto pro Person, statt gemeinsamem Passwort). */
