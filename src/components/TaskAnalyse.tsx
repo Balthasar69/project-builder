@@ -21,10 +21,12 @@ export default function TaskAnalyse({
   slug,
   taskId,
   titel,
+  onClose,
 }: {
   slug: string;
   taskId: string;
   titel: string;
+  onClose: () => void;
 }) {
   // undefined = wird noch geladen, null = geladen, aber noch keine vorhanden
   const [analyse, setAnalyse] = useState<AufgabenAnalyse | null | undefined>(
@@ -114,6 +116,16 @@ export default function TaskAnalyse({
         <p className="mt-2 text-xs text-warn">{speicherHinweis}</p>
       )}
       {error && <p className="mt-2 text-xs text-bad">{error}</p>}
+
+      <div className="mt-3 border-t border-line pt-2">
+        <button
+          type="button"
+          onClick={onClose}
+          className="font-mono text-[0.65rem] uppercase tracking-wide text-ink-faint hover:text-accent"
+        >
+          Bearbeitung schließen
+        </button>
+      </div>
     </div>
   );
 }

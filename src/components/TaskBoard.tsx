@@ -248,7 +248,12 @@ export default function TaskBoard({
                 </div>
               </div>
               {offeneAnalyse === t.id && (
-                <TaskAnalyse slug={slug} taskId={t.id} titel={t.title} />
+                <TaskAnalyse
+                  slug={slug}
+                  taskId={t.id}
+                  titel={t.title}
+                  onClose={() => setOffeneAnalyse(null)}
+                />
               )}
               {offenNotizen === t.id && <TaskNotes slug={slug} taskId={t.id} />}
             </div>
