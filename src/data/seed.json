@@ -1,0 +1,31 @@
+{
+  "be-happy-again": {
+    "slug": "be-happy-again",
+    "name": "Be Happy Again",
+    "rolleImSystem": "Erstes Pilotprojekt des Project Builders",
+    "aktuellePhase": "idee",
+    "kernteam": [
+      { "name": "Balthasar Fleischmann", "rolle": "Projektleitung", "bitrix24UserId": 2, "email": "balthasar@balthasar-fleischmann.de" },
+      { "name": "Cindy Endres", "rolle": "noch zu klären", "bitrix24UserId": 74, "email": "hallo@cindyendres.de" }
+    ],
+    "mitglieder": ["balthasar@balthasar-fleischmann.de", "hallo@cindyendres.de"],
+    "bereichStatus": {
+      "idee_markt": 30,
+      "konzept": 10,
+      "team": 40,
+      "voraussetzungen": 0,
+      "produkt": 0,
+      "business_case": 0,
+      "pilot": 0,
+      "marketing": 0,
+      "vertrieb": 0
+    },
+    "checkVerlauf": [],
+    "bitrix24": {
+      "dealId": 138,
+      "categoryId": 4,
+      "zuordnung": "KULTO GmbH Balthasar"
+    },
+    "aktualisiertAm": "2026-09-01T00:57:00.000Z"
+  }
+}

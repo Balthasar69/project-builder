@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: theme("colors.paper");
+  color: theme("colors.ink");
+}
+
+::selection {
+  background-color: theme("colors.accent.soft");
+  color: theme("colors.accent.ink");
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
