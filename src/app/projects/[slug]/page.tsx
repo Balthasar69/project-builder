@@ -12,6 +12,7 @@ import KernteamManager from "@/components/KernteamManager";
 import TaskBoard from "@/components/TaskBoard";
 import IdeenManager from "@/components/IdeenManager";
 import Brand from "@/components/Brand";
+import LogoutButton from "@/components/LogoutButton";
 import ProjectDescription from "@/components/ProjectDescription";
 import ProjectProgress from "@/components/ProjectProgress";
 import BlockHinweis from "@/components/BlockHinweis";
@@ -35,12 +36,18 @@ export default async function ProjectCockpit({
   if (!hatProjektZugriff(session, project)) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-16">
-        <div className="mb-8 flex items-center gap-3">
-          <Brand />
-          <span className="h-4 w-px bg-line" />
-          <span className="font-mono text-xs uppercase tracking-widest text-accent">
-            Projektcockpit
-          </span>
+        <div className="mb-8 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Brand />
+            <span className="h-4 w-px bg-line" />
+            <span className="font-mono text-xs uppercase tracking-widest text-accent">
+              Projektcockpit
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-ink-muted">{session.name}</span>
+            <LogoutButton />
+          </div>
         </div>
         <h1 className="mb-3 font-display text-3xl font-semibold text-ink">
           Kein Zugriff
@@ -73,12 +80,17 @@ export default async function ProjectCockpit({
             Projektcockpit
           </span>
         </div>
-        <Link
-          href="/"
-          className="font-mono text-sm uppercase tracking-wide text-ink-faint hover:text-ink"
-        >
-          ← Alle Projekte
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/"
+            className="font-mono text-sm uppercase tracking-wide text-ink-faint hover:text-ink"
+          >
+            ← Alle Projekte
+          </Link>
+          <span className="h-4 w-px bg-line" />
+          <span className="text-sm text-ink-muted">{session.name}</span>
+          <LogoutButton />
+        </div>
       </div>
 
       {/* Kurzeinleitung: was das Projektcockpit ist und wie es genutzt wird.

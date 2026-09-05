@@ -644,6 +644,11 @@ dieser Stelle lediglich eine klare Fehlermeldung – der Rest der App
 (Aufgaben, Notizen, Bewertung usw.) funktioniert davon vollkommen unberührt
 weiter.
 
+**Abmelden im Projektcockpit (v0.36):** Der Knopf „Abmelden" (bisher nur
+auf der Projektübersicht) steht jetzt auch oben im Projektcockpit selbst,
+direkt neben „← Alle Projekte" — vorher musste man dafür erst zur
+Übersicht zurück.
+
 **Bearbeitung schließen (v0.36):** Der aufgeklappte „Mit KI bearbeiten"-
 Bereich einer Aufgabe hat jetzt ganz unten einen zusätzlichen Link
 „Bearbeitung schließen", der ihn wieder einklappt (zusätzlich zum
