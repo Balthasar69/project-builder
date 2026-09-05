@@ -738,6 +738,21 @@ im Aufgaben-Bereich). Beide stehen jetzt zusammen direkt unter
 Kernteam/Team, bevor es weiter unten um Fortschritt, Bewertung und
 Aufgaben geht.
 
+**KI berücksichtigt bei den Fragen zum Projektstart bereits vorhandene
+Aufgaben (v0.44):** Der Fragebogen „Aufgaben von der KI vorschlagen lassen"
+(siehe v0.42) steht von Anfang an auf jedem Projekt zur Verfügung — auch
+auf bereits länger laufenden, bestehenden Projekten, nicht nur auf gerade
+neu angelegten. Bisher wusste die KI bei einem bestehenden Projekt aber
+nicht, welche Aufgaben in Bitrix24 schon existieren, und konnte dadurch
+Titel vorschlagen, die es inhaltlich schon gab. Jetzt liest die App vor der
+KI-Anfrage die aktuell in Bitrix24 hinterlegten Aufgaben dieses Projekts
+mit (Titel und ob bereits erledigt) und gibt sie der KI als Kontext mit der
+ausdrücklichen Anweisung mit, nichts davon doppelt vorzuschlagen, sondern
+gezielt zu ergänzen, was zum Erreichen der genannten Meilensteine noch
+fehlt. Ist Bitrix24 gerade nicht erreichbar oder das Projekt (noch) mit
+keiner Arbeitsgruppe verbunden, wird ganz normal ohne diesen Zusatz
+weitergemacht — die Generierung bricht deswegen nicht ab.
+
 **Korrektur in v0.19:** In v0.18 wurden zwei technische Bitrix24-Codes
 ("Neu" und "Wartet auf Bearbeitung") noch unterschiedlich beschriftet
 ("Neu" bzw. "Ausstehend"), obwohl Bitrix24 selbst beide in seiner

@@ -3,6 +3,7 @@ import { getProject, setAufgabenVorschlaege, setProjektstartFehler } from "@/lib
 import { getSession } from "@/lib/auth";
 import { PHASES } from "@/lib/types";
 import { schlageAufgabenVor, VorschlagError } from "@/lib/aufgabenVorschlag";
+import { listTasks } from "@/lib/bitrix24";
 
 /**
  * Lässt die KI aus den bereits gespeicherten Antworten erneut Aufgaben-
@@ -48,6 +49,16 @@ export async function POST(
 
   const phaseName = PHASES.find((p) => p.code === project.aktuellePhase)?.name ?? project.aktuellePhase;
 
+  // Siehe Kommentar in .../fragebogen/antworten/route.ts: bereits
+  // vorhandene Bitrix24-Aufgaben werden mit einbezogen, damit die KI nicht
+  // dieselben Titel nochmal vorschlägt.
+  const bestehendeAufgaben = await listTasks({
+    groupId: project.bitrix24.groupId,
+    dealId: project.bitrix24.dealId || undefined,
+  })
+    .then((tasks) => tasks.map((t) => ({ titel: t.title, erledigt: t.erledigt })))
+    .catch(() => []);
+
   try {
     const titel = await schlageAufgabenVor({
       projektName: project.name,
@@ -57,6 +68,7 @@ export async function POST(
       liquiditaet: fragebogen.liquiditaet,
       meilensteine: fragebogen.meilensteine,
       phaseName,
+      bestehendeAufgaben,
     });
     const updated = await setAufgabenVorschlaege(params.slug, titel);
     return NextResponse.json({ project: updated });

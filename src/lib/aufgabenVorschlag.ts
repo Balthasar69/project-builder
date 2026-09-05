@@ -20,6 +20,7 @@ function buildPrompt(params: {
   liquiditaet?: string;
   meilensteine: string;
   phaseName: string;
+  bestehendeAufgaben?: { titel: string; erledigt: boolean }[];
 }): string {
   const {
     projektName,
@@ -29,7 +30,22 @@ function buildPrompt(params: {
     liquiditaet,
     meilensteine,
     phaseName,
+    bestehendeAufgaben,
   } = params;
+
+  // Bei einem bestehenden Projekt gibt es meist schon Bitrix24-Aufgaben.
+  // Die werden hier mit aufgeführt, damit die KI nicht einfach dieselben
+  // Titel nochmal vorschlägt, sondern gezielt ergänzt, was noch fehlt.
+  const bestehendeAufgabenTeil =
+    bestehendeAufgaben && bestehendeAufgaben.length > 0
+      ? `Bereits vorhandene Aufgaben in diesem Projekt (nicht nochmal vorschlagen,
+sondern nur ergänzen bzw. anpassen, was daraus noch fehlt):
+${bestehendeAufgaben
+  .map((a) => `- ${a.titel}${a.erledigt ? " (erledigt)" : ""}`)
+  .join("\n")}
+
+`
+      : "In diesem Projekt gibt es aktuell noch keine Aufgaben.\n\n";
 
   const geschaeftsteil =
     projektArt === "geschaeft"
@@ -53,10 +69,12 @@ ${zielsituation.trim()}
 ${geschaeftsteil}Vom Projektleiter genannte Meilensteine:
 ${meilensteine.trim()}
 
-Leite daraus konkrete, direkt umsetzbare Zwischenaufgaben ab, die nötig
+${bestehendeAufgabenTeil}Leite daraus konkrete, direkt umsetzbare Zwischenaufgaben ab, die nötig
 sind, um von der aktuellen Situation zu den genannten Meilensteinen zu
 kommen. Nenne 5 bis 10 Aufgaben, jede so kurz und konkret wie möglich
-(max. 12 Wörter je Aufgabe).
+(max. 12 Wörter je Aufgabe). Schlage dabei nur Aufgaben vor, die inhaltlich
+noch nicht durch die oben genannten bereits vorhandenen Aufgaben abgedeckt
+sind.
 
 Antworte AUSSCHLIESSLICH mit einem JSON-Array aus Zeichenketten, ohne
 jede weitere Erklärung, ohne Markdown-Codeblock, z. B.:
@@ -201,6 +219,7 @@ export async function schlageAufgabenVor(params: {
   liquiditaet?: string;
   meilensteine: string;
   phaseName: string;
+  bestehendeAufgaben?: { titel: string; erledigt: boolean }[];
 }): Promise<string[]> {
   const groqKey = process.env.GROQ_API_KEY;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;

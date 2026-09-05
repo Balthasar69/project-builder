@@ -8,6 +8,7 @@ import {
 import { getSession } from "@/lib/auth";
 import { PHASES, ProjektArt } from "@/lib/types";
 import { schlageAufgabenVor, VorschlagError } from "@/lib/aufgabenVorschlag";
+import { listTasks } from "@/lib/bitrix24";
 
 /**
  * Speichert die Antworten des Projektleiters auf den Projektstart-
@@ -88,6 +89,18 @@ export async function POST(
 
   const phaseName = PHASES.find((p) => p.code === project.aktuellePhase)?.name ?? project.aktuellePhase;
 
+  // Bei einem bestehenden Projekt gibt es meist schon Bitrix24-Aufgaben –
+  // die bezieht die KI mit ein, damit sie nicht dieselben Titel nochmal
+  // vorschlägt (siehe `aufgabenVorschlag.ts`). Schlägt das Laden fehl (z. B.
+  // Bitrix24 nicht erreichbar), wird trotzdem ohne diese Zusatzinfo
+  // fortgefahren, statt die ganze Generierung abzubrechen.
+  const bestehendeAufgaben = await listTasks({
+    groupId: project.bitrix24.groupId,
+    dealId: project.bitrix24.dealId || undefined,
+  })
+    .then((tasks) => tasks.map((t) => ({ titel: t.title, erledigt: t.erledigt })))
+    .catch(() => []);
+
   try {
     const titel = await schlageAufgabenVor({
       projektName: project.name,
@@ -97,6 +110,7 @@ export async function POST(
       liquiditaet: body.liquiditaet,
       meilensteine,
       phaseName,
+      bestehendeAufgaben,
     });
     const updated = await setAufgabenVorschlaege(params.slug, titel);
     return NextResponse.json({ project: updated });
