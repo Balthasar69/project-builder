@@ -97,17 +97,18 @@ function normalizeProject(data: Project): Project {
     ? kernteamBereinigt
     : [...kernteamBereinigt, STANDARD_KERNTEAM_MITGLIED];
 
-  const mitglieder = data.mitglieder ?? [];
-  const mitgliederKlein = mitglieder.map((e) => e.toLowerCase());
-  const hatStandardZugriff = BALTHASAR_EMAILS.some((e) =>
-    mitgliederKlein.includes(e)
+  // Team-Liste ("mitglieder"): Balthasar taucht dort bewusst NICHT
+  // zusätzlich auf, sobald er (wie oben sichergestellt) im Kernteam steht —
+  // Kernteam-Zugriff deckt den vollen Zugriff bereits ab (siehe
+  // `hatProjektZugriff` in auth.ts), eine doppelte Nennung in "Team" wäre
+  // nur verwirrend. Etwaige alte, redundante Einträge werden hier entfernt.
+  const mitglieder = (data.mitglieder ?? []).filter(
+    (e) => !BALTHASAR_EMAILS.includes(e.toLowerCase())
   );
 
   return {
     ...data,
-    mitglieder: hatStandardZugriff
-      ? mitglieder
-      : [...mitglieder, STANDARD_KERNTEAM_EMAIL],
+    mitglieder,
     kernteam,
     beschreibung: data.beschreibung ?? "",
     hinweise: data.hinweise ?? {},
