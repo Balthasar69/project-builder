@@ -75,10 +75,28 @@ const STANDARD_KERNTEAM_MITGLIED: KernteamMitglied = {
 // Lesen ergänzen wir ein leeres Array, statt die Datenbank zu migrieren und
 // dabei bestehende Daten anzufassen.
 function normalizeProject(data: Project): Project {
-  const kernteam = data.kernteam ?? [];
-  const hatStandardMitglied = kernteam.some(
-    (m) => !!m.email && BALTHASAR_EMAILS.includes(m.email.toLowerCase())
-  );
+  // Kernteam: genau einen Balthasar-Eintrag sicherstellen. Bereits doppelt
+  // eingetragene Projekte (z. B. weil vor dieser Korrektur sowohl
+  // "balthasar@…" als auch "management@…" gleichzeitig ergänzt wurden)
+  // werden dabei automatisch bereinigt — der erste vorhandene Eintrag
+  // bleibt erhalten, weitere werden entfernt; fehlt er ganz, wird der
+  // Standard-Eintrag ergänzt.
+  const kernteamRoh = data.kernteam ?? [];
+  const istBalthasar = (m: KernteamMitglied) =>
+    !!m.email && BALTHASAR_EMAILS.includes(m.email.toLowerCase());
+  let ersterBalthasarGefunden = false;
+  const kernteamBereinigt: KernteamMitglied[] = [];
+  for (const m of kernteamRoh) {
+    if (istBalthasar(m)) {
+      if (ersterBalthasarGefunden) continue; // Duplikat überspringen
+      ersterBalthasarGefunden = true;
+    }
+    kernteamBereinigt.push(m);
+  }
+  const kernteam = ersterBalthasarGefunden
+    ? kernteamBereinigt
+    : [...kernteamBereinigt, STANDARD_KERNTEAM_MITGLIED];
+
   const mitglieder = data.mitglieder ?? [];
   const mitgliederKlein = mitglieder.map((e) => e.toLowerCase());
   const hatStandardZugriff = BALTHASAR_EMAILS.some((e) =>
@@ -90,9 +108,7 @@ function normalizeProject(data: Project): Project {
     mitglieder: hatStandardZugriff
       ? mitglieder
       : [...mitglieder, STANDARD_KERNTEAM_EMAIL],
-    kernteam: hatStandardMitglied
-      ? kernteam
-      : [...kernteam, STANDARD_KERNTEAM_MITGLIED],
+    kernteam,
     beschreibung: data.beschreibung ?? "",
     hinweise: data.hinweise ?? {},
     ideen: data.ideen ?? [],
