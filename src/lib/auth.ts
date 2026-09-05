@@ -22,13 +22,18 @@ export async function verifyPassword(
 // Balthasar (Geschäftsführung) soll grundsätzlich immer Admin-Rechte haben —
 // unabhängig vom "is_admin"-Feld in der Datenbank (z. B. falls versehentlich
 // mit einem neuen/Test-Konto eingeloggt, das nicht als Admin angelegt
-// wurde). Wird beim Anmelden/Registrieren angewendet (siehe login/route.ts,
-// register/route.ts); passend dazu ergänzt `normalizeProject` in data.ts
-// dieselbe E-Mail automatisch im Kernteam jedes Projekts.
-const STANDARD_ADMIN_EMAIL = "management@balthasar-fleischmann.de";
+// wurde). Er nutzt zwei E-Mail-Adressen parallel (historisch gewachsen);
+// beide bekommen automatisch Admin-Rechte. Wird beim Anmelden/Registrieren
+// angewendet (siehe login/route.ts, register/route.ts); passend dazu
+// ergänzt `normalizeProject` in data.ts dieselben Adressen automatisch im
+// Kernteam jedes Projekts.
+const STANDARD_ADMIN_EMAILS = [
+  "management@balthasar-fleischmann.de",
+  "balthasar@balthasar-fleischmann.de",
+];
 
 export function effektiverAdminStatus(email: string, dbIsAdmin: boolean): boolean {
-  return dbIsAdmin || email.toLowerCase() === STANDARD_ADMIN_EMAIL;
+  return dbIsAdmin || STANDARD_ADMIN_EMAILS.includes(email.toLowerCase());
 }
 
 /** Liest die aktuelle, bereits verifizierte Session aus dem Cookie (Server Components/API-Routen). */

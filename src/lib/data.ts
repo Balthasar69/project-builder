@@ -51,14 +51,20 @@ function getSql() {
 
 // Balthasar (Geschäftsführung) soll grundsätzlich in jedem Projekt Zugriff
 // und Bewertungsrecht haben — unabhängig davon, wer das Projekt angelegt
-// hat oder mit welchem (ggf. neuen/Test-)Konto gerade eingeloggt ist. Diese
-// E-Mail-Adresse wird deshalb beim Lesen jedes Projekts automatisch ins
-// Kernteam und in `mitglieder` ergänzt, falls sie dort noch fehlt (siehe
-// auch `effektiverAdminStatus` in auth.ts für die passenden Admin-Rechte
-// beim Login). Kein Datenbank-Update nötig: Wird ein Projekt danach ohnehin
+// hat oder mit welchem seiner beiden Konten er gerade eingeloggt ist. Er
+// nutzt zwei E-Mail-Adressen parallel (historisch gewachsen); beide zählen
+// hier als "er selbst", damit die Automatik ihn nicht doppelt einträgt,
+// wenn eine der beiden in einem Projekt schon vorhanden ist. Fehlen beide,
+// wird die erste (`STANDARD_KERNTEAM_EMAIL`) ergänzt. Siehe auch
+// `effektiverAdminStatus` in auth.ts für die passenden Admin-Rechte beim
+// Login. Kein Datenbank-Update nötig: Wird ein Projekt danach ohnehin
 // gespeichert (z. B. weil jemand etwas anderes ändert), landet die Ergänzung
 // dabei automatisch dauerhaft in der Datenbank.
-const STANDARD_KERNTEAM_EMAIL = "management@balthasar-fleischmann.de";
+const BALTHASAR_EMAILS = [
+  "management@balthasar-fleischmann.de",
+  "balthasar@balthasar-fleischmann.de",
+];
+const STANDARD_KERNTEAM_EMAIL = BALTHASAR_EMAILS[0];
 const STANDARD_KERNTEAM_MITGLIED: KernteamMitglied = {
   name: "Balthasar Fleischmann",
   rolle: "Geschäftsführung",
@@ -71,12 +77,13 @@ const STANDARD_KERNTEAM_MITGLIED: KernteamMitglied = {
 function normalizeProject(data: Project): Project {
   const kernteam = data.kernteam ?? [];
   const hatStandardMitglied = kernteam.some(
-    (m) => m.email?.toLowerCase() === STANDARD_KERNTEAM_EMAIL
+    (m) => !!m.email && BALTHASAR_EMAILS.includes(m.email.toLowerCase())
   );
   const mitglieder = data.mitglieder ?? [];
-  const hatStandardZugriff = mitglieder
-    .map((e) => e.toLowerCase())
-    .includes(STANDARD_KERNTEAM_EMAIL);
+  const mitgliederKlein = mitglieder.map((e) => e.toLowerCase());
+  const hatStandardZugriff = BALTHASAR_EMAILS.some((e) =>
+    mitgliederKlein.includes(e)
+  );
 
   return {
     ...data,
