@@ -4,7 +4,7 @@ import { getSession, hatProjektZugriff } from "@/lib/auth";
 import { analysiereAufgabe, AnalyseError } from "@/lib/aufgabenAnalyse";
 import { PHASES } from "@/lib/types";
 
-// Der Aufruf bei Claude braucht etwas länger als die Standard-Zeitgrenze
+// Der Aufruf bei Groq/Claude braucht etwas länger als die Standard-Zeitgrenze
 // von Vercel-Funktionen (10 s im Hobby-Plan) – auf Plänen, die längere
 // Laufzeiten erlauben, gilt dieser höhere Wert, sonst wird automatisch auf
 // das jeweilige Maximum begrenzt.
@@ -42,7 +42,7 @@ export async function GET(
   return NextResponse.json({ analyse });
 }
 
-/** Erstellt (bzw. erneuert) die Einschätzung zu einer Aufgabe über Claude. */
+/** Erstellt (bzw. erneuert) die Einschätzung zu einer Aufgabe per KI. */
 export async function POST(
   req: NextRequest,
   { params }: { params: { slug: string; taskId: string } }

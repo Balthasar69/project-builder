@@ -22,8 +22,10 @@ export class AnalyseError extends Error {}
 
 // Bei Groq mehrere Kandidaten hintereinander versuchen: fällt ein Modell
 // weg oder ist gerade überlastet, springt die App automatisch zum nächsten,
-// statt gleich aufzugeben.
-const GROQ_MODELLE = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+// statt gleich aufzugeben. Groq benennt bzw. ersetzt seine kostenlosen
+// Modelle gelegentlich (siehe console.groq.com/docs/deprecations) – aktuell
+// (Stand v0.35) sind das die beiden "gpt-oss"-Modelle.
+const GROQ_MODELLE = ["openai/gpt-oss-20b", "openai/gpt-oss-120b"];
 const ANTHROPIC_MODELL = "claude-haiku-4-5-20251001";
 
 function buildPrompt(params: {

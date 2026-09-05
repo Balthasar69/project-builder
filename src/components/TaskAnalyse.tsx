@@ -13,7 +13,7 @@ function formatiereZeit(iso: string): string {
 }
 
 /**
- * Bereich unter "Mit KI bearbeiten ▾": zeigt eine bereits von Claude erstellte
+ * Bereich unter "Mit KI bearbeiten ▾": zeigt eine bereits erstellte
  * Hilfestellung zu dieser Aufgabe (falls vorhanden) und bietet den Button,
  * um eine neue Einschätzung anzufordern bzw. die vorhandene zu erneuern.
  */
@@ -98,16 +98,16 @@ export default function TaskAnalyse({
           className="rounded-md border border-line px-3 py-1.5 text-xs font-medium text-ink transition hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
         >
           {erstellt
-            ? "Claude denkt nach…"
+            ? "KI denkt nach…"
             : analyse
             ? "Neu einschätzen lassen"
-            : "Jetzt von Claude einschätzen lassen"}
+            : "Jetzt von der KI einschätzen lassen"}
         </button>
       )}
 
       <p className="mt-2 text-[0.65rem] text-ink-faint">
-        Automatisch erstellte Einschätzung von Claude (KI) – ein Denkanstoß,
-        keine verbindliche Aussage.
+        Automatisch erstellte Einschätzung der KI – ein Denkanstoß, keine
+        verbindliche Aussage.
       </p>
 
       {speicherHinweis && (
