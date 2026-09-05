@@ -1,48 +1,39 @@
-// "Mit KI bearbeiten": eine einzelne Bitrix24-Aufgabe wird mithilfe von
-// Claude (Anthropic-API) eingeschätzt – wie sie sich einfacher erledigen
-// lässt und wofür sie im Zusammenhang mit der aktuellen Projektphase gerade
-// nützlich ist. Bewusst genauso fehlertolerant gebaut wie die Vertextung
-// (siehe transcribe.ts): fehlt der Schlüssel oder schlägt der Aufruf fehl,
-// bekommt die Person eine klare deutsche Fehlermeldung statt eines kaputten
-// Klicks – der Rest der App ist davon nicht betroffen.
+// "Mit KI bearbeiten": eine einzelne Bitrix24-Aufgabe wird per KI eingeschätzt
+// – wie sie sich einfacher erledigen lässt und wofür sie im Zusammenhang mit
+// der aktuellen Projektphase gerade nützlich ist. Genau wie bei der
+// Vertextung von Sprachnotizen (siehe transcribe.ts) gibt es zwei
+// austauschbare Anbieter:
+//
+// - Groq (GROQ_API_KEY): kostenlose Stufe ohne hinterlegte Zahlungsmethode
+//   – derselbe Schlüssel, der schon für Sprachnotizen genutzt wird. Ist er
+//   bereits gesetzt, funktioniert "Mit KI bearbeiten" automatisch mit, ohne
+//   dass extra etwas eingerichtet werden muss.
+// - Claude/Anthropic (ANTHROPIC_API_KEY): kostenpflichtige Alternative,
+//   falls kein Groq-Zugang gewünscht ist oder eine höhere Qualität nötig
+//   erscheint.
+//
+// Ist GROQ_API_KEY gesetzt, hat er Vorrang (kostenlos). Bewusst genauso
+// fehlertolerant gebaut wie die übrigen Zusatzfunktionen: fehlt jeder
+// Schlüssel oder schlägt der Aufruf fehl, bekommt die Person eine klare
+// deutsche Fehlermeldung statt eines kaputten Klicks – der Rest der App ist
+// davon nicht betroffen.
 
 export class AnalyseError extends Error {}
 
-// Schnellstes/günstigstes aktuelles Modell – für eine kurze Texteinschätzung
-// völlig ausreichend und damit passend zu den geringen Kosten der übrigen
-// Zusatzfunktionen (Vertextung, Versand).
-const MODELL = "claude-haiku-4-5-20251001";
+// Bei Groq mehrere Kandidaten hintereinander versuchen: fällt ein Modell
+// weg oder ist gerade überlastet, springt die App automatisch zum nächsten,
+// statt gleich aufzugeben.
+const GROQ_MODELLE = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+const ANTHROPIC_MODELL = "claude-haiku-4-5-20251001";
 
-interface AnthropicContentBlock {
-  type: string;
-  text?: string;
-}
-
-interface AnthropicResponse {
-  content?: AnthropicContentBlock[];
-  error?: { message?: string };
-}
-
-/**
- * Fordert bei Claude eine kurze Hilfestellung zu einer Aufgabe an. Wirft
- * `AnalyseError`, statt still zu scheitern, damit Aufrufer bewusst
- * entscheiden, wie sie einen Fehlschlag der Person mitteilen.
- */
-export async function analysiereAufgabe(params: {
+function buildPrompt(params: {
   aufgabenTitel: string;
   projektName: string;
   projektBeschreibung?: string;
   phaseName: string;
   phaseZiel: string;
-}): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new AnalyseError(
-      'ANTHROPIC_API_KEY ist nicht gesetzt. Siehe README, Abschnitt "Mit KI bearbeiten".'
-    );
-  }
-
-  const prompt = `Du unterstützt ein kleines Projektteam bei der Umsetzung eines Projekts.
+}): string {
+  return `Du unterstützt ein kleines Projektteam bei der Umsetzung eines Projekts.
 
 Projekt: "${params.projektName}"
 Projektbeschreibung: ${params.projektBeschreibung?.trim() || "(keine hinterlegt)"}
@@ -54,7 +45,51 @@ Gib eine kurze, konkrete Hilfestellung auf Deutsch (maximal 120 Wörter, als nor
 2. Wofür ist diese Aufgabe im Zusammenhang mit dieser Projektphase gerade nützlich bzw. wichtig.
 
 Antworte direkt mit dem Fließtext, ohne Einleitung wie "Hier ist deine Einschätzung" und ohne die beiden Punkte wörtlich zu wiederholen.`;
+}
 
+/** Fragt ein Groq-Chatmodell (OpenAI-kompatibles Format) an. */
+async function frageGroq(
+  apiKey: string,
+  modell: string,
+  prompt: string
+): Promise<string> {
+  let res: Response;
+  try {
+    res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: modell,
+        max_tokens: 400,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+  } catch {
+    throw new AnalyseError("Groq war nicht erreichbar.");
+  }
+
+  const body = (await res.json().catch(() => null)) as
+    | { choices?: { message?: { content?: string } }[]; error?: { message?: string } }
+    | null;
+
+  if (!res.ok || !body) {
+    throw new AnalyseError(body?.error?.message || `HTTP ${res.status}`);
+  }
+
+  const text = body.choices?.[0]?.message?.content?.trim();
+  if (!text) throw new AnalyseError("Keine verwertbare Antwort erhalten.");
+  return text;
+}
+
+/** Fragt Claude über die Anthropic-Messages-API an. */
+async function frageClaude(
+  apiKey: string,
+  modell: string,
+  prompt: string
+): Promise<string> {
   let res: Response;
   try {
     res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -65,29 +100,76 @@ Antworte direkt mit dem Fließtext, ohne Einleitung wie "Hier ist deine Einschä
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: MODELL,
+        model: modell,
         max_tokens: 400,
         messages: [{ role: "user", content: prompt }],
       }),
     });
   } catch {
-    throw new AnalyseError("Claude war nicht erreichbar. Bitte später erneut versuchen.");
+    throw new AnalyseError("Claude war nicht erreichbar.");
   }
 
-  const body = (await res.json().catch(() => null)) as AnthropicResponse | null;
+  const body = (await res.json().catch(() => null)) as
+    | { content?: { type: string; text?: string }[]; error?: { message?: string } }
+    | null;
 
   if (!res.ok || !body) {
-    const detail = body?.error?.message || `HTTP ${res.status}`;
-    throw new AnalyseError(`Claude hat die Analyse abgelehnt: ${detail}`);
+    throw new AnalyseError(body?.error?.message || `HTTP ${res.status}`);
   }
 
   const text = body.content
     ?.find((block) => block.type === "text" && block.text)
     ?.text?.trim();
+  if (!text) throw new AnalyseError("Keine verwertbare Antwort erhalten.");
+  return text;
+}
 
-  if (!text) {
-    throw new AnalyseError("Claude hat keine verwertbare Antwort geliefert.");
+/**
+ * Fordert eine kurze Hilfestellung zu einer Aufgabe an – bevorzugt über den
+ * kostenlosen Groq-Zugang, ersatzweise über Claude/Anthropic (kostenpflichtig),
+ * falls vorhanden. Wirft `AnalyseError` mit einer für Menschen lesbaren
+ * Sammel-Fehlermeldung, wenn kein Anbieter erfolgreich war.
+ */
+export async function analysiereAufgabe(params: {
+  aufgabenTitel: string;
+  projektName: string;
+  projektBeschreibung?: string;
+  phaseName: string;
+  phaseZiel: string;
+}): Promise<string> {
+  const groqKey = process.env.GROQ_API_KEY;
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+
+  if (!groqKey && !anthropicKey) {
+    throw new AnalyseError(
+      'Weder GROQ_API_KEY (kostenlos) noch ANTHROPIC_API_KEY (kostenpflichtig) gesetzt. Siehe README, Abschnitt "Mit KI bearbeiten".'
+    );
   }
 
-  return text;
+  const prompt = buildPrompt(params);
+  const fehlermeldungen: string[] = [];
+
+  if (groqKey) {
+    for (const modell of GROQ_MODELLE) {
+      try {
+        return await frageGroq(groqKey, modell, prompt);
+      } catch (err) {
+        fehlermeldungen.push(
+          `Groq (${modell}): ${err instanceof Error ? err.message : "Fehler"}`
+        );
+      }
+    }
+  }
+
+  if (anthropicKey) {
+    try {
+      return await frageClaude(anthropicKey, ANTHROPIC_MODELL, prompt);
+    } catch (err) {
+      fehlermeldungen.push(
+        `Claude: ${err instanceof Error ? err.message : "Fehler"}`
+      );
+    }
+  }
+
+  throw new AnalyseError(`Analyse fehlgeschlagen (${fehlermeldungen.join(" · ")}).`);
 }

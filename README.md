@@ -614,25 +614,35 @@ im Projekt gespeichert und bleibt beim nächsten Öffnen der Seite sichtbar;
 über „Neu einschätzen lassen" lässt sie sich jederzeit ersetzen. Es ist
 ausdrücklich ein Denkanstoß, keine verbindliche Aussage.
 
-Dafür wird ein eigener Schlüssel bei [Anthropic](https://console.anthropic.com)
-benötigt (kostenpflichtig, Cent-Beträge pro Anfrage, Zahlungsmethode
-nötig):
+Dafür wird — genau wie bei der Vertextung von Sprachnotizen weiter oben —
+einer von zwei austauschbaren Anbietern genutzt:
 
-1. Konto auf [console.anthropic.com](https://console.anthropic.com) anlegen
-   (bzw. mit dem vorhandenen Konto anmelden) und eine Zahlungsmethode
-   hinterlegen.
-2. Im Dashboard unter **API Keys** einen neuen Key erzeugen und kopieren
-   (beginnt mit `sk-ant-`).
-3. In Vercel → **Settings** → **Environment Variables** als
-   `ANTHROPIC_API_KEY` eintragen (alle Umgebungen) und speichern.
-4. Einmal auf „Redeploy" klicken (Vercel → Reiter **Deployments** → bei der
-   obersten, aktuellen Bereitstellung die drei Punkte → „Redeploy"), damit
-   der neue Schlüssel in der laufenden App ankommt.
+- **[Groq](https://console.groq.com) (empfohlen, kostenlos).** Ist bereits
+  ein `GROQ_API_KEY` hinterlegt (weil Sprachnotizen eingerichtet wurden),
+  funktioniert „Mit KI bearbeiten" damit automatisch mit — **ohne dass
+  irgendetwas zusätzlich eingerichtet werden muss.** Falls noch kein Key
+  vorhanden ist: Konto auf [console.groq.com](https://console.groq.com)
+  anlegen (keine Zahlungsmethode nötig), im Dashboard unter **API Keys**
+  einen neuen Key erzeugen und in Vercel → **Settings** →
+  **Environment Variables** als `GROQ_API_KEY` eintragen (alle Umgebungen).
+- **[Anthropic/Claude](https://console.anthropic.com) (Alternative,
+  kostenpflichtig).** Cent-Beträge pro Anfrage, Zahlungsmethode nötig. Konto
+  anlegen, im Dashboard unter **API Keys** einen neuen Key erzeugen
+  (beginnt mit `sk-ant-`) und in Vercel als `ANTHROPIC_API_KEY` eintragen.
+  Ist `GROQ_API_KEY` gesetzt, hat er Vorrang (kostenlos); `ANTHROPIC_API_KEY`
+  greift nur, wenn kein `GROQ_API_KEY` vorhanden ist oder Groq gerade
+  keine Antwort liefert.
 
-Fehlt `ANTHROPIC_API_KEY` oder lehnt Claude eine Anfrage ab (z. B. wegen
-aufgebrauchtem Guthaben), erscheint an dieser Stelle lediglich eine klare
-Fehlermeldung – der Rest der App (Aufgaben, Notizen, Bewertung usw.)
-funktioniert davon vollkommen unberührt weiter.
+Nach dem Eintragen eines neuen Schlüssels einmal auf „Redeploy" klicken
+(Vercel → Reiter **Deployments** → bei der obersten, aktuellen
+Bereitstellung die drei Punkte → „Redeploy"), damit er in der laufenden App
+ankommt.
+
+Fehlen beide Schlüssel oder lehnt der jeweilige Dienst eine Anfrage ab (z. B.
+wegen aufgebrauchtem Guthaben oder kurzzeitiger Überlastung), erscheint an
+dieser Stelle lediglich eine klare Fehlermeldung – der Rest der App
+(Aufgaben, Notizen, Bewertung usw.) funktioniert davon vollkommen unberührt
+weiter.
 
 **Korrektur in v0.19:** In v0.18 wurden zwei technische Bitrix24-Codes
 ("Neu" und "Wartet auf Bearbeitung") noch unterschiedlich beschriftet
