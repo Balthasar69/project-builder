@@ -387,6 +387,10 @@ export interface Project {
   projektstartFragebogen?: ProjektstartFragebogen;
   /** Von der KI aus dem Projektstart-Fragebogen abgeleitete, noch nicht durchgesehene Aufgaben-Vorschläge. */
   aufgabenVorschlaege?: AufgabenVorschlag[];
+  /** Selbst eingetragene Beiträge zu "Kompetenzen", ein Eintrag je Person (siehe KompetenzBeitrag). */
+  kompetenzbeitraege?: KompetenzBeitrag[];
+  /** Interner Chat-Verlauf dieses Projekts, älteste Nachricht zuerst (siehe ChatNachricht). */
+  chat?: ChatNachricht[];
   bitrix24: {
     dealId: number;
     categoryId: number;
@@ -503,6 +507,36 @@ export interface AufgabenVorschlag {
   titel: string;
   uebernommenAlsTaskId?: string;
   verworfen?: boolean;
+}
+
+/**
+ * Selbst eingetragener Beitrag einer Person zu "Kompetenzen" (neuer
+ * Cockpit-Bereich seit v0.46, nicht zu verwechseln mit der Projektphase
+ * "kompetenzen" oben): was sie zum Projekt beitragen kann bzw. beitragen
+ * möchte, in eigenen Worten. Jede Person (Kernteam oder Team) trägt nur
+ * ihren eigenen Eintrag ein – kein Bewertungs- oder Freigabeprozess, reine
+ * Selbstauskunft, sichtbar für alle mit Projektzugriff.
+ */
+export interface KompetenzBeitrag {
+  email: string;
+  name: string;
+  kannBeitragen: string;
+  moechteBeitragen: string;
+  aktualisiertAm: string; // ISO-Datum
+}
+
+/**
+ * Eine einzelne Nachricht im internen Projekt-Chat (neuer Cockpit-Bereich
+ * seit v0.46) – nur für Kernteam & Team dieses Projekts sichtbar. Bewusst
+ * einfach gehalten: keine Threads, kein Bearbeiten/Löschen im ersten
+ * Schritt, nur ein fortlaufendes Protokoll je Projekt.
+ */
+export interface ChatNachricht {
+  id: string;
+  autorEmail: string;
+  autorName: string;
+  text: string;
+  erstelltAm: string; // ISO-Datum
 }
 
 /** Ein registrierter Zugang (echtes Konto pro Person, statt gemeinsamem Passwort). */

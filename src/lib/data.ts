@@ -3,9 +3,11 @@ import {
   AufgabenAnalyse,
   AufgabenVorschlag,
   BlockHinweisKey,
+  ChatNachricht,
   CheckResult,
   Idee,
   KernteamMitglied,
+  KompetenzBeitrag,
   PhaseCode,
   Project,
   ProjektArt,
@@ -117,6 +119,8 @@ function normalizeProject(data: Project): Project {
     ideen: data.ideen ?? [],
     aufgabenAnalysen: data.aufgabenAnalysen ?? {},
     aufgabenVorschlaege: data.aufgabenVorschlaege ?? [],
+    kompetenzbeitraege: data.kompetenzbeitraege ?? [],
+    chat: data.chat ?? [],
   };
 }
 
@@ -812,6 +816,74 @@ export async function markiereVorschlagUebernommen(
   project.aufgabenVorschlaege = (project.aufgabenVorschlaege ?? []).map((v) =>
     v.id === vorschlagId ? { ...v, uebernommenAlsTaskId: bitrixTaskId } : v
   );
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/**
+ * Legt den eigenen Kompetenzen-Eintrag an oder überschreibt ihn (Rechteprüfung
+ * – nur der/die Angemeldete selbst – sitzt in der API-Route: jede Person
+ * pflegt ausschließlich ihren eigenen Eintrag, nie den einer anderen).
+ */
+export async function setKompetenzBeitrag(
+  slug: string,
+  params: { email: string; name: string; kannBeitragen: string; moechteBeitragen: string }
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  const normalized = params.email.trim().toLowerCase();
+  const eintrag: KompetenzBeitrag = {
+    email: normalized,
+    name: params.name,
+    kannBeitragen: params.kannBeitragen.trim(),
+    moechteBeitragen: params.moechteBeitragen.trim(),
+    aktualisiertAm: new Date().toISOString(),
+  };
+  const bisherige = project.kompetenzbeitraege ?? [];
+  const index = bisherige.findIndex((k) => k.email.toLowerCase() === normalized);
+  project.kompetenzbeitraege =
+    index >= 0
+      ? bisherige.map((k, i) => (i === index ? eintrag : k))
+      : [...bisherige, eintrag];
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/**
+ * Hängt eine neue Nachricht an den internen Projekt-Chat an (Rechteprüfung –
+ * Kernteam & Team dieses Projekts – sitzt in der API-Route). Bewusst kein
+ * Limit/Löschen im ersten Schritt, nur ein fortlaufendes Protokoll.
+ */
+export async function addChatNachricht(
+  slug: string,
+  params: { autorEmail: string; autorName: string; text: string }
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  const neueNachricht: ChatNachricht = {
+    id: randomUUID(),
+    autorEmail: params.autorEmail.trim().toLowerCase(),
+    autorName: params.autorName,
+    text: params.text.trim(),
+    erstelltAm: new Date().toISOString(),
+  };
+  project.chat = [...(project.chat ?? []), neueNachricht];
   project.aktualisiertAm = new Date().toISOString();
 
   const sql = getSql();

@@ -33,6 +33,17 @@ const config: Config = {
         warn: { DEFAULT: "#a8791f", soft: "#f4e8cd" },
         bad: { DEFAULT: "#bd0604", soft: "#f7dcdb" },
         pending: { DEFAULT: "#8b8f7e", soft: "#ecebe1" },
+        // Die drei Logo-Farben (exakt aus dem Icon entnommen: äußerer Ring
+        // Blau, mittlerer Ring Rot, Punkt in der Mitte Grün) – ab v0.46
+        // bewusst nicht mehr nur als Statusfarben (good/bad), sondern direkt
+        // im Projektcockpit-Hub verwendet: Orga=Blau, Dashboard=Rot,
+        // Dynamik=Grün, spiegelbildlich zum Logo von außen nach innen.
+        brand: {
+          blue: "#006fc0",
+          red: "#be0000",
+          green: "#8cc63e",
+          "green-soft": "#edf6e2",
+        },
       },
     },
   },

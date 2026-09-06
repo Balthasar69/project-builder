@@ -1,13 +1,19 @@
 import { PHASES, PhaseCode, BereichStatus } from "@/lib/types";
 import { berechneReifegrad } from "@/lib/scoring";
 
+// Die drei Logo-Farben, im Wechsel für die Phasen-Ringe (v0.46) – vorher ein
+// gleichmäßig über den ganzen Farbkreis verteilter Regenbogen, jetzt bewusst
+// nur noch Blau/Rot/Grün aus dem Logo, damit die CD-Farben im ganzen Cockpit
+// wiedererkennbar bleiben statt beliebiger Zwischentöne.
+const RING_FARBEN = ["#006fc0", "#be0000", "#8cc63e"];
+
 /**
  * Grafische Gesamt-Fortschrittsanzeige oben im Projektcockpit: ein Ring pro
  * Phase, ineinander verschachtelt wie bei einer Zielscheibe – der innerste
  * Ring ist Phase 1, jede weitere Phase kommt als eigener Ring nach außen
- * dazu. Jede Phase hat eine eigene, feste Farbe (gleichmäßig über den
- * Farbkreis verteilt); erreichte Phasen sind volltonig, offene blass. Der
- * Gesamt-Reifegrad (Kapitel 9) steht als Zahl in der Mitte.
+ * dazu. Jede Phase bekommt der Reihe nach eine der drei Logo-Farben; erreichte
+ * Phasen sind volltonig, offene blass. Der Gesamt-Reifegrad (Kapitel 9) steht
+ * als Zahl in der Mitte.
  */
 export default function ProjectProgress({
   aktuell,
@@ -32,13 +38,20 @@ export default function ProjectProgress({
 
   return (
     <div className="mb-10 flex flex-col items-center gap-6 rounded-lg border border-line bg-surface px-6 py-6 sm:flex-row sm:justify-center sm:gap-10">
-      <div className="relative shrink-0" style={{ width: groesse, height: groesse }}>
-        <svg viewBox={`0 0 ${groesse} ${groesse}`} className="h-full w-full">
+      {/* Prozentzahl steht bewusst UNTER dem Ring statt darin (v0.46) – bei
+          14 ineinander verschachtelten Phasen-Ringen ist die Mitte zu klein,
+          um "100% / Reifegrad" überlappungsfrei darzustellen. */}
+      <div className="flex shrink-0 flex-col items-center">
+        <svg
+          width={groesse}
+          height={groesse}
+          viewBox={`0 0 ${groesse} ${groesse}`}
+        >
           {hauptPhasen.map((phase, i) => {
             const radius = startRadius + i * ringAbstand;
             const erreicht = !istGeparkt && phase.order <= aktuelleOrder;
             const istAktuell = !istGeparkt && phase.order === aktuelleOrder;
-            const farbe = `hsl(${Math.round((360 / hauptPhasen.length) * i)}, 58%, 45%)`;
+            const farbe = RING_FARBEN[i % RING_FARBEN.length];
             return (
               <circle
                 key={phase.code}
@@ -58,14 +71,12 @@ export default function ProjectProgress({
             );
           })}
         </svg>
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="font-display text-3xl font-semibold tabular text-ink">
-            {reifegrad}%
-          </span>
-          <span className="text-[0.65rem] uppercase tracking-wide text-ink-faint">
-            Reifegrad
-          </span>
-        </div>
+        <span className="mt-1 font-display text-3xl font-semibold tabular text-ink">
+          {reifegrad}%
+        </span>
+        <span className="text-[0.65rem] uppercase tracking-wide text-ink-faint">
+          Reifegrad
+        </span>
       </div>
 
       <div className="max-w-[42ch] text-center sm:text-left">

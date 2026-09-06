@@ -17,6 +17,11 @@ import LogoutButton from "@/components/LogoutButton";
 import ProjectDescription from "@/components/ProjectDescription";
 import ProjectProgress from "@/components/ProjectProgress";
 import BlockHinweis from "@/components/BlockHinweis";
+import ReifegradRingKompakt from "@/components/ReifegradRingKompakt";
+import ProjektHubNav from "@/components/ProjektHubNav";
+import NaechsteSchritte from "@/components/NaechsteSchritte";
+import KompetenzenManager from "@/components/KompetenzenManager";
+import ProjectChat from "@/components/ProjectChat";
 
 export const dynamic = "force-dynamic";
 
@@ -95,6 +100,23 @@ export default async function ProjectCockpit({
     )
   );
 
+  // Für "Kompetenzen": alle Personen mit Projektzugriff (Kernteam + Team),
+  // dedupliziert nach E-Mail-Adresse – Grundlage dafür, wer einen eigenen
+  // Eintrag hat und wer noch als "Noch nicht ausgefüllt" erscheint.
+  const teilnehmerNachEmail = new Map<string, { email: string; name: string }>();
+  for (const m of project.kernteam) {
+    if (m.email) teilnehmerNachEmail.set(m.email.toLowerCase(), { email: m.email, name: m.name });
+  }
+  for (const email of project.mitglieder) {
+    if (!teilnehmerNachEmail.has(email.toLowerCase())) {
+      teilnehmerNachEmail.set(email.toLowerCase(), {
+        email,
+        name: mitgliederNamen[email] ?? email,
+      });
+    }
+  }
+  const kompetenzTeilnehmer = [...teilnehmerNachEmail.values()];
+
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
       <div className="mb-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
@@ -137,68 +159,46 @@ export default async function ProjectCockpit({
         </p>
       </div>
 
-      <h1 className="mb-1 font-display text-4xl font-semibold text-ink">
-        {project.name}
-      </h1>
-      <p className="mb-3 text-ink-muted">{project.rolleImSystem}</p>
+      {/* Titel + kompakter Reifegrad-Ring nebeneinander (seit v0.46) –
+          Prozentzahl steht bewusst UNTER dem Ring, nicht mehr darin, damit
+          sie bei dieser kleinen Größe gut lesbar bleibt. */}
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="mb-1 font-display text-4xl font-semibold text-ink">
+            {project.name}
+          </h1>
+          <p className="text-ink-muted">{project.rolleImSystem}</p>
+        </div>
+        <ReifegradRingKompakt
+          aktuell={project.aktuellePhase}
+          bereichStatus={project.bereichStatus}
+        />
+      </div>
 
       {/* Projektbeschreibung steht bewusst direkt unter dem Projektnamen –
-          noch vor der Schnellzugriff-Navigation. */}
+          noch vor dem KI-Hinweis und der Hub-Navigation. */}
       <ProjectDescription
         slug={project.slug}
         beschreibung={project.beschreibung ?? ""}
         darfBearbeiten={istKernteam(session, project)}
       />
 
-      {/* Schnellzugriff: springt direkt zu den vier Kernbereichen weiter
-          unten auf derselben Seite (reine Sprungmarken, kein eigener
-          Baustein) – soll neuen Nutzern auf einen Blick zeigen, worum es im
-          Projektcockpit überhaupt geht. */}
-      <nav className="mb-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <a
-          href="#phasenverlauf"
-          className="flex flex-col gap-1 rounded-md border border-line bg-surface px-4 py-3 text-center transition hover:border-accent hover:bg-accent-soft"
-        >
-          <span className="text-xs text-ink-muted">Wo stehen wir</span>
-          <span className="font-mono text-xs font-semibold uppercase tracking-wide text-ink">
-            Phasenverlauf
-          </span>
-        </a>
-        <a
-          href="#bewertung"
-          className="flex flex-col gap-1 rounded-md border border-line bg-surface px-4 py-3 text-center transition hover:border-accent hover:bg-accent-soft"
-        >
-          <span className="text-xs text-ink-muted">Wie sehen wir uns</span>
-          <span className="font-mono text-xs font-semibold uppercase tracking-wide text-ink">
-            Bewertung
-          </span>
-        </a>
-        <a
-          href="#aufgaben"
-          className="flex flex-col gap-1 rounded-md border border-line bg-surface px-4 py-3 text-center transition hover:border-accent hover:bg-accent-soft"
-        >
-          <span className="text-xs text-ink-muted">Was ist zu tun</span>
-          <span className="font-mono text-xs font-semibold uppercase tracking-wide text-ink">
-            Aufgaben
-          </span>
-        </a>
-        <a
-          href="#ideen"
-          className="flex flex-col gap-1 rounded-md border border-line bg-surface px-4 py-3 text-center transition hover:border-accent hover:bg-accent-soft"
-        >
-          <span className="text-xs text-ink-muted">
-            Was ich denke und zu tun ist
-          </span>
-          <span className="font-mono text-xs font-semibold uppercase tracking-wide text-ink">
-            Ideen
-          </span>
-        </a>
-      </nav>
+      {/* Persönlicher KI-Hinweis "Für dich als Nächstes" – ganz oben, noch
+          vor den drei Hub-Spalten (siehe NaechsteSchritte.tsx). */}
+      <NaechsteSchritte slug={project.slug} />
+
+      {/* Hub-Navigation: drei schmale Spalten (Orga/Dashboard/Dynamik),
+          ersetzt die frühere 4er-Kachelreihe. Alle Unterpunkte sind sofort
+          sichtbar; jeder Punkt springt zum jeweiligen Bereich weiter unten. */}
+      <ProjektHubNav />
+      <p className="mb-10 text-center text-xs text-ink-faint">
+        Auf einen Punkt tippen springt direkt zum jeweiligen Bereich
+      </p>
 
       {/* Kernteam & Team stehen bewusst nebeneinander, auf einer Höhe, und
           direkt über der grafischen Projektfortschritts-Darstellung. */}
       <div className="mb-10 grid grid-cols-1 gap-8 sm:grid-cols-2">
-        <section>
+        <section id="kernteam" className="scroll-mt-6">
           <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
             <h2 className="font-display text-xl font-semibold">Kernteam</h2>
           </div>
@@ -216,7 +216,7 @@ export default async function ProjectCockpit({
           />
         </section>
 
-        <section>
+        <section id="team" className="scroll-mt-6">
           <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
             <h2 className="font-display text-xl font-semibold">Team</h2>
             <span className="font-mono text-xs text-ink-faint">
@@ -239,9 +239,27 @@ export default async function ProjectCockpit({
         </section>
       </div>
 
+      {/* Kompetenzen (neu seit v0.46, Teil von "Orga"): jede Person trägt
+          selbst ein, was sie beitragen kann bzw. möchte. */}
+      <section id="kompetenzen" className="mb-10 scroll-mt-6">
+        <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
+          <h2 className="font-display text-xl font-semibold">Kompetenzen</h2>
+        </div>
+        <p className="mb-4 text-sm text-ink-muted">
+          Jede Person trägt hier für sich selbst ein, was sie zum Projekt
+          beitragen kann und was sie gerne beitragen möchte.
+        </p>
+        <KompetenzenManager
+          slug={project.slug}
+          teilnehmer={kompetenzTeilnehmer}
+          beitraege={project.kompetenzbeitraege ?? []}
+          sessionEmail={session.email}
+        />
+      </section>
+
       {/* Die KI-Fragen zum Projektstart stehen bewusst direkt unter
-          Kernteam/Team – bevor es weiter unten um Fortschritt, Bewertung
-          und Aufgaben geht. */}
+          Kernteam/Team/Kompetenzen – bevor es weiter unten um Fortschritt,
+          Bewertung und Aufgaben geht. */}
       <ProjektstartFragebogen
         slug={project.slug}
         kernteam={project.kernteam}
@@ -252,10 +270,12 @@ export default async function ProjectCockpit({
         vorschlaege={project.aufgabenVorschlaege ?? []}
       />
 
-      <ProjectProgress
-        aktuell={project.aktuellePhase}
-        bereichStatus={project.bereichStatus}
-      />
+      <div id="fortschritt" className="scroll-mt-6">
+        <ProjectProgress
+          aktuell={project.aktuellePhase}
+          bereichStatus={project.bereichStatus}
+        />
+      </div>
 
       <div className="mb-10 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-4">
         <div className="bg-surface px-4 py-3">
@@ -394,6 +414,22 @@ export default async function ProjectCockpit({
           slug={project.slug}
           ideen={project.ideen ?? []}
           istKernteam={istKernteam(session, project)}
+        />
+      </section>
+
+      {/* Chat (neu seit v0.46, Teil von "Dynamik"): interner Austausch nur
+          für Kernteam & Team dieses Projekts. */}
+      <section id="chat" className="mt-12 scroll-mt-6">
+        <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
+          <h2 className="font-display text-xl font-semibold">Chat</h2>
+          <span className="font-mono text-xs text-ink-faint">
+            Nur für Kernteam &amp; Team sichtbar
+          </span>
+        </div>
+        <ProjectChat
+          slug={project.slug}
+          initial={project.chat ?? []}
+          sessionEmail={session.email}
         />
       </section>
     </main>

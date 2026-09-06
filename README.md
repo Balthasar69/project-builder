@@ -759,6 +759,48 @@ KI-Fragen zum Projektstart unter Kernteam/Team. Die Projektbeschreibung
 steht jetzt wieder direkt unter dem Projektnamen, ganz oben auf der Seite
 — die KI-Fragen zum Projektstart bleiben wie in v0.43 unter Kernteam/Team.
 
+**Neues Projektcockpit-Layout: Hub-Navigation, Kompetenzen, Chat und
+persönlicher KI-Hinweis (v0.46):** Größere Überarbeitung des
+Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
+(Mockups):
+
+- **Logo.** Die Zeile "KULTO" wurde aus dem Logo entfernt (`public/logo.png`)
+  — die App trägt jetzt "insightworx – O&K Organisation und Kommunikation",
+  Text neu zentriert neben dem unveränderten Icon.
+- **Die drei Logo-Farben stärker im Design.** Blau, Rot und Grün aus dem
+  Logo-Icon (exakt `#006fc0` / `#be0000` / `#8cc63e`) werden jetzt nicht nur
+  für GO/STOPP-Bewertungen verwendet, sondern durchgängig im Cockpit: die
+  Phasen-Ringe (großer Fortschritts-Ring wie auch der neue kompakte Ring
+  oben) wechseln der Reihe nach durch diese drei Farben, und die drei neuen
+  Hub-Spalten Orga/Dashboard/Dynamik sind entsprechend eingefärbt.
+- **Titel + kompakter Reifegrad-Ring.** Direkt neben Projektname und
+  Kurzbeschreibung steht jetzt ein kleiner Ring mit dem Gesamt-Reifegrad;
+  die Prozentzahl steht bewusst UNTER dem Ring statt darin (bei vielen
+  ineinander verschachtelten Phasen-Ringen war die Mitte zu klein für eine
+  gut lesbare Zahl — das wurde beim großen Fortschritts-Ring weiter unten
+  ebenfalls so korrigiert).
+- **Persönlicher KI-Hinweis "Für dich als Nächstes".** Ganz oben, noch vor
+  der Hub-Navigation, fasst die KI für die angemeldete Person zusammen, was
+  als Nächstes zu tun oder anzuschauen ist — ein kurzer Satz plus 2–3
+  konkrete Punkte, abgeleitet aus Rolle, eigenem Kompetenzen-Eintrag, Phase/
+  Reifegrad/letzter Bewertung, offenen Bitrix24-Aufgaben, Ideen und
+  Chat-Aktivität. Nutzt dieselbe KI-Anbieterkette wie die Aufgaben-
+  Vorschläge (Groq, ersatzweise Claude) und blendet sich bei einem Fehler
+  einfach aus, ohne die restliche Seite zu stören.
+- **Hub-Navigation mit drei Spalten.** Die frühere 4er-Kachelreihe
+  ("Schnellzugriff") ist einer kompakten Übersicht mit drei schmalen Spalten
+  gewichen — Orga (Kernteam, Team, Kompetenzen), Dashboard (Fortschritt,
+  Phasen, Bewertung) und Dynamik (Aufgaben, Ideen, Chat). Alle neun Punkte
+  sind sofort sichtbar; ein Tipp auf einen Punkt springt direkt zum
+  jeweiligen, bereits vollständig auf der Seite vorhandenen Bereich.
+- **Neu: Kompetenzen.** Jede Person mit Projektzugriff trägt für sich selbst
+  ein, was sie zum Projekt beitragen kann und was sie gerne beitragen
+  möchte — reine Selbstauskunft, jede Person sieht und bearbeitet nur ihren
+  eigenen Eintrag, die Einträge der anderen werden nur gelesen.
+- **Neu: Chat.** Interner Team-Chat je Projekt, nur für Kernteam & Team
+  dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
+  Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
+
 **Korrektur in v0.19:** In v0.18 wurden zwei technische Bitrix24-Codes
 ("Neu" und "Wartet auf Bearbeitung") noch unterschiedlich beschriftet
 ("Neu" bzw. "Ausstehend"), obwohl Bitrix24 selbst beide in seiner
