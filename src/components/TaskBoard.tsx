@@ -86,6 +86,7 @@ export default function TaskBoard({
   const [tasks, setTasks] = useState<Bitrix24Task[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reparaturHinweis, setReparaturHinweis] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
   const [offenNotizen, setOffenNotizen] = useState<string | null>(null);
@@ -120,6 +121,15 @@ export default function TaskBoard({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Verbinden fehlgeschlagen");
+      if (typeof data.repariert === "number" && data.repariert > 0) {
+        setReparaturHinweis(
+          `${data.repariert} bereits übernommene Aufgabe${
+            data.repariert === 1 ? "" : "n"
+          }, die vorher nicht sichtbar war${
+            data.repariert === 1 ? "" : "en"
+          }, wurde${data.repariert === 1 ? "" : "n"} jetzt zugeordnet.`
+        );
+      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unbekannter Fehler");
@@ -172,6 +182,11 @@ export default function TaskBoard({
 
   return (
     <div>
+      {reparaturHinweis && (
+        <p className="mb-4 rounded-md border border-good/40 bg-good-soft px-3 py-2 text-sm text-good">
+          {reparaturHinweis}
+        </p>
+      )}
       <form onSubmit={hinzufuegen} className="mb-4 flex gap-2">
         <input
           type="text"

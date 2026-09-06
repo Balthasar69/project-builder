@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getProject, markiereVorschlagUebernommen } from "@/lib/data";
+import { ensureBitrixGroupId, getProject, markiereVorschlagUebernommen } from "@/lib/data";
 import { getSession, istKernteam } from "@/lib/auth";
 import { createTask } from "@/lib/bitrix24";
 
 /**
  * Übernimmt einen KI-Aufgaben-Vorschlag als echte Bitrix24-Aufgabe – nur
- * fürs Kernteam, analog zu `ideen/[ideeId]/uebernehmen`. Funktioniert auch,
- * wenn das Projekt (noch) nicht mit einer Bitrix24-Arbeitsgruppe verbunden
- * ist (dann ohne Gruppen-Zuordnung, siehe `createTask`).
+ * fürs Kernteam, analog zu `ideen/[ideeId]/uebernehmen`. War das Projekt
+ * noch nicht mit einer Bitrix24-Arbeitsgruppe verbunden, wird das jetzt
+ * zuerst automatisch nachgeholt (`ensureBitrixGroupId`) – eine Aufgabe ohne
+ * Gruppen-Zuordnung würde sonst zwar in Bitrix24 entstehen, aber nirgends
+ * im Aufgaben-Bereich der App angezeigt werden (Korrektur, siehe README).
  */
 export async function POST(
   req: NextRequest,
@@ -50,10 +52,11 @@ export async function POST(
   const responsibleId = project.kernteam.find((m) => m.bitrix24UserId)?.bitrix24UserId;
 
   try {
+    const { project: verbundenesProjekt, groupId } = await ensureBitrixGroupId(project);
     const task = await createTask({
       title: titel,
-      groupId: project.bitrix24.groupId,
-      dealId: project.bitrix24.dealId || undefined,
+      groupId,
+      dealId: verbundenesProjekt.bitrix24.dealId || undefined,
       responsibleId,
     });
     const updated = await markiereVorschlagUebernommen(params.slug, params.vorschlagId, task.id);

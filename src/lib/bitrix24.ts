@@ -287,6 +287,18 @@ export async function completeTask(taskId: string): Promise<void> {
 }
 
 /**
+ * Ordnet eine bereits bestehende Bitrix24-Aufgabe nachträglich einer
+ * Arbeitsgruppe zu. Wird gebraucht, um Aufgaben zu reparieren, die entstanden
+ * sind, BEVOR ein Projekt mit einer Arbeitsgruppe verbunden war (siehe
+ * `ensureBitrixGroupId` in data.ts) – ohne Gruppe tauchen Aufgaben nämlich
+ * nirgends im Aufgaben-Bereich der App auf, obwohl sie in Bitrix24 selbst
+ * ganz normal existieren.
+ */
+export async function setTaskGroup(taskId: string, groupId: number): Promise<void> {
+  await call("task.item.update", { TASKID: taskId, FIELDS: { GROUP_ID: groupId } });
+}
+
+/**
  * Postet eine Notiz aus dem Project Builder (Text und/oder vertextete
  * Sprachnotiz) als Kommentar bei der zugehörigen Bitrix24-Aufgabe – so
  * sehen auch Team-Mitglieder, die nur in Bitrix24 arbeiten, die Notiz,

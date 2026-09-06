@@ -15,6 +15,7 @@ import {
   User,
 } from "./types";
 import { randomUUID } from "crypto";
+import { addWorkgroupMembers, createWorkgroup } from "./bitrix24";
 
 // Datenhaltung über Postgres (Neon, via Vercel Marketplace-Integration).
 // Jede Zeile ist ein Projekt als JSON-Dokument – bewusst einfach (kein
@@ -461,6 +462,42 @@ export async function setBitrixGroupId(slug: string, groupId: number): Promise<P
     WHERE slug = ${slug}
   `;
   return project;
+}
+
+/**
+ * Stellt sicher, dass ein Projekt eine Bitrix24-Arbeitsgruppe hat, und legt
+ * sie bei Bedarf automatisch an (dieselbe Logik wie der Button "Mit
+ * Bitrix24 verbinden") – genutzt beim Übernehmen von KI-Aufgaben-
+ * Vorschlägen und Ideen, DAMIT eine dabei neu angelegte Bitrix24-Aufgabe
+ * auch garantiert einer Gruppe zugeordnet ist. Ohne das würde die Aufgabe
+ * zwar in Bitrix24 entstehen, aber nirgends im Aufgaben-Bereich der App
+ * auftauchen (der immer nach Arbeitsgruppe filtert) – genau der Fehler, der
+ * bei Projekten auftrat, die vor dem ersten "Übernehmen" noch nie manuell
+ * verbunden worden waren.
+ */
+export async function ensureBitrixGroupId(
+  project: Project
+): Promise<{ project: Project; groupId: number; neuVerbunden: boolean }> {
+  if (project.bitrix24.groupId) {
+    return { project, groupId: project.bitrix24.groupId, neuVerbunden: false };
+  }
+
+  const groupId = await createWorkgroup({
+    name: project.name,
+    description: `Automatisch angelegt vom Project Builder für „${project.name}".`,
+  });
+
+  const mitgliederIds = project.kernteam
+    .map((m) => m.bitrix24UserId)
+    .filter((id): id is number => typeof id === "number");
+  try {
+    await addWorkgroupMembers(groupId, mitgliederIds);
+  } catch {
+    // bewusst ignoriert, siehe Kommentar in bitrix24/connect/route.ts
+  }
+
+  const updated = await setBitrixGroupId(project.slug, groupId);
+  return { project: updated, groupId, neuVerbunden: true };
 }
 
 /** Setzt die Phase eines Projekts (nur für Kernteam/Admins gedacht – Rechteprüfung sitzt in der API-Route). */

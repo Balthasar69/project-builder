@@ -801,6 +801,29 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**Korrektur: übernommene KI-Aufgaben-Vorschläge/Ideen tauchten bei nicht
+verbundenen Projekten nirgends auf (v0.51):** Der Aufgaben-Bereich zeigt bei
+einem Projekt ohne verbundene Bitrix24-Arbeitsgruppe bewusst nur den Button
+"Mit Bitrix24 verbinden" statt einer (leeren) Liste – die Liste selbst
+filtert immer nach dieser Arbeitsgruppe. Bisher legten "Übernehmen" bei
+einem KI-Aufgaben-Vorschlag bzw. einer Idee eine echte Bitrix24-Aufgabe an,
+OHNE vorher zu prüfen, ob eine Arbeitsgruppe überhaupt existiert – bei einem
+noch nicht verbundenen Projekt entstand die Aufgabe dadurch zwar ganz normal
+in Bitrix24, aber ohne Gruppen-Zuordnung, und war deshalb im Aufgaben-Bereich
+der App nirgends zu sehen, obwohl "Übernehmen" ohne Fehlermeldung
+durchlief. Zwei Korrekturen:
+
+- **Für neue Vorschläge/Ideen:** "Übernehmen" verbindet das Projekt jetzt
+  bei Bedarf zuerst automatisch mit einer Bitrix24-Arbeitsgruppe (dieselbe
+  Aktion wie der Button "Mit Bitrix24 verbinden"), bevor die Aufgabe angelegt
+  wird – die neue Aufgabe ist dadurch garantiert sofort im Aufgaben-Bereich
+  sichtbar.
+- **Für bereits verschwundene, schon übernommene Vorschläge/Ideen:** Ein
+  Klick auf "Mit Bitrix24 verbinden" ordnet jetzt automatisch auch alle
+  vorher auf diese Weise "verlorenen" Aufgaben nachträglich der neuen
+  Arbeitsgruppe zu – ein Hinweis zeigt an, wie viele Aufgaben dabei
+  gefunden und repariert wurden.
+
 **Korrektur: doppelter Kernteam-Eintrag entfernbar, Logo-Cache behoben
 (v0.50):**
 

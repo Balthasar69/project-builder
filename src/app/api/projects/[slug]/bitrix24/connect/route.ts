@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getProject, setBitrixGroupId } from "@/lib/data";
+import { ensureBitrixGroupId, getProject } from "@/lib/data";
 import { getSession, hatProjektZugriff } from "@/lib/auth";
-import { addWorkgroupMembers, createWorkgroup } from "@/lib/bitrix24";
+import { setTaskGroup } from "@/lib/bitrix24";
 
 export async function POST(
   _req: Request,
@@ -29,27 +29,34 @@ export async function POST(
   }
 
   try {
-    const groupId = await createWorkgroup({
-      name: project.name,
-      description: `Automatisch angelegt vom Project Builder für „${project.name}".`,
-    });
+    const { project: updated, groupId, neuVerbunden } = await ensureBitrixGroupId(project);
 
-    // Kernteam-Mitglieder mit hinterlegter Bitrix24-Nutzer-Nummer direkt zur
-    // Arbeitsgruppe hinzufügen, damit sie die Aufgaben auch in Bitrix24
-    // selbst sehen (nicht nur über die App). Schlägt das aus irgendeinem
-    // Grund fehl, soll das die Verbindung selbst nicht scheitern lassen –
-    // die Gruppe existiert dann trotzdem, nur eben ohne alle Mitglieder.
-    const mitgliederIds = project.kernteam
-      .map((m) => m.bitrix24UserId)
-      .filter((id): id is number => typeof id === "number");
-    try {
-      await addWorkgroupMembers(groupId, mitgliederIds);
-    } catch {
-      // bewusst ignoriert, siehe Kommentar oben
+    // War das Projekt noch nicht verbunden, können bereits übernommene
+    // KI-Aufgaben-Vorschläge oder Ideen als Bitrix24-Aufgabe OHNE
+    // Gruppen-Zuordnung entstanden sein (Fehler vor dieser Korrektur, siehe
+    // README) – solche Aufgaben existierten zwar in Bitrix24, tauchten aber
+    // nirgends im Aufgaben-Bereich der App auf. Jetzt nachträglich der neuen
+    // Gruppe zuordnen, damit sie sichtbar werden. Best effort: schlägt es
+    // für eine einzelne Aufgabe fehl (z. B. weil sie inzwischen in Bitrix24
+    // gelöscht wurde), wird bei den übrigen trotzdem weitergemacht.
+    let repariert = 0;
+    if (neuVerbunden) {
+      const verwaisteTaskIds = [
+        ...(updated.aufgabenVorschlaege ?? []).map((v) => v.uebernommenAlsTaskId),
+        ...(updated.ideen ?? []).map((i) => i.uebernommenAlsTaskId),
+      ].filter((id): id is string => !!id);
+
+      for (const taskId of verwaisteTaskIds) {
+        try {
+          await setTaskGroup(taskId, groupId);
+          repariert += 1;
+        } catch {
+          // bewusst ignoriert, siehe Kommentar oben
+        }
+      }
     }
 
-    const updated = await setBitrixGroupId(params.slug, groupId);
-    return NextResponse.json({ project: updated });
+    return NextResponse.json({ project: updated, repariert });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Unbekannter Fehler" },

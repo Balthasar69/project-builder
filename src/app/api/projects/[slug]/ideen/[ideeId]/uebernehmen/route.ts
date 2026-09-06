@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getProject, markiereIdeeUebernommen } from "@/lib/data";
+import { ensureBitrixGroupId, getProject, markiereIdeeUebernommen } from "@/lib/data";
 import { getSession, istKernteam } from "@/lib/auth";
 import { createTask } from "@/lib/bitrix24";
 
@@ -8,7 +8,10 @@ import { createTask } from "@/lib/bitrix24";
  * "Ideen") – nur fürs Kernteam. Die verantwortliche Person folgt bewusst
  * derselben Standardzuordnung wie beim regulären "Aufgabe hinzufügen"
  * (erstes Kernteam-Mitglied mit hinterlegter Bitrix24-Nutzer-ID, sonst der
- * Webhook-eigene Nutzer) – kein eigener Auswahlschritt.
+ * Webhook-eigene Nutzer) – kein eigener Auswahlschritt. War das Projekt
+ * noch nicht mit einer Bitrix24-Arbeitsgruppe verbunden, wird das jetzt
+ * zuerst automatisch nachgeholt (`ensureBitrixGroupId`, siehe Kommentar
+ * dort und README).
  */
 export async function POST(
   _req: NextRequest,
@@ -45,10 +48,11 @@ export async function POST(
   const responsibleId = project.kernteam.find((m) => m.bitrix24UserId)?.bitrix24UserId;
 
   try {
+    const { project: verbundenesProjekt, groupId } = await ensureBitrixGroupId(project);
     const task = await createTask({
       title: idee.text,
-      groupId: project.bitrix24.groupId,
-      dealId: project.bitrix24.dealId || undefined,
+      groupId,
+      dealId: verbundenesProjekt.bitrix24.dealId || undefined,
       responsibleId,
     });
     const updated = await markiereIdeeUebernommen(params.slug, params.ideeId, task.id);
