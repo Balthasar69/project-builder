@@ -801,6 +801,12 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**Kernteam & Team erst durch Aufklappen sichtbar (v0.49):** Beide Bereiche
+zeigen zunächst nur einen Button ("Kernteam sehen" bzw. "Team sehen") statt
+sofort die volle Liste samt Formularen – ein Klick blendet den gewohnten
+Inhalt ein. Reduziert die Höhe der Seite beim ersten Blick, ohne dass etwas
+an Kernteam/Team selbst wegfällt.
+
 **Korrektur: Groq-Reasoning-Modelle lieferten oft eine leere Antwort
 (v0.48):** Dank der v0.47-Fehleranzeige kam ans Licht, dass die kostenlosen
 Groq-Modelle ("gpt-oss-20b"/"gpt-oss-120b") beim neuen KI-Hinweis "Für dich

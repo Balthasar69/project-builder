@@ -22,6 +22,7 @@ import ProjektHubNav from "@/components/ProjektHubNav";
 import NaechsteSchritte from "@/components/NaechsteSchritte";
 import KompetenzenManager from "@/components/KompetenzenManager";
 import ProjectChat from "@/components/ProjectChat";
+import Aufklappbar from "@/components/Aufklappbar";
 
 export const dynamic = "force-dynamic";
 
@@ -202,18 +203,20 @@ export default async function ProjectCockpit({
           <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
             <h2 className="font-display text-xl font-semibold">Kernteam</h2>
           </div>
-          <BlockHinweis
-            slug={project.slug}
-            blockKey="kernteam"
-            individuellerText={project.hinweise?.kernteam ?? ""}
-            standardText={STANDARD_HINWEISE.kernteam}
-            darfBearbeiten={darfHinweiseBearbeiten}
-          />
-          <KernteamManager
-            slug={project.slug}
-            kernteam={project.kernteam}
-            istAdmin={session.isAdmin}
-          />
+          <Aufklappbar buttonText="Kernteam sehen">
+            <BlockHinweis
+              slug={project.slug}
+              blockKey="kernteam"
+              individuellerText={project.hinweise?.kernteam ?? ""}
+              standardText={STANDARD_HINWEISE.kernteam}
+              darfBearbeiten={darfHinweiseBearbeiten}
+            />
+            <KernteamManager
+              slug={project.slug}
+              kernteam={project.kernteam}
+              istAdmin={session.isAdmin}
+            />
+          </Aufklappbar>
         </section>
 
         <section id="team" className="scroll-mt-6">
@@ -223,19 +226,21 @@ export default async function ProjectCockpit({
               Zugriff auf die App
             </span>
           </div>
-          <BlockHinweis
-            slug={project.slug}
-            blockKey="team"
-            individuellerText={project.hinweise?.team ?? ""}
-            standardText={STANDARD_HINWEISE.team}
-            darfBearbeiten={darfHinweiseBearbeiten}
-          />
-          <TeamManager
-            slug={project.slug}
-            mitglieder={project.mitglieder}
-            namen={mitgliederNamen}
-            istAdmin={session.isAdmin}
-          />
+          <Aufklappbar buttonText="Team sehen">
+            <BlockHinweis
+              slug={project.slug}
+              blockKey="team"
+              individuellerText={project.hinweise?.team ?? ""}
+              standardText={STANDARD_HINWEISE.team}
+              darfBearbeiten={darfHinweiseBearbeiten}
+            />
+            <TeamManager
+              slug={project.slug}
+              mitglieder={project.mitglieder}
+              namen={mitgliederNamen}
+              istAdmin={session.isAdmin}
+            />
+          </Aufklappbar>
         </section>
       </div>
 
