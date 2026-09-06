@@ -801,6 +801,13 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**Persönliche Begrüßung bei "Für dich als Nächstes" (v0.53):** Das Label
+über dem persönlichen KI-Hinweis grüßt die angemeldete Person jetzt mit
+Vornamen, z. B. "Hallo Balthasar – für dich als Nächstes" statt nur "Für
+dich als Nächstes". Der Vorname wird aus dem hinterlegten vollen Namen
+abgeleitet (erstes Wort) – ist aus irgendeinem Grund kein Name bekannt,
+bleibt es unauffällig beim bisherigen Text ohne Begrüßung.
+
 **Bitrix24-Arbeitsgruppe: kein manueller Verbinden-Klick mehr nötig
 (v0.52):** In v0.51 (siehe unten) verband sich ein Projekt erst dann mit
 einer eigenen Bitrix24-Arbeitsgruppe, wenn jemand auf "Mit Bitrix24

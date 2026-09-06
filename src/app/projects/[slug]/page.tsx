@@ -186,7 +186,7 @@ export default async function ProjectCockpit({
 
       {/* Persönlicher KI-Hinweis "Für dich als Nächstes" – ganz oben, noch
           vor den drei Hub-Spalten (siehe NaechsteSchritte.tsx). */}
-      <NaechsteSchritte slug={project.slug} />
+      <NaechsteSchritte slug={project.slug} name={session.name} />
 
       {/* Hub-Navigation: drei schmale Spalten (Orga/Dashboard/Dynamik),
           ersetzt die frühere 4er-Kachelreihe. Alle Unterpunkte sind sofort

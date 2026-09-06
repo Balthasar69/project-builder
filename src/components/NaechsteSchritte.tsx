@@ -2,6 +2,14 @@
 
 import { useEffect, useState } from "react";
 
+// Erster Vorname aus dem vollen angezeigten Namen (z. B. "Balthasar" aus
+// "Balthasar Fleischmann") – für die persönliche Begrüßung vor dem Label,
+// siehe unten. Fällt auf einen leeren String zurück, falls kein Name
+// vorliegt (dann bleibt die Begrüßung einfach weg, kein Absturz).
+function ersterVorname(name: string): string {
+  return name.trim().split(/\s+/)[0] ?? "";
+}
+
 /**
  * Persönlicher KI-Hinweis "Für dich als Nächstes" ganz oben im
  * Projektcockpit-Hub, noch vor den drei Bereichen Orga/Dashboard/Dynamik
@@ -9,9 +17,13 @@ import { useEffect, useState } from "react";
  * Projektseite einmal automatisch nach. Schlägt die KI-Anfrage fehl, zeigt
  * die Box bewusst den technischen Grund (statt lautlos zu verschwinden) –
  * so bleibt ein Fehlschlagen erkennbar und meldbar, statt unbemerkt zu
- * bleiben; die restliche Seite funktioniert unabhängig davon weiter.
+ * bleiben; die restliche Seite funktioniert unabhängig davon weiter. Wird
+ * mit dem vollen Namen der angemeldeten Person begrüßt (`name`), aus dem
+ * hier nur der Vorname für die persönliche Anrede vor dem Label verwendet
+ * wird.
  */
-export default function NaechsteSchritte({ slug }: { slug: string }) {
+export default function NaechsteSchritte({ slug, name }: { slug: string; name: string }) {
+  const vorname = ersterVorname(name);
   const [status, setStatus] = useState<"laedt" | "da" | "fehler">("laedt");
   const [satz, setSatz] = useState("");
   const [punkte, setPunkte] = useState<string[]>([]);
@@ -70,7 +82,7 @@ export default function NaechsteSchritte({ slug }: { slug: string }) {
           <path d="M10 22h4" />
         </svg>
         <span className="font-mono text-[0.65rem] uppercase tracking-wide text-accent-ink">
-          Für dich als Nächstes
+          {vorname ? `Hallo ${vorname} – für dich als Nächstes` : "Für dich als Nächstes"}
         </span>
       </div>
 
