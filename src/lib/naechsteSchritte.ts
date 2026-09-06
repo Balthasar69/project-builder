@@ -111,7 +111,17 @@ async function frageGroq(
       },
       body: JSON.stringify({
         model: modell,
-        max_tokens: 300,
+        // "gpt-oss"-Modelle sind Reasoning-Modelle: sie verbrauchen einen
+        // Teil des Token-Budgets fürs interne "Nachdenken", bevor die
+        // eigentliche Antwort kommt. Bei "max_tokens" (veraltet) und einem
+        // zu knappen Budget kam bisher oft ein leeres `message.content`
+        // zurück, weil das Budget mitten im Nachdenken aufgebraucht war
+        // (sichtbar an finish_reason "length"). Deshalb: das aktuelle
+        // Feld "max_completion_tokens" mit reichlich Spielraum, plus
+        // "reasoning_effort: low", da für diese kurze Zusammenfassung kein
+        // tiefes Nachdenken nötig ist.
+        max_completion_tokens: 800,
+        reasoning_effort: "low",
         messages: [{ role: "user", content: prompt }],
       }),
     });
@@ -120,7 +130,10 @@ async function frageGroq(
   }
 
   const body = (await res.json().catch(() => null)) as
-    | { choices?: { message?: { content?: string } }[]; error?: { message?: string } }
+    | {
+        choices?: { message?: { content?: string }; finish_reason?: string }[];
+        error?: { message?: string };
+      }
     | null;
 
   if (!res.ok || !body) {
@@ -128,7 +141,14 @@ async function frageGroq(
   }
 
   const text = body.choices?.[0]?.message?.content?.trim();
-  if (!text) throw new NaechsteSchritteError("Keine verwertbare Antwort erhalten.");
+  if (!text) {
+    const abgeschnitten = body.choices?.[0]?.finish_reason === "length";
+    throw new NaechsteSchritteError(
+      abgeschnitten
+        ? "Antwort wurde wegen Token-Limit abgeschnitten, bevor Text kam."
+        : "Keine verwertbare Antwort erhalten."
+    );
+  }
   return parseErgebnis(text);
 }
 

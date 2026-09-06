@@ -801,6 +801,20 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**Korrektur: Groq-Reasoning-Modelle lieferten oft eine leere Antwort
+(v0.48):** Dank der v0.47-Fehleranzeige kam ans Licht, dass die kostenlosen
+Groq-Modelle ("gpt-oss-20b"/"gpt-oss-120b") beim neuen KI-Hinweis "Für dich
+als Nächstes" mit "Keine verwertbare Antwort erhalten" fehlschlugen. Grund:
+Diese Modelle "denken" intern nach, bevor sie antworten, und verbrauchen
+dafür einen Teil des Token-Budgets — war das (veraltete) Limit "max_tokens"
+zu knapp bemessen, war das Budget schon beim Nachdenken aufgebraucht und die
+eigentliche Antwort blieb leer. Betraf vermutlich nicht nur den neuen
+Hinweis, sondern genauso "Mit KI bearbeiten" (v0.29) und "Aufgaben von der
+KI vorschlagen lassen" (v0.42). Behoben an allen drei Stellen: aktuelles
+Feld "max_completion_tokens" mit deutlich mehr Spielraum, plus
+"reasoning_effort: low", da für diese kurzen Texte kein tiefes Nachdenken
+nötig ist.
+
 **Korrektur: Fehlermeldung beim KI-Hinweis "Für dich als Nächstes" sichtbar
 gemacht (v0.47):** Schlug die KI-Anfrage für den neuen persönlichen Hinweis
 (v0.46) fehl, verschwand die Box bisher lautlos wieder, ohne erkennen zu
