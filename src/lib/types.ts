@@ -362,6 +362,14 @@ export interface Idee {
   erstelltAm: string; // ISO-Datum
   /** Gesetzt, sobald daraus eine echte Bitrix24-Aufgabe gemacht wurde. */
   uebernommenAlsTaskId?: string;
+  /**
+   * Gesetzt, sobald die Bitrix24-Aufgabe (siehe `uebernommenAlsTaskId`)
+   * einer Bitrix24-Arbeitsgruppe zugeordnet ist – erst dadurch taucht sie
+   * im Aufgaben-Bereich der App auf (siehe `ensureBitrixGroupId` in
+   * data.ts). Verhindert, dass dieselbe Aufgabe bei jedem Laden erneut
+   * geprüft/zugeordnet wird.
+   */
+  bitrixGruppeZugeordnet?: boolean;
 }
 
 export interface Project {
@@ -506,6 +514,8 @@ export interface AufgabenVorschlag {
   id: string;
   titel: string;
   uebernommenAlsTaskId?: string;
+  /** Siehe gleichnamiges Feld bei `Idee`. */
+  bitrixGruppeZugeordnet?: boolean;
   verworfen?: boolean;
 }
 

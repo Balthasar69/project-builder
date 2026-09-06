@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Bitrix24Task } from "@/lib/types";
 import TaskNotes from "./TaskNotes";
 import TaskAnalyse from "./TaskAnalyse";
@@ -74,15 +73,15 @@ function sortSchluessel(t: Bitrix24Task): number {
   return STATUS_REIHENFOLGE[t.status] ?? 0;
 }
 
-export default function TaskBoard({
-  slug,
-  groupId,
-}: {
-  slug: string;
-  groupId?: number;
-}) {
-  const router = useRouter();
-  const [connecting, setConnecting] = useState(false);
+/**
+ * Bitrix24-Arbeitsgruppe: Projekte werden seit v0.52 automatisch beim
+ * Anlegen bzw. spätestens beim ersten Laden dieser Liste damit verbunden
+ * (`ensureBitrixGroupId` in data.ts) – kein manueller "Verbinden"-Klick
+ * mehr nötig. Nebenbei ordnet der Aufruf auch alle vorher "verlorenen",
+ * schon übernommenen KI-Aufgaben-Vorschläge/Ideen automatisch nach
+ * (`repariereVerwaisteBitrixAufgaben`) und meldet, wie viele das waren.
+ */
+export default function TaskBoard({ slug }: { slug: string }) {
   const [tasks, setTasks] = useState<Bitrix24Task[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,27 +99,6 @@ export default function TaskBoard({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Laden fehlgeschlagen");
       setTasks(data.tasks);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unbekannter Fehler");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    if (groupId) ladeAufgaben();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId]);
-
-  async function verbinden() {
-    setConnecting(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/projects/${slug}/bitrix24/connect`, {
-        method: "POST",
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Verbinden fehlgeschlagen");
       if (typeof data.repariert === "number" && data.repariert > 0) {
         setReparaturHinweis(
           `${data.repariert} bereits übernommene Aufgabe${
@@ -130,13 +108,17 @@ export default function TaskBoard({
           }, wurde${data.repariert === 1 ? "" : "n"} jetzt zugeordnet.`
         );
       }
-      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unbekannter Fehler");
     } finally {
-      setConnecting(false);
+      setLoading(false);
     }
   }
+
+  useEffect(() => {
+    ladeAufgaben();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]);
 
   async function hinzufuegen(e: FormEvent) {
     e.preventDefault();
@@ -157,27 +139,6 @@ export default function TaskBoard({
     } finally {
       setSaving(false);
     }
-  }
-
-  if (!groupId) {
-    return (
-      <div>
-        <p className="mb-4 text-sm text-ink-muted">
-          Noch keine Bitrix24-Arbeitsgruppe verbunden. Damit bekommt dieses
-          Projekt eine eigene Aufgabenliste in Bitrix24, die hier direkt
-          bearbeitet werden kann.
-        </p>
-        <button
-          type="button"
-          onClick={verbinden}
-          disabled={connecting}
-          className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-surface transition hover:bg-accent-ink disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {connecting ? "Verbindet…" : "Mit Bitrix24 verbinden"}
-        </button>
-        {error && <p className="mt-3 text-sm text-bad">{error}</p>}
-      </div>
-    );
   }
 
   return (

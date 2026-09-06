@@ -801,6 +801,28 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**Bitrix24-Arbeitsgruppe: kein manueller Verbinden-Klick mehr nötig
+(v0.52):** In v0.51 (siehe unten) verband sich ein Projekt erst dann mit
+einer eigenen Bitrix24-Arbeitsgruppe, wenn jemand auf "Mit Bitrix24
+verbinden" klickte oder eine KI-Aufgabe/Idee übernahm – und weil bei einem
+bereits verbundenen Projekt schon vorher übernommene, aber unsichtbare
+Aufgaben trotzdem noch nicht repariert wurden, blieb der eigentliche Grund
+für "Immo Weinsberg" zunächst unklar. Statt an dieser Reihenfolge weiter zu
+feilen: Der manuelle Schritt entfällt jetzt komplett.
+
+- **Neue Projekte** bekommen ihre Bitrix24-Arbeitsgruppe automatisch direkt
+  beim Anlegen.
+- **Bestehende, noch nicht verbundene Projekte** (wie "Immo Weinsberg")
+  verbinden sich beim nächsten Öffnen des Aufgaben-Bereichs automatisch,
+  ganz ohne Klick.
+- Bei dieser automatischen Verbindung – ob beim Anlegen oder beim ersten
+  Öffnen – werden zusätzlich alle vorher übernommenen, aber unsichtbar
+  gebliebenen KI-Aufgaben-Vorschläge/Ideen automatisch mit repariert (siehe
+  v0.51); ein kurzer Hinweis zeigt an, wie viele das waren.
+- Die Aufgaben selbst bleiben bewusst weiterhin echte Bitrix24-Aufgaben
+  (keine zweite, separate Speicherung in der App) – nur das Verbinden mit
+  der Arbeitsgruppe läuft jetzt vollautomatisch im Hintergrund.
+
 **Korrektur: übernommene KI-Aufgaben-Vorschläge/Ideen tauchten bei nicht
 verbundenen Projekten nirgends auf (v0.51):** Der Aufgaben-Bereich zeigt bei
 einem Projekt ohne verbundene Bitrix24-Arbeitsgruppe bewusst nur den Button

@@ -401,7 +401,7 @@ export default async function ProjectCockpit({
           standardText={STANDARD_HINWEISE.aufgaben}
           darfBearbeiten={darfHinweiseBearbeiten}
         />
-        <TaskBoard slug={project.slug} groupId={project.bitrix24.groupId} />
+        <TaskBoard slug={project.slug} />
       </section>
 
       <section id="ideen" className="mt-12 scroll-mt-6">

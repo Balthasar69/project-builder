@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getProject } from "@/lib/data";
+import { ensureBitrixGroupId, getProject, repariereVerwaisteBitrixAufgaben } from "@/lib/data";
 import { getSession, hatProjektZugriff } from "@/lib/auth";
 import { createTask, listTasks } from "@/lib/bitrix24";
 import { Project } from "@/lib/types";
@@ -38,16 +38,20 @@ export async function GET(
   if ("error" in check) return check.error;
   const { project } = check;
 
-  if (!project.bitrix24.groupId && !project.bitrix24.dealId) {
-    return NextResponse.json({ tasks: [] });
-  }
-
   try {
+    // Verbindet die Bitrix24-Arbeitsgruppe bei Bedarf automatisch (Projekte
+    // vor dieser Korrektur konnten noch ohne Gruppe entstanden sein) – kein
+    // manueller "Verbinden"-Klick mehr nötig. Anschließend werden dadurch
+    // eventuell vorher "verlorene", schon übernommene Aufgaben (siehe
+    // `repariereVerwaisteBitrixAufgaben`) automatisch nachträglich sichtbar.
+    const { project: verbundenesProjekt, groupId } = await ensureBitrixGroupId(project);
+    const { repariert } = await repariereVerwaisteBitrixAufgaben(verbundenesProjekt);
+
     const tasks = await listTasks({
-      groupId: project.bitrix24.groupId,
-      dealId: project.bitrix24.dealId || undefined,
+      groupId,
+      dealId: verbundenesProjekt.bitrix24.dealId || undefined,
     });
-    return NextResponse.json({ tasks });
+    return NextResponse.json({ tasks, repariert });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Unbekannter Fehler" },
@@ -73,10 +77,11 @@ export async function POST(
   const responsibleId = project.kernteam.find((m) => m.bitrix24UserId)?.bitrix24UserId;
 
   try {
+    const { project: verbundenesProjekt, groupId } = await ensureBitrixGroupId(project);
     const task = await createTask({
       title,
-      groupId: project.bitrix24.groupId,
-      dealId: project.bitrix24.dealId || undefined,
+      groupId,
+      dealId: verbundenesProjekt.bitrix24.dealId || undefined,
       responsibleId,
     });
     return NextResponse.json({ task });

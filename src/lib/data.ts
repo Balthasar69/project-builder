@@ -15,7 +15,7 @@ import {
   User,
 } from "./types";
 import { randomUUID } from "crypto";
-import { addWorkgroupMembers, createWorkgroup } from "./bitrix24";
+import { addWorkgroupMembers, createWorkgroup, setTaskGroup } from "./bitrix24";
 
 // Datenhaltung über Postgres (Neon, via Vercel Marketplace-Integration).
 // Jede Zeile ist ein Projekt als JSON-Dokument – bewusst einfach (kein
@@ -234,7 +234,18 @@ export async function createProject(params: {
     INSERT INTO projects (slug, data)
     VALUES (${slug}, ${JSON.stringify(project)}::jsonb)
   `;
-  return project;
+
+  // Bitrix24-Arbeitsgruppe direkt beim Anlegen mitverbinden, statt erst auf
+  // einen manuellen Klick zu warten – die Aufgabenliste ist dadurch von
+  // Anfang an einsatzbereit. Best effort: ist Bitrix24 gerade nicht
+  // erreichbar, bleibt das Projekt trotzdem nutzbar; `ensureBitrixGroupId`
+  // holt die Verbindung beim nächsten Öffnen der Aufgaben automatisch nach.
+  try {
+    const { project: verbunden } = await ensureBitrixGroupId(project);
+    return verbunden;
+  } catch {
+    return project;
+  }
 }
 
 /** Fügt eine E-Mail-Adresse zu den Mitgliedern eines Projekts hinzu (idempotent). */
@@ -500,6 +511,67 @@ export async function ensureBitrixGroupId(
   return { project: updated, groupId, neuVerbunden: true };
 }
 
+/**
+ * Ordnet übernommene KI-Aufgaben-Vorschläge und Ideen, deren Bitrix24-
+ * Aufgabe noch keiner Arbeitsgruppe zugeordnet ist (`bitrixGruppeZugeordnet`
+ * fehlt bzw. ist `false` – z. B. weil sie vor dieser Korrektur oder vor dem
+ * Verbinden des Projekts entstanden ist), nachträglich der aktuellen
+ * Arbeitsgruppe zu. Läuft best effort: eine einzelne fehlgeschlagene
+ * Zuordnung (z. B. weil die Aufgabe in Bitrix24 inzwischen gelöscht wurde)
+ * hält die übrigen nicht auf. Wird ohne Bitrix24-Verbindung oder ohne
+ * offene Fälle sofort ohne Datenbank-Zugriff beendet.
+ */
+export async function repariereVerwaisteBitrixAufgaben(
+  project: Project
+): Promise<{ project: Project; repariert: number }> {
+  const groupId = project.bitrix24.groupId;
+  if (!groupId) return { project, repariert: 0 };
+
+  const offeneVorschlaege = (project.aufgabenVorschlaege ?? []).filter(
+    (v) => v.uebernommenAlsTaskId && !v.bitrixGruppeZugeordnet
+  );
+  const offeneIdeen = (project.ideen ?? []).filter(
+    (i) => i.uebernommenAlsTaskId && !i.bitrixGruppeZugeordnet
+  );
+  if (offeneVorschlaege.length === 0 && offeneIdeen.length === 0) {
+    return { project, repariert: 0 };
+  }
+
+  const erfolgreich = new Set<string>();
+  for (const eintrag of [...offeneVorschlaege, ...offeneIdeen]) {
+    try {
+      await setTaskGroup(eintrag.uebernommenAlsTaskId as string, groupId);
+      erfolgreich.add(eintrag.uebernommenAlsTaskId as string);
+    } catch {
+      // bewusst ignoriert, siehe Kommentar oben
+    }
+  }
+  if (erfolgreich.size === 0) return { project, repariert: 0 };
+
+  const aktuell = await getProject(project.slug);
+  if (!aktuell) return { project, repariert: 0 };
+
+  aktuell.aufgabenVorschlaege = (aktuell.aufgabenVorschlaege ?? []).map((v) =>
+    v.uebernommenAlsTaskId && erfolgreich.has(v.uebernommenAlsTaskId)
+      ? { ...v, bitrixGruppeZugeordnet: true }
+      : v
+  );
+  aktuell.ideen = (aktuell.ideen ?? []).map((i) =>
+    i.uebernommenAlsTaskId && erfolgreich.has(i.uebernommenAlsTaskId)
+      ? { ...i, bitrixGruppeZugeordnet: true }
+      : i
+  );
+  aktuell.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(aktuell)}::jsonb
+    WHERE slug = ${project.slug}
+  `;
+  return { project: aktuell, repariert: erfolgreich.size };
+}
+
 /** Setzt die Phase eines Projekts (nur für Kernteam/Admins gedacht – Rechteprüfung sitzt in der API-Route). */
 export async function setPhase(slug: string, phase: PhaseCode): Promise<Project> {
   const project = await getProject(slug);
@@ -671,7 +743,9 @@ export async function markiereIdeeUebernommen(
   if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
 
   project.ideen = (project.ideen ?? []).map((i) =>
-    i.id === ideeId ? { ...i, uebernommenAlsTaskId: bitrixTaskId } : i
+    i.id === ideeId
+      ? { ...i, uebernommenAlsTaskId: bitrixTaskId, bitrixGruppeZugeordnet: true }
+      : i
   );
   project.aktualisiertAm = new Date().toISOString();
 
@@ -892,7 +966,9 @@ export async function markiereVorschlagUebernommen(
   if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
 
   project.aufgabenVorschlaege = (project.aufgabenVorschlaege ?? []).map((v) =>
-    v.id === vorschlagId ? { ...v, uebernommenAlsTaskId: bitrixTaskId } : v
+    v.id === vorschlagId
+      ? { ...v, uebernommenAlsTaskId: bitrixTaskId, bitrixGruppeZugeordnet: true }
+      : v
   );
   project.aktualisiertAm = new Date().toISOString();
 
