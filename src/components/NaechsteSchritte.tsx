@@ -6,22 +6,30 @@ import { useEffect, useState } from "react";
  * Persönlicher KI-Hinweis "Für dich als Nächstes" ganz oben im
  * Projektcockpit-Hub, noch vor den drei Bereichen Orga/Dashboard/Dynamik
  * (siehe API-Route naechste-schritte/route.ts). Lädt beim Anzeigen der
- * Projektseite einmal automatisch nach; schlägt die KI fehl (z. B. weil kein
- * Schlüssel hinterlegt ist), verschwindet der Hinweis einfach wieder, statt
- * eine Fehlermeldung zu zeigen – die restliche Seite funktioniert unabhängig
- * davon.
+ * Projektseite einmal automatisch nach. Schlägt die KI-Anfrage fehl, zeigt
+ * die Box bewusst den technischen Grund (statt lautlos zu verschwinden) –
+ * so bleibt ein Fehlschlagen erkennbar und meldbar, statt unbemerkt zu
+ * bleiben; die restliche Seite funktioniert unabhängig davon weiter.
  */
 export default function NaechsteSchritte({ slug }: { slug: string }) {
-  const [status, setStatus] = useState<"laedt" | "da" | "weg">("laedt");
+  const [status, setStatus] = useState<"laedt" | "da" | "fehler">("laedt");
   const [satz, setSatz] = useState("");
   const [punkte, setPunkte] = useState<string[]>([]);
+  const [fehler, setFehler] = useState("");
 
   useEffect(() => {
     let aktiv = true;
     fetch(`/api/projects/${slug}/naechste-schritte`)
       .then(async (res) => {
-        if (!res.ok) throw new Error();
-        return res.json() as Promise<{ satz?: string; punkte?: string[] }>;
+        const data = (await res.json().catch(() => ({}))) as {
+          satz?: string;
+          punkte?: string[];
+          error?: string;
+        };
+        if (!res.ok) {
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }
+        return data;
       })
       .then((data) => {
         if (!aktiv) return;
@@ -30,18 +38,19 @@ export default function NaechsteSchritte({ slug }: { slug: string }) {
           setPunkte(data.punkte);
           setStatus("da");
         } else {
-          setStatus("weg");
+          setFehler("Keine verwertbare Antwort erhalten.");
+          setStatus("fehler");
         }
       })
-      .catch(() => {
-        if (aktiv) setStatus("weg");
+      .catch((err) => {
+        if (!aktiv) return;
+        setFehler(err instanceof Error ? err.message : "Unbekannter Fehler");
+        setStatus("fehler");
       });
     return () => {
       aktiv = false;
     };
   }, [slug]);
-
-  if (status === "weg") return null;
 
   return (
     <div className="mb-8 rounded-lg border border-accent bg-accent-soft/50 px-4 py-3.5 sm:px-5">
@@ -65,9 +74,15 @@ export default function NaechsteSchritte({ slug }: { slug: string }) {
         </span>
       </div>
 
-      {status === "laedt" ? (
+      {status === "laedt" && (
         <p className="text-sm text-ink-faint">Wird ermittelt…</p>
-      ) : (
+      )}
+      {status === "fehler" && (
+        <p className="text-sm text-ink-faint">
+          Konnte gerade nicht ermittelt werden ({fehler}).
+        </p>
+      )}
+      {status === "da" && (
         <>
           <p className="mb-2 text-sm font-semibold text-ink">{satz}</p>
           <ul className="flex flex-col gap-1">

@@ -801,6 +801,14 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**Korrektur: Fehlermeldung beim KI-Hinweis "Für dich als Nächstes" sichtbar
+gemacht (v0.47):** Schlug die KI-Anfrage für den neuen persönlichen Hinweis
+(v0.46) fehl, verschwand die Box bisher lautlos wieder, ohne erkennen zu
+lassen, woran es lag. Jetzt zeigt sie stattdessen den technischen Grund an
+("Konnte gerade nicht ermittelt werden (…)") und die Route protokolliert den
+Fehler zusätzlich serverseitig (Vercel-Funktionslogs) — die restliche Seite
+bleibt davon unberührt.
+
 **Korrektur in v0.19:** In v0.18 wurden zwei technische Bitrix24-Codes
 ("Neu" und "Wartet auf Bearbeitung") noch unterschiedlich beschriftet
 ("Neu" bzw. "Ausstehend"), obwohl Bitrix24 selbst beide in seiner

@@ -76,6 +76,10 @@ export async function GET(
         : err instanceof Error
           ? err.message
           : "Unbekannter Fehler";
+    // Serverseitig protokollieren (erscheint in den Vercel-Funktionslogs) –
+    // damit ein Fehlschlagen sich im Nachhinein nachvollziehen lässt, auch
+    // wenn gerade niemand den Bildschirm beobachtet.
+    console.error(`[naechste-schritte] ${params.slug}:`, message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
