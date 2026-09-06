@@ -327,6 +327,47 @@ export async function removeKernteamMitglied(
 }
 
 /**
+ * Entfernt einen Kernteam-Eintrag OHNE hinterlegte E-Mail-Adresse anhand
+ * seiner Position in der Liste – für ältere Einträge von vor der Zeit, als
+ * eine E-Mail-Adresse im Kernteam noch nicht zwingend war (lassen sich
+ * sonst nirgends eindeutig identifizieren, `removeKernteamMitglied` braucht
+ * eine E-Mail-Adresse). Rechteprüfung – nur Admins – sitzt in der
+ * API-Route. Zur Sicherheit werden Name und Rolle zusätzlich verglichen,
+ * damit ein inzwischen anderer Datensatz an dieser Position nicht
+ * versehentlich mitgelöscht wird.
+ */
+export async function removeKernteamMitgliedOhneEmail(
+  slug: string,
+  params: { index: number; name: string; rolle: string }
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  const eintrag = project.kernteam[params.index];
+  if (
+    !eintrag ||
+    eintrag.email ||
+    eintrag.name !== params.name ||
+    (eintrag.rolle || "") !== (params.rolle || "")
+  ) {
+    throw new Error(
+      "Der Eintrag wurde inzwischen geändert – bitte Seite neu laden und erneut versuchen."
+    );
+  }
+
+  project.kernteam = project.kernteam.filter((_, i) => i !== params.index);
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/**
  * Entfernt eine E-Mail-Adresse wieder aus den Mitgliedern eines Projekts
  * (Rechteprüfung sitzt in der API-Route, gedacht nur für Admins). Entfernt
  * die Person dabei auch automatisch aus `kernteam`, falls sie dort steht –

@@ -91,11 +91,42 @@ export default function KernteamManager({
     }
   }
 
+  // Ältere Einträge ohne hinterlegte E-Mail-Adresse (von vor der Zeit, als
+  // sie im Kernteam noch nicht zwingend war) lassen sich nur über ihre
+  // Position in der Liste entfernen – z. B. doppelte Alt-Einträge, die beim
+  // automatischen Abgleich (siehe data.ts) nicht erkannt werden, weil ihnen
+  // gerade die E-Mail-Adresse fehlt.
+  async function entfernenOhneEmail(m: KernteamMitglied, index: number) {
+    if (
+      !window.confirm(
+        `${m.name} (${m.rolle || "ohne Rolle"}) wirklich aus dem Kernteam entfernen? Dieser Eintrag hat keine E-Mail-Adresse hinterlegt.`
+      )
+    )
+      return;
+    const schluessel = `__index_${index}`;
+    setEntfernenLaeuft(schluessel);
+    setEntfernenFehler(null);
+    try {
+      const res = await fetch(`/api/projects/${slug}/kernteam`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ index, name: m.name, rolle: m.rolle }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Entfernen fehlgeschlagen");
+      router.refresh();
+    } catch (err) {
+      setEntfernenFehler(err instanceof Error ? err.message : "Unbekannter Fehler");
+    } finally {
+      setEntfernenLaeuft(null);
+    }
+  }
+
   return (
     <div>
       <div className="mb-4 flex flex-col gap-2">
-        {kernteam.map((m) => {
-          const schluessel = m.email ?? m.name;
+        {kernteam.map((m, index) => {
+          const schluessel = m.email ?? `__index_${index}`;
           const emailSichtbar =
             istAdmin &&
             !!m.email &&
@@ -143,6 +174,17 @@ export default function KernteamManager({
                   className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-bad transition hover:text-accent-ink disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {entfernenLaeuft === m.email ? "Entfernt…" : "Entfernen"}
+                </button>
+              )}
+              {istAdmin && !m.email && (
+                <button
+                  type="button"
+                  onClick={() => entfernenOhneEmail(m, index)}
+                  disabled={entfernenLaeuft === schluessel}
+                  title="Dieser Eintrag hat keine E-Mail-Adresse hinterlegt"
+                  className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-bad transition hover:text-accent-ink disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {entfernenLaeuft === schluessel ? "Entfernt…" : "Entfernen"}
                 </button>
               )}
             </div>

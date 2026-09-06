@@ -801,6 +801,28 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**Korrektur: doppelter Kernteam-Eintrag entfernbar, Logo-Cache behoben
+(v0.50):**
+
+- **Alte Kernteam-Einträge ohne E-Mail-Adresse jetzt entfernbar.** Einträge
+  aus der Zeit, bevor eine E-Mail-Adresse im Kernteam zwingend war, hatten
+  keinen "Entfernen"-Button (der war bisher an eine hinterlegte
+  E-Mail-Adresse gekoppelt) und wurden vom automatischen Abgleich, der
+  Balthasar als Geschäftsführer im Kernteam führt, nicht erkannt — dadurch
+  konnte ein solcher Alt-Eintrag als Dublette neben dem regulären
+  Geschäftsführungs-Eintrag stehen bleiben, ohne dass sich das über die App
+  beheben ließ. Diese Alt-Einträge zeigen jetzt ebenfalls einen
+  "Entfernen"-Button (mit Sicherheitsabfrage); da keine E-Mail-Adresse
+  bekannt ist, entfällt nur die sonst übliche Benachrichtigungs-E-Mail.
+- **Logo-Anzeige: Browser-/CDN-Cache umgangen.** Nach dem Logo-Austausch in
+  v0.46 zeigten manche Browser trotz korrekt ausgetauschter Datei noch die
+  alte Version mit "KULTO" an, weil Bilder unter derselben Adresse oft lange
+  zwischengespeichert werden. Die Bild-URL trägt jetzt einen
+  Versions-Anhang (`/logo.png?v=46`) und die Bild-Optimierung wird ganz
+  umgangen — dadurch laden alle garantiert die aktuelle Datei. Bei einem
+  künftigen Logo-Austausch muss dafür nur die Zahl im Code hochgezählt
+  werden.
+
 **Kernteam & Team erst durch Aufklappen sichtbar (v0.49):** Beide Bereiche
 zeigen zunächst nur einen Button ("Kernteam sehen" bzw. "Team sehen") statt
 sofort die volle Liste samt Formularen – ein Klick blendet den gewohnten

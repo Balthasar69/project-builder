@@ -4,6 +4,7 @@ import {
   getProject,
   getUserByEmail,
   removeKernteamMitglied,
+  removeKernteamMitgliedOhneEmail,
 } from "@/lib/data";
 import { getSession } from "@/lib/auth";
 import { EmailError, sendMail } from "@/lib/email";
@@ -116,13 +117,38 @@ export async function DELETE(
     return NextResponse.json({ error: "Projekt nicht gefunden" }, { status: 404 });
   }
 
-  const body = (await req.json().catch(() => ({}))) as { email?: string };
+  const body = (await req.json().catch(() => ({}))) as {
+    email?: string;
+    index?: number;
+    name?: string;
+    rolle?: string;
+  };
   const email = body.email?.trim();
+
+  // Legacy-Einträge ohne hinterlegte E-Mail-Adresse (von vor der Zeit, als
+  // sie im Kernteam noch nicht zwingend war) lassen sich nur über ihre
+  // Position in der Liste entfernen – dafür gibt es keine
+  // Benachrichtigungs-E-Mail, da keine Adresse bekannt ist.
   if (!email) {
-    return NextResponse.json(
-      { error: "E-Mail-Adresse erforderlich." },
-      { status: 400 }
-    );
+    if (typeof body.index !== "number") {
+      return NextResponse.json(
+        { error: "E-Mail-Adresse oder Position erforderlich." },
+        { status: 400 }
+      );
+    }
+    try {
+      const updated = await removeKernteamMitgliedOhneEmail(params.slug, {
+        index: body.index,
+        name: body.name?.trim() ?? "",
+        rolle: body.rolle?.trim() ?? "",
+      });
+      return NextResponse.json({ project: updated });
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Unbekannter Fehler" },
+        { status: 500 }
+      );
+    }
   }
 
   try {
