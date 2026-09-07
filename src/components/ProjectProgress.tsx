@@ -38,9 +38,10 @@ export default function ProjectProgress({
 
   return (
     <div className="mb-10 flex flex-col items-center gap-6 rounded-lg border border-line bg-surface px-6 py-6 sm:flex-row sm:justify-center sm:gap-10">
-      {/* Prozentzahl steht bewusst UNTER dem Ring statt darin (v0.46) – bei
-          14 ineinander verschachtelten Phasen-Ringen ist die Mitte zu klein,
-          um "100% / Reifegrad" überlappungsfrei darzustellen. */}
+      {/* Der Ring zeigt nur noch die Phasen selbst; die Prozentzahl steht
+          seit v0.56 nicht mehr direkt darunter, sondern prominent über der
+          Überschrift "Projektfortschritt" auf der rechten Seite (auf
+          Wunsch), statt wie zuvor eng am Ring zu kleben. */}
       <div className="flex shrink-0 flex-col items-center">
         <svg
           width={groesse}
@@ -71,16 +72,18 @@ export default function ProjectProgress({
             );
           })}
         </svg>
-        <span className="mt-1 font-display text-3xl font-semibold tabular text-ink">
-          {reifegrad}%
-        </span>
-        <span className="text-[0.65rem] uppercase tracking-wide text-ink-faint">
-          Reifegrad
-        </span>
       </div>
 
       <div className="max-w-[42ch] text-center sm:text-left">
-        <span className="font-mono text-xs uppercase tracking-widest text-ink-faint">
+        <div className="flex flex-col items-center sm:items-start">
+          <span className="font-display text-4xl font-semibold tabular text-ink">
+            {reifegrad}%
+          </span>
+          <span className="text-[0.65rem] uppercase tracking-wide text-ink-faint">
+            Reifegrad
+          </span>
+        </div>
+        <span className="mt-3 block font-mono text-xs uppercase tracking-widest text-ink-faint">
           Projektfortschritt
         </span>
         <div className="mt-1 font-display text-lg font-semibold text-ink">

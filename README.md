@@ -801,6 +801,14 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**Prozentzahl über "Projektfortschritt" statt am Ring (v0.56):** Die große
+Reifegrad-Prozentzahl stand bisher direkt unter dem Phasen-Ring – bei den
+vielen ineinander verschachtelten Ringen wirkte das auf kleineren Bildschirmen
+so, als würde die Zahl in den Ring hineinragen. Jetzt steht die Prozentzahl
+(mit "Reifegrad"-Beschriftung darunter) deutlich abgesetzt über der
+Überschrift "Projektfortschritt", der Ring daneben zeigt nur noch die reinen
+Phasen-Ringe ohne Text.
+
 **Hub-Navigation deutlich bunter und prominenter (v0.55):** Die drei
 Spalten Orga/Dashboard/Dynamik waren bisher sehr zurückhaltend gestaltet –
 nur ein dünner Rahmen und ein kleines Icon trugen die jeweilige Logo-Farbe,
