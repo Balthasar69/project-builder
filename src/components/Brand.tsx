@@ -3,7 +3,11 @@ import Image from "next/image";
 /**
  * Logo im Kopfbereich jeder Seite (CD-Branding insightworx – O&K). Ersetzt
  * den früheren reinen Text-Schriftzug "Project Builder". Die Bilddatei
- * liegt unter /public/logo.png (seit v0.46 ohne die Zeile "KULTO").
+ * liegt unter /public/logo.png (seit v0.46 ohne die Zeile "KULTO"; seit
+ * v0.57 mit repariertem Kreis-Icon – die rechte Hälfte des Rings war durch
+ * einen alten Bearbeitungsfehler leicht verschoben und dadurch nicht mehr
+ * rund/geschlossen, jetzt spiegelbildlich zur unbeschädigten linken Hälfte
+ * neu zusammengesetzt).
  *
  * Der Anhang "?v=46" an der Bild-URL ist bewusst gesetzt: Browser/CDN
  * merken sich Bilder unter derselben Adresse oft sehr lange (auch nach
@@ -19,7 +23,7 @@ import Image from "next/image";
 export default function Brand({ size = "normal" }: { size?: "normal" | "gross" }) {
   return (
     <Image
-      src="/logo.png?v=46"
+      src="/logo.png?v=57"
       alt="insightworx – O&K Organisation und Kommunikation"
       width={440}
       height={140}

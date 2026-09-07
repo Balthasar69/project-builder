@@ -801,6 +801,16 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**Logo-Icon repariert (v0.57):** Beim Kreis-Icon vor "insightworx" war die
+rechte Hälfte der Ringe durch einen alten Bearbeitungsfehler leicht nach
+unten/außen verschoben – dadurch wirkten die Ringe nicht mehr rund und
+geschlossen, sondern wie zwei leicht versetzte Kopien übereinander. Die
+rechte Hälfte wurde jetzt spiegelbildlich zur unbeschädigten linken Hälfte
+neu zusammengesetzt (reine Bildkorrektur, keine Neugestaltung), Farben und
+Schriftzug bleiben unverändert. Die Bild-Adresse wurde wie beim letzten
+Logo-Fix erneut mit einer neuen Versionsnummer versehen, damit garantiert
+niemand noch das alte, kaputte Bild aus dem Browser-Cache sieht.
+
 **Prozentzahl über "Projektfortschritt" statt am Ring (v0.56):** Die große
 Reifegrad-Prozentzahl stand bisher direkt unter dem Phasen-Ring – bei den
 vielen ineinander verschachtelten Ringen wirkte das auf kleineren Bildschirmen
