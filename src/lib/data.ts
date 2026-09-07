@@ -380,6 +380,71 @@ export async function removeKernteamMitgliedOhneEmail(
 }
 
 /**
+ * Bearbeitet Name, Rolle und/oder E-Mail-Adresse eines bestehenden
+ * Kernteam-Eintrags, ohne ihn zu entfernen und neu anzulegen (Rechteprüfung
+ * – nur Admins – sitzt in der API-Route). Adressiert den Eintrag über seine
+ * Position in der Liste (funktioniert dadurch auch bei Einträgen ohne
+ * E-Mail-Adresse), mit einer Sicherheitsprüfung anhand der bisherigen
+ * Werte, damit ein inzwischen anderer Datensatz an dieser Position nicht
+ * versehentlich überschrieben wird. Wird dabei eine neue E-Mail-Adresse
+ * hinterlegt, bekommt diese automatisch auch Team-Zugriff (wie beim
+ * normalen Hinzufügen) – eine vorher hinterlegte Adresse behält ihren
+ * Zugriff ebenfalls und wird NICHT automatisch entfernt.
+ */
+export async function bearbeiteKernteamEintrag(
+  slug: string,
+  params: {
+    index: number;
+    bisherigerName: string;
+    bisherigeRolle: string;
+    bisherigeEmail?: string;
+    neuerName: string;
+    neueRolle: string;
+    neueEmail?: string;
+  }
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  const eintrag = project.kernteam[params.index];
+  if (
+    !eintrag ||
+    eintrag.name !== params.bisherigerName ||
+    (eintrag.rolle || "") !== (params.bisherigeRolle || "") ||
+    (eintrag.email || "") !== (params.bisherigeEmail || "")
+  ) {
+    throw new Error(
+      "Der Eintrag wurde inzwischen geändert – bitte Seite neu laden und erneut versuchen."
+    );
+  }
+
+  const neuerName = params.neuerName.trim();
+  if (!neuerName) throw new Error("Name ist erforderlich.");
+  const neueEmail = params.neueEmail?.trim().toLowerCase() || undefined;
+  if (neueEmail && !neueEmail.includes("@")) {
+    throw new Error("Bitte eine gültige E-Mail-Adresse angeben (oder das Feld leer lassen).");
+  }
+
+  project.kernteam = project.kernteam.map((m, i) =>
+    i === params.index
+      ? { ...m, name: neuerName, rolle: params.neueRolle.trim(), email: neueEmail }
+      : m
+  );
+  if (neueEmail && !project.mitglieder.includes(neueEmail)) {
+    project.mitglieder = [...project.mitglieder, neueEmail];
+  }
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/**
  * Entfernt eine E-Mail-Adresse wieder aus den Mitgliedern eines Projekts
  * (Rechteprüfung sitzt in der API-Route, gedacht nur für Admins). Entfernt
  * die Person dabei auch automatisch aus `kernteam`, falls sie dort steht –
@@ -396,6 +461,49 @@ export async function removeMitglied(slug: string, email: string): Promise<Proje
   project.mitglieder = project.mitglieder.filter((m) => m !== normalized);
   project.kernteam = project.kernteam.filter(
     (m) => m.email?.toLowerCase() !== normalized
+  );
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/**
+ * Ändert die hinterlegte E-Mail-Adresse eines Team-Mitglieds (z. B. bei
+ * einem Tippfehler oder einer neuen dienstlichen Adresse), ohne die Person
+ * zu entfernen und neu einzuladen – Rechteprüfung (nur Admins) sitzt in der
+ * API-Route. Steht dieselbe Adresse auch im Kernteam, wird sie dort
+ * ebenfalls aktualisiert, damit beide Listen konsistent bleiben.
+ */
+export async function bearbeiteMitgliedEmail(
+  slug: string,
+  params: { bisherigeEmail: string; neueEmail: string }
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  const alt = params.bisherigeEmail.trim().toLowerCase();
+  const neu = params.neueEmail.trim().toLowerCase();
+  if (!neu || !neu.includes("@")) {
+    throw new Error("Bitte eine gültige E-Mail-Adresse angeben.");
+  }
+  if (!project.mitglieder.includes(alt)) {
+    throw new Error(
+      "Diese Person steht nicht (mehr) im Team – bitte Seite neu laden und erneut versuchen."
+    );
+  }
+  if (neu !== alt && project.mitglieder.includes(neu)) {
+    throw new Error("Diese E-Mail-Adresse ist bereits im Team eingetragen.");
+  }
+
+  project.mitglieder = project.mitglieder.map((m) => (m === alt ? neu : m));
+  project.kernteam = project.kernteam.map((k) =>
+    k.email?.toLowerCase() === alt ? { ...k, email: neu } : k
   );
   project.aktualisiertAm = new Date().toISOString();
 

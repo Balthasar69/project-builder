@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { addMitglied, getProject, getUserByEmail, removeMitglied } from "@/lib/data";
+import {
+  addMitglied,
+  bearbeiteMitgliedEmail,
+  getProject,
+  getUserByEmail,
+  removeMitglied,
+} from "@/lib/data";
 import { getSession, hatProjektZugriff } from "@/lib/auth";
 import { EmailError, sendMail } from "@/lib/email";
 
@@ -135,6 +141,59 @@ export async function DELETE(
     }
 
     return NextResponse.json({ project: updated, mailHinweis });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Unbekannter Fehler" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Ändert die hinterlegte E-Mail-Adresse eines Team-Mitglieds (z. B. bei
+ * einem Tippfehler), statt die Person zu entfernen und neu einzuladen –
+ * nur für Admins.
+ */
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { slug: string } }
+) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
+  }
+
+  if (!session.isAdmin) {
+    return NextResponse.json(
+      { error: "Nur Admins dürfen Teammitglieder ändern." },
+      { status: 403 }
+    );
+  }
+
+  const project = await getProject(params.slug);
+  if (!project) {
+    return NextResponse.json({ error: "Projekt nicht gefunden" }, { status: 404 });
+  }
+
+  const body = (await req.json().catch(() => ({}))) as {
+    bisherigeEmail?: string;
+    neueEmail?: string;
+  };
+  const bisherigeEmail = body.bisherigeEmail?.trim().toLowerCase();
+  const neueEmail = body.neueEmail?.trim().toLowerCase();
+  if (!bisherigeEmail || !neueEmail) {
+    return NextResponse.json(
+      { error: "Bisherige und neue E-Mail-Adresse sind erforderlich." },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const updated = await bearbeiteMitgliedEmail(params.slug, {
+      bisherigeEmail,
+      neueEmail,
+    });
+    return NextResponse.json({ project: updated });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Unbekannter Fehler" },

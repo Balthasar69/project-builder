@@ -29,6 +29,16 @@ export default function KernteamManager({
   const [entfernenLaeuft, setEntfernenLaeuft] = useState<string | null>(null);
   const [entfernenFehler, setEntfernenFehler] = useState<string | null>(null);
 
+  // Bearbeiten eines bestehenden Eintrags (Name/Rolle/E-Mail), statt ihn zu
+  // entfernen und neu anzulegen – adressiert über die Position in der
+  // Liste, damit es auch bei Einträgen ohne E-Mail-Adresse funktioniert.
+  const [bearbeitenIndex, setBearbeitenIndex] = useState<number | null>(null);
+  const [bearbeitenName, setBearbeitenName] = useState("");
+  const [bearbeitenRolle, setBearbeitenRolle] = useState("");
+  const [bearbeitenEmail, setBearbeitenEmail] = useState("");
+  const [bearbeitenLaeuft, setBearbeitenLaeuft] = useState(false);
+  const [bearbeitenFehler, setBearbeitenFehler] = useState<string | null>(null);
+
   // Name und Rolle sind immer sichtbar. Nur Admins können zusätzlich die
   // E-Mail-Adresse einblenden – per Klick auf den Namen (bleibt an, bis
   // erneut geklickt) oder indem sie mit der Maus über den Namen fahren
@@ -122,6 +132,48 @@ export default function KernteamManager({
     }
   }
 
+  function bearbeitenStarten(m: KernteamMitglied, index: number) {
+    setBearbeitenIndex(index);
+    setBearbeitenName(m.name);
+    setBearbeitenRolle(m.rolle ?? "");
+    setBearbeitenEmail(m.email ?? "");
+    setBearbeitenFehler(null);
+  }
+
+  function bearbeitenAbbrechen() {
+    setBearbeitenIndex(null);
+    setBearbeitenFehler(null);
+  }
+
+  async function bearbeitenSpeichern(e: FormEvent, m: KernteamMitglied, index: number) {
+    e.preventDefault();
+    setBearbeitenLaeuft(true);
+    setBearbeitenFehler(null);
+    try {
+      const res = await fetch(`/api/projects/${slug}/kernteam`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          index,
+          bisherigerName: m.name,
+          bisherigeRolle: m.rolle ?? "",
+          bisherigeEmail: m.email,
+          neuerName: bearbeitenName,
+          neueRolle: bearbeitenRolle,
+          neueEmail: bearbeitenEmail || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Speichern fehlgeschlagen");
+      setBearbeitenIndex(null);
+      router.refresh();
+    } catch (err) {
+      setBearbeitenFehler(err instanceof Error ? err.message : "Unbekannter Fehler");
+    } finally {
+      setBearbeitenLaeuft(false);
+    }
+  }
+
   return (
     <div>
       <div className="mb-4 flex flex-col gap-2">
@@ -131,6 +183,58 @@ export default function KernteamManager({
             istAdmin &&
             !!m.email &&
             (klickDetails === schluessel || hoverDetails === schluessel);
+          if (istAdmin && bearbeitenIndex === index) {
+            return (
+              <form
+                key={schluessel}
+                onSubmit={(e) => bearbeitenSpeichern(e, m, index)}
+                className="flex flex-col gap-2 rounded-md border border-accent bg-surface px-4 py-3"
+              >
+                <input
+                  type="text"
+                  required
+                  placeholder="Name"
+                  value={bearbeitenName}
+                  onChange={(e) => setBearbeitenName(e.target.value)}
+                  className="rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+                />
+                <input
+                  type="text"
+                  placeholder="Rolle (z. B. Projektleitung)"
+                  value={bearbeitenRolle}
+                  onChange={(e) => setBearbeitenRolle(e.target.value)}
+                  className="rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+                />
+                <input
+                  type="email"
+                  placeholder="E-Mail-Adresse"
+                  value={bearbeitenEmail}
+                  onChange={(e) => setBearbeitenEmail(e.target.value)}
+                  className="rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+                />
+                <div className="flex items-center gap-3">
+                  <button
+                    type="submit"
+                    disabled={bearbeitenLaeuft || !bearbeitenName.trim()}
+                    className="whitespace-nowrap rounded-md bg-accent px-4 py-2 text-sm font-medium text-surface transition hover:bg-accent-ink disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {bearbeitenLaeuft ? "Speichert…" : "Speichern"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={bearbeitenAbbrechen}
+                    disabled={bearbeitenLaeuft}
+                    className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-ink-faint hover:text-ink"
+                  >
+                    Abbrechen
+                  </button>
+                </div>
+                {bearbeitenFehler && (
+                  <p className="text-sm text-bad">{bearbeitenFehler}</p>
+                )}
+              </form>
+            );
+          }
           return (
             <div
               key={schluessel}
@@ -166,26 +270,36 @@ export default function KernteamManager({
                   </span>
                 )}
               </div>
-              {istAdmin && m.email && (
-                <button
-                  type="button"
-                  onClick={() => entfernen(m)}
-                  disabled={entfernenLaeuft === m.email}
-                  className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-bad transition hover:text-accent-ink disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {entfernenLaeuft === m.email ? "Entfernt…" : "Entfernen"}
-                </button>
-              )}
-              {istAdmin && !m.email && (
-                <button
-                  type="button"
-                  onClick={() => entfernenOhneEmail(m, index)}
-                  disabled={entfernenLaeuft === schluessel}
-                  title="Dieser Eintrag hat keine E-Mail-Adresse hinterlegt"
-                  className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-bad transition hover:text-accent-ink disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {entfernenLaeuft === schluessel ? "Entfernt…" : "Entfernen"}
-                </button>
+              {istAdmin && (
+                <div className="flex shrink-0 items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => bearbeitenStarten(m, index)}
+                    className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-ink-faint transition hover:text-accent"
+                  >
+                    Bearbeiten
+                  </button>
+                  {m.email ? (
+                    <button
+                      type="button"
+                      onClick={() => entfernen(m)}
+                      disabled={entfernenLaeuft === m.email}
+                      className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-bad transition hover:text-accent-ink disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {entfernenLaeuft === m.email ? "Entfernt…" : "Entfernen"}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => entfernenOhneEmail(m, index)}
+                      disabled={entfernenLaeuft === schluessel}
+                      title="Dieser Eintrag hat keine E-Mail-Adresse hinterlegt"
+                      className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-bad transition hover:text-accent-ink disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {entfernenLaeuft === schluessel ? "Entfernt…" : "Entfernen"}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           );

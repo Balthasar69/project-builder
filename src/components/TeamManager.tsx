@@ -31,6 +31,13 @@ export default function TeamManager({
   const [entfernenLaeuft, setEntfernenLaeuft] = useState<string | null>(null);
   const [entfernenFehler, setEntfernenFehler] = useState<string | null>(null);
 
+  // Bearbeiten der hinterlegten E-Mail-Adresse (z. B. bei einem Tippfehler),
+  // statt die Person zu entfernen und neu einzuladen.
+  const [bearbeitenEmail, setBearbeitenEmail] = useState<string | null>(null);
+  const [neueEmail, setNeueEmail] = useState("");
+  const [bearbeitenLaeuft, setBearbeitenLaeuft] = useState(false);
+  const [bearbeitenFehler, setBearbeitenFehler] = useState<string | null>(null);
+
   async function hinzufuegen(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -86,6 +93,38 @@ export default function TeamManager({
     }
   }
 
+  function bearbeitenStarten(m: string) {
+    setBearbeitenEmail(m);
+    setNeueEmail(m);
+    setBearbeitenFehler(null);
+  }
+
+  function bearbeitenAbbrechen() {
+    setBearbeitenEmail(null);
+    setBearbeitenFehler(null);
+  }
+
+  async function bearbeitenSpeichern(e: FormEvent, bisherigeEmail: string) {
+    e.preventDefault();
+    setBearbeitenLaeuft(true);
+    setBearbeitenFehler(null);
+    try {
+      const res = await fetch(`/api/projects/${slug}/mitglieder`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bisherigeEmail, neueEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Speichern fehlgeschlagen");
+      setBearbeitenEmail(null);
+      router.refresh();
+    } catch (err) {
+      setBearbeitenFehler(err instanceof Error ? err.message : "Unbekannter Fehler");
+    } finally {
+      setBearbeitenLaeuft(false);
+    }
+  }
+
   return (
     <div>
       <div className="mb-4 flex flex-col gap-2">
@@ -95,6 +134,46 @@ export default function TeamManager({
           const emailSichtbar =
             !hatEigenenNamen ||
             (istAdmin && (klickEmail === m || hoverEmail === m));
+          if (istAdmin && bearbeitenEmail === m) {
+            return (
+              <form
+                key={m}
+                onSubmit={(e) => bearbeitenSpeichern(e, m)}
+                className="flex flex-col gap-2 rounded-md border border-accent bg-surface px-4 py-3"
+              >
+                <label className="text-xs text-ink-muted">
+                  E-Mail-Adresse für {anzeigeName}
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={neueEmail}
+                  onChange={(e) => setNeueEmail(e.target.value)}
+                  className="rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+                />
+                <div className="flex items-center gap-3">
+                  <button
+                    type="submit"
+                    disabled={bearbeitenLaeuft || !neueEmail.trim()}
+                    className="whitespace-nowrap rounded-md bg-accent px-4 py-2 text-sm font-medium text-surface transition hover:bg-accent-ink disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {bearbeitenLaeuft ? "Speichert…" : "Speichern"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={bearbeitenAbbrechen}
+                    disabled={bearbeitenLaeuft}
+                    className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-ink-faint hover:text-ink"
+                  >
+                    Abbrechen
+                  </button>
+                </div>
+                {bearbeitenFehler && (
+                  <p className="text-sm text-bad">{bearbeitenFehler}</p>
+                )}
+              </form>
+            );
+          }
           return (
             <div
               key={m}
@@ -124,14 +203,23 @@ export default function TeamManager({
                 )}
               </div>
               {istAdmin && (
-                <button
-                  type="button"
-                  onClick={() => entfernen(m)}
-                  disabled={entfernenLaeuft === m}
-                  className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-bad transition hover:text-accent-ink disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {entfernenLaeuft === m ? "Entfernt…" : "Entfernen"}
-                </button>
+                <div className="flex shrink-0 items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => bearbeitenStarten(m)}
+                    className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-ink-faint transition hover:text-accent"
+                  >
+                    Bearbeiten
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => entfernen(m)}
+                    disabled={entfernenLaeuft === m}
+                    className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-bad transition hover:text-accent-ink disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {entfernenLaeuft === m ? "Entfernt…" : "Entfernen"}
+                  </button>
+                </div>
               )}
             </div>
           );

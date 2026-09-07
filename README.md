@@ -801,6 +801,22 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**Kernteam- und Team-Einträge bearbeiten (v0.54):** Admins konnten einen
+Eintrag bisher nur entfernen und neu anlegen, wenn sich z. B. ein Tippfehler
+im Namen oder in der E-Mail-Adresse eingeschlichen hatte – beim Kernteam
+zusätzlich unpraktisch, weil das Entfernen auch eine Benachrichtigungs-Mail
+auslöst. Jetzt gibt es bei jedem Eintrag einen Button "Bearbeiten":
+
+- **Kernteam:** Name, Rolle und E-Mail-Adresse eines bestehenden Eintrags
+  lassen sich direkt in der Liste ändern (auch bei älteren Einträgen ohne
+  hinterlegte E-Mail-Adresse). Wird dabei eine E-Mail-Adresse neu
+  eingetragen, bekommt die Person automatisch auch Team-Zugriff, wie beim
+  normalen Hinzufügen.
+- **Team:** Die hinterlegte E-Mail-Adresse lässt sich korrigieren, ohne die
+  Person zu entfernen und neu einzuladen. Steht dieselbe Adresse auch im
+  Kernteam, wird sie dort automatisch mit angepasst, damit beide Listen
+  zueinander passen.
+
 **Persönliche Begrüßung bei "Für dich als Nächstes" (v0.53):** Das Label
 über dem persönlichen KI-Hinweis grüßt die angemeldete Person jetzt mit
 Vornamen, z. B. "Hallo Balthasar – für dich als Nächstes" statt nur "Für

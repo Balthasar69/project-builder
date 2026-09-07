@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   addKernteamMitglied,
+  bearbeiteKernteamEintrag,
   getProject,
   getUserByEmail,
   removeKernteamMitglied,
@@ -174,6 +175,67 @@ export async function DELETE(
     }
 
     return NextResponse.json({ project: updated, mailHinweis });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Unbekannter Fehler" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Bearbeitet Name, Rolle und/oder E-Mail-Adresse eines bestehenden
+ * Kernteam-Eintrags (statt entfernen + neu anlegen) – nur für Admins.
+ */
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { slug: string } }
+) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
+  }
+
+  if (!session.isAdmin) {
+    return NextResponse.json(
+      { error: "Nur Admins dürfen das Kernteam ändern." },
+      { status: 403 }
+    );
+  }
+
+  const project = await getProject(params.slug);
+  if (!project) {
+    return NextResponse.json({ error: "Projekt nicht gefunden" }, { status: 404 });
+  }
+
+  const body = (await req.json().catch(() => ({}))) as {
+    index?: number;
+    bisherigerName?: string;
+    bisherigeRolle?: string;
+    bisherigeEmail?: string;
+    neuerName?: string;
+    neueRolle?: string;
+    neueEmail?: string;
+  };
+
+  if (typeof body.index !== "number" || !body.neuerName?.trim()) {
+    return NextResponse.json(
+      { error: "Position und Name sind erforderlich." },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const updated = await bearbeiteKernteamEintrag(params.slug, {
+      index: body.index,
+      bisherigerName: body.bisherigerName ?? "",
+      bisherigeRolle: body.bisherigeRolle ?? "",
+      bisherigeEmail: body.bisherigeEmail,
+      neuerName: body.neuerName,
+      neueRolle: body.neueRolle ?? "",
+      neueEmail: body.neueEmail,
+    });
+    return NextResponse.json({ project: updated });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Unbekannter Fehler" },
