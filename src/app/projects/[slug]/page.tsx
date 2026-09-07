@@ -336,101 +336,112 @@ export default async function ProjectCockpit({
         </Aufklappbar>
       </section>
 
-      <section id="phasenverlauf" className="mb-12 scroll-mt-6">
-        <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
-          <h2 className="font-display text-xl font-semibold">
-            Phasenverlauf
-          </h2>
-          <span className="font-mono text-xs text-ink-faint">Kapitel 6</span>
-        </div>
-        <Aufklappbar buttonText="Hier öffnen">
+      {/* Phasenverlauf und Projekt-Check stehen auf dem Desktop
+          nebeneinander (ab "sm") statt untereinander – auf Wunsch, damit
+          beide auf einen Blick sichtbar sind; auf schmalen Bildschirmen
+          (Handy) bleiben sie wie gewohnt untereinander. */}
+      <div className="mb-12 grid grid-cols-1 gap-8 sm:grid-cols-2">
+        <section id="phasenverlauf" className="scroll-mt-6">
+          <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
+            <h2 className="font-display text-xl font-semibold">
+              Phasenverlauf
+            </h2>
+            <span className="font-mono text-xs text-ink-faint">Kapitel 6</span>
+          </div>
+          <Aufklappbar buttonText="Hier öffnen">
+            <BlockHinweis
+              slug={project.slug}
+              blockKey="phasenverlauf"
+              individuellerText={project.hinweise?.phasenverlauf ?? ""}
+              standardText={STANDARD_HINWEISE.phasenverlauf}
+              darfBearbeiten={darfHinweiseBearbeiten}
+            />
+            <PhaseTracker
+              aktuell={project.aktuellePhase}
+              checkVerlauf={project.checkVerlauf}
+              kernteam={project.kernteam}
+            />
+            <PhaseAdvance
+              slug={project.slug}
+              aktuell={project.aktuellePhase}
+              darfSteuern={istKernteam(session, project)}
+              istAdmin={session.isAdmin}
+            />
+          </Aufklappbar>
+        </section>
+
+        <section id="bewertung" className="scroll-mt-6">
+          <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
+            <h2 className="font-display text-xl font-semibold">
+              Projekt-Check &amp; GO/NO-GO
+            </h2>
+            <span className="font-mono text-xs text-ink-faint">Kapitel 11</span>
+          </div>
+          <Aufklappbar buttonText="Hier öffnen">
+            <BlockHinweis
+              slug={project.slug}
+              blockKey="check"
+              individuellerText={project.hinweise?.check ?? ""}
+              standardText={STANDARD_HINWEISE.check}
+              darfBearbeiten={darfHinweiseBearbeiten}
+            />
+            <ProjectCheckForm
+              key={project.aktuellePhase}
+              slug={project.slug}
+              phase={project.aktuellePhase}
+              checkVerlauf={project.checkVerlauf}
+              darfBewerten={istKernteam(session, project)}
+              kernteam={project.kernteam}
+              bewerterEmail={session.email}
+              bewerterName={session.name}
+            />
+          </Aufklappbar>
+        </section>
+      </div>
+
+      {/* Aufgaben und Ideen ebenso nebeneinander (ab "sm") – beide gehören
+          zu "Dynamik" in der Hub-Navigation und passen inhaltlich
+          zusammen. */}
+      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+        <section id="aufgaben" className="scroll-mt-6">
+          <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
+            <h2 className="font-display text-xl font-semibold">Aufgaben</h2>
+            <span className="font-mono text-xs text-ink-faint">Kapitel 25</span>
+          </div>
+          {/* Ursprünglich erst ab der Kerngruppen-Phase sichtbar (Kapitel 6) –
+              auf Wunsch jetzt in jeder Phase nutzbar, damit Aufgaben schon
+              früher koordiniert werden können. Steht bewusst unter dem
+              Projekt-Check (Bewertungsmodul), nicht mehr davor. */}
+          <Aufklappbar buttonText="Hier öffnen">
+            <BlockHinweis
+              slug={project.slug}
+              blockKey="aufgaben"
+              individuellerText={project.hinweise?.aufgaben ?? ""}
+              standardText={STANDARD_HINWEISE.aufgaben}
+              darfBearbeiten={darfHinweiseBearbeiten}
+            />
+            <TaskBoard slug={project.slug} />
+          </Aufklappbar>
+        </section>
+
+        <section id="ideen" className="scroll-mt-6">
+          <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
+            <h2 className="font-display text-xl font-semibold">Ideen</h2>
+          </div>
           <BlockHinweis
             slug={project.slug}
-            blockKey="phasenverlauf"
-            individuellerText={project.hinweise?.phasenverlauf ?? ""}
-            standardText={STANDARD_HINWEISE.phasenverlauf}
+            blockKey="ideen"
+            individuellerText={project.hinweise?.ideen ?? ""}
+            standardText={STANDARD_HINWEISE.ideen}
             darfBearbeiten={darfHinweiseBearbeiten}
           />
-          <PhaseTracker
-            aktuell={project.aktuellePhase}
-            checkVerlauf={project.checkVerlauf}
-            kernteam={project.kernteam}
-          />
-          <PhaseAdvance
+          <IdeenManager
             slug={project.slug}
-            aktuell={project.aktuellePhase}
-            darfSteuern={istKernteam(session, project)}
-            istAdmin={session.isAdmin}
+            ideen={project.ideen ?? []}
+            istKernteam={istKernteam(session, project)}
           />
-        </Aufklappbar>
-      </section>
-
-      <section id="bewertung" className="mb-12 scroll-mt-6">
-        <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
-          <h2 className="font-display text-xl font-semibold">
-            Projekt-Check &amp; GO/NO-GO
-          </h2>
-          <span className="font-mono text-xs text-ink-faint">Kapitel 11</span>
-        </div>
-        <Aufklappbar buttonText="Hier öffnen">
-          <BlockHinweis
-            slug={project.slug}
-            blockKey="check"
-            individuellerText={project.hinweise?.check ?? ""}
-            standardText={STANDARD_HINWEISE.check}
-            darfBearbeiten={darfHinweiseBearbeiten}
-          />
-          <ProjectCheckForm
-            key={project.aktuellePhase}
-            slug={project.slug}
-            phase={project.aktuellePhase}
-            checkVerlauf={project.checkVerlauf}
-            darfBewerten={istKernteam(session, project)}
-            kernteam={project.kernteam}
-            bewerterEmail={session.email}
-            bewerterName={session.name}
-          />
-        </Aufklappbar>
-      </section>
-
-      <section id="aufgaben" className="scroll-mt-6">
-        <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
-          <h2 className="font-display text-xl font-semibold">Aufgaben</h2>
-          <span className="font-mono text-xs text-ink-faint">Kapitel 25</span>
-        </div>
-        {/* Ursprünglich erst ab der Kerngruppen-Phase sichtbar (Kapitel 6) –
-            auf Wunsch jetzt in jeder Phase nutzbar, damit Aufgaben schon
-            früher koordiniert werden können. Steht bewusst unter dem
-            Projekt-Check (Bewertungsmodul), nicht mehr davor. */}
-        <Aufklappbar buttonText="Hier öffnen">
-          <BlockHinweis
-            slug={project.slug}
-            blockKey="aufgaben"
-            individuellerText={project.hinweise?.aufgaben ?? ""}
-            standardText={STANDARD_HINWEISE.aufgaben}
-            darfBearbeiten={darfHinweiseBearbeiten}
-          />
-          <TaskBoard slug={project.slug} />
-        </Aufklappbar>
-      </section>
-
-      <section id="ideen" className="mt-12 scroll-mt-6">
-        <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
-          <h2 className="font-display text-xl font-semibold">Ideen</h2>
-        </div>
-        <BlockHinweis
-          slug={project.slug}
-          blockKey="ideen"
-          individuellerText={project.hinweise?.ideen ?? ""}
-          standardText={STANDARD_HINWEISE.ideen}
-          darfBearbeiten={darfHinweiseBearbeiten}
-        />
-        <IdeenManager
-          slug={project.slug}
-          ideen={project.ideen ?? []}
-          istKernteam={istKernteam(session, project)}
-        />
-      </section>
+        </section>
+      </div>
 
       {/* Chat (neu seit v0.46, Teil von "Dynamik"): interner Austausch nur
           für Kernteam & Team dieses Projekts. */}

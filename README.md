@@ -801,6 +801,13 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**Phasenverlauf/Projekt-Check und Aufgaben/Ideen nebeneinander auf dem
+Desktop (v0.60):** Diese vier Bereiche stehen jetzt paarweise
+nebeneinander (Phasenverlauf + Projekt-Check in einer Zeile, Aufgaben +
+Ideen in der nächsten), sobald der Bildschirm breit genug ist – wie schon
+zuvor bei Kernteam + Team. Auf dem Handy bleibt es bei einer Spalte
+untereinander.
+
 **"Hier öffnen"-Button dezenter (v0.59):** Der blaue Flächen-Hintergrund
 des in v0.58 eingeführten Buttons wirkte zu präsent. Jetzt ohne
 Farbfläche – nur noch fette, blaue Schrift mit dem Pfeil-Symbol davor
