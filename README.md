@@ -801,6 +801,11 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**"Hier öffnen"-Button dezenter (v0.59):** Der blaue Flächen-Hintergrund
+des in v0.58 eingeführten Buttons wirkte zu präsent. Jetzt ohne
+Farbfläche – nur noch fette, blaue Schrift mit dem Pfeil-Symbol davor
+(bei Kernteam, Team und den fünf neu zugeklappten Bereichen gleichermaßen).
+
 **Weitere Bereiche zugeklappt, prominenter "Hier öffnen"-Button (v0.58):**
 Kompetenzen, Reifegrad je Bereich, Phasenverlauf, Projekt-Check & GO/NO-GO
 und Aufgaben sind – wie schon Kernteam und Team – standardmäßig zugeklappt

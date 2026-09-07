@@ -10,9 +10,10 @@ import { ReactNode, useState } from "react";
  * Phasenverlauf, Projekt-Check und Aufgaben, damit diese (oft längeren)
  * Bereiche nicht sofort die ganze Seite füllen.
  *
- * Der Button ist bewusst auffällig (kräftige Akzentfarbe statt nur ein
- * dünner Rahmen) gestaltet, damit der Klick zum Öffnen nicht übersehen
- * wird – auf ausdrücklichen Wunsch.
+ * Der Button ist bewusst auffällig (fette, farbige Schrift statt nur
+ * dünnem Rahmen) gestaltet, damit der Klick zum Öffnen nicht übersehen
+ * wird – ohne flächigen Farbhintergrund, der auf Wunsch als zu präsent
+ * empfunden wurde (v0.59).
  */
 export default function Aufklappbar({
   buttonText,
@@ -28,7 +29,7 @@ export default function Aufklappbar({
       <button
         type="button"
         onClick={() => setOffen(true)}
-        className="flex items-center gap-2 rounded-md bg-accent px-4 py-2.5 text-sm font-semibold text-surface shadow-sm transition hover:bg-accent-ink"
+        className="flex items-center gap-2 rounded-md px-1 py-1.5 text-sm font-bold text-accent transition hover:text-accent-ink"
       >
         <svg
           width="16"
