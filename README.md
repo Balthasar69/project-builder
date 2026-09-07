@@ -801,6 +801,14 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**Hub-Navigation deutlich bunter und prominenter (v0.55):** Die drei
+Spalten Orga/Dashboard/Dynamik waren bisher sehr zurückhaltend gestaltet –
+nur ein dünner Rahmen und ein kleines Icon trugen die jeweilige Logo-Farbe,
+Spaltentitel und Unterpunkte blieben neutral und klein. Jetzt ist jede
+Spalte eine eigene, sanft farblich getönte Karte; Titel und Icon tragen die
+Spaltenfarbe direkt (Blau/Rot/Grün, wie im Ring darüber) und sind deutlich
+größer und fett gesetzt, die Unterpunkte selbst sind ebenfalls größer.
+
 **Kernteam- und Team-Einträge bearbeiten (v0.54):** Admins konnten einen
 Eintrag bisher nur entfernen und neu anlegen, wenn sich z. B. ein Tippfehler
 im Namen oder in der E-Mail-Adresse eingeschlichen hatte – beim Kernteam
