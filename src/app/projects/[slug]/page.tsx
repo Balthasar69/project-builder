@@ -250,16 +250,18 @@ export default async function ProjectCockpit({
         <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
           <h2 className="font-display text-xl font-semibold">Kompetenzen</h2>
         </div>
-        <p className="mb-4 text-sm text-ink-muted">
-          Jede Person trägt hier für sich selbst ein, was sie zum Projekt
-          beitragen kann und was sie gerne beitragen möchte.
-        </p>
-        <KompetenzenManager
-          slug={project.slug}
-          teilnehmer={kompetenzTeilnehmer}
-          beitraege={project.kompetenzbeitraege ?? []}
-          sessionEmail={session.email}
-        />
+        <Aufklappbar buttonText="Hier öffnen">
+          <p className="mb-4 text-sm text-ink-muted">
+            Jede Person trägt hier für sich selbst ein, was sie zum Projekt
+            beitragen kann und was sie gerne beitragen möchte.
+          </p>
+          <KompetenzenManager
+            slug={project.slug}
+            teilnehmer={kompetenzTeilnehmer}
+            beitraege={project.kompetenzbeitraege ?? []}
+            sessionEmail={session.email}
+          />
+        </Aufklappbar>
       </section>
 
       {/* Die KI-Fragen zum Projektstart stehen bewusst direkt unter
@@ -322,14 +324,16 @@ export default async function ProjectCockpit({
           </h2>
           <span className="font-mono text-xs text-ink-faint">Kapitel 9</span>
         </div>
-        <BlockHinweis
-          slug={project.slug}
-          blockKey="reifegrad"
-          individuellerText={project.hinweise?.reifegrad ?? ""}
-          standardText={STANDARD_HINWEISE.reifegrad}
-          darfBearbeiten={darfHinweiseBearbeiten}
-        />
-        <ReifegradMeter status={project.bereichStatus} />
+        <Aufklappbar buttonText="Hier öffnen">
+          <BlockHinweis
+            slug={project.slug}
+            blockKey="reifegrad"
+            individuellerText={project.hinweise?.reifegrad ?? ""}
+            standardText={STANDARD_HINWEISE.reifegrad}
+            darfBearbeiten={darfHinweiseBearbeiten}
+          />
+          <ReifegradMeter status={project.bereichStatus} />
+        </Aufklappbar>
       </section>
 
       <section id="phasenverlauf" className="mb-12 scroll-mt-6">
@@ -339,24 +343,26 @@ export default async function ProjectCockpit({
           </h2>
           <span className="font-mono text-xs text-ink-faint">Kapitel 6</span>
         </div>
-        <BlockHinweis
-          slug={project.slug}
-          blockKey="phasenverlauf"
-          individuellerText={project.hinweise?.phasenverlauf ?? ""}
-          standardText={STANDARD_HINWEISE.phasenverlauf}
-          darfBearbeiten={darfHinweiseBearbeiten}
-        />
-        <PhaseTracker
-          aktuell={project.aktuellePhase}
-          checkVerlauf={project.checkVerlauf}
-          kernteam={project.kernteam}
-        />
-        <PhaseAdvance
-          slug={project.slug}
-          aktuell={project.aktuellePhase}
-          darfSteuern={istKernteam(session, project)}
-          istAdmin={session.isAdmin}
-        />
+        <Aufklappbar buttonText="Hier öffnen">
+          <BlockHinweis
+            slug={project.slug}
+            blockKey="phasenverlauf"
+            individuellerText={project.hinweise?.phasenverlauf ?? ""}
+            standardText={STANDARD_HINWEISE.phasenverlauf}
+            darfBearbeiten={darfHinweiseBearbeiten}
+          />
+          <PhaseTracker
+            aktuell={project.aktuellePhase}
+            checkVerlauf={project.checkVerlauf}
+            kernteam={project.kernteam}
+          />
+          <PhaseAdvance
+            slug={project.slug}
+            aktuell={project.aktuellePhase}
+            darfSteuern={istKernteam(session, project)}
+            istAdmin={session.isAdmin}
+          />
+        </Aufklappbar>
       </section>
 
       <section id="bewertung" className="mb-12 scroll-mt-6">
@@ -366,23 +372,25 @@ export default async function ProjectCockpit({
           </h2>
           <span className="font-mono text-xs text-ink-faint">Kapitel 11</span>
         </div>
-        <BlockHinweis
-          slug={project.slug}
-          blockKey="check"
-          individuellerText={project.hinweise?.check ?? ""}
-          standardText={STANDARD_HINWEISE.check}
-          darfBearbeiten={darfHinweiseBearbeiten}
-        />
-        <ProjectCheckForm
-          key={project.aktuellePhase}
-          slug={project.slug}
-          phase={project.aktuellePhase}
-          checkVerlauf={project.checkVerlauf}
-          darfBewerten={istKernteam(session, project)}
-          kernteam={project.kernteam}
-          bewerterEmail={session.email}
-          bewerterName={session.name}
-        />
+        <Aufklappbar buttonText="Hier öffnen">
+          <BlockHinweis
+            slug={project.slug}
+            blockKey="check"
+            individuellerText={project.hinweise?.check ?? ""}
+            standardText={STANDARD_HINWEISE.check}
+            darfBearbeiten={darfHinweiseBearbeiten}
+          />
+          <ProjectCheckForm
+            key={project.aktuellePhase}
+            slug={project.slug}
+            phase={project.aktuellePhase}
+            checkVerlauf={project.checkVerlauf}
+            darfBewerten={istKernteam(session, project)}
+            kernteam={project.kernteam}
+            bewerterEmail={session.email}
+            bewerterName={session.name}
+          />
+        </Aufklappbar>
       </section>
 
       <section id="aufgaben" className="scroll-mt-6">
@@ -394,14 +402,16 @@ export default async function ProjectCockpit({
             auf Wunsch jetzt in jeder Phase nutzbar, damit Aufgaben schon
             früher koordiniert werden können. Steht bewusst unter dem
             Projekt-Check (Bewertungsmodul), nicht mehr davor. */}
-        <BlockHinweis
-          slug={project.slug}
-          blockKey="aufgaben"
-          individuellerText={project.hinweise?.aufgaben ?? ""}
-          standardText={STANDARD_HINWEISE.aufgaben}
-          darfBearbeiten={darfHinweiseBearbeiten}
-        />
-        <TaskBoard slug={project.slug} />
+        <Aufklappbar buttonText="Hier öffnen">
+          <BlockHinweis
+            slug={project.slug}
+            blockKey="aufgaben"
+            individuellerText={project.hinweise?.aufgaben ?? ""}
+            standardText={STANDARD_HINWEISE.aufgaben}
+            darfBearbeiten={darfHinweiseBearbeiten}
+          />
+          <TaskBoard slug={project.slug} />
+        </Aufklappbar>
       </section>
 
       <section id="ideen" className="mt-12 scroll-mt-6">

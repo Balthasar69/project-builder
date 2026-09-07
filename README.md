@@ -801,6 +801,16 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**Weitere Bereiche zugeklappt, prominenter "Hier öffnen"-Button (v0.58):**
+Kompetenzen, Reifegrad je Bereich, Phasenverlauf, Projekt-Check & GO/NO-GO
+und Aufgaben sind – wie schon Kernteam und Team – standardmäßig zugeklappt
+und zeigen ihren Inhalt erst nach einem Klick. Der Button dafür ("Hier
+öffnen") ist jetzt außerdem deutlich auffälliger gestaltet (kräftige
+Akzentfarbe statt nur dünnem Rahmen) – gilt auch für die bereits
+bestehenden Buttons bei Kernteam und Team, damit alle einheitlich
+aussehen. Überschrift und ggf. "Kapitel"-Angabe jedes Bereichs bleiben
+weiterhin immer sichtbar, nur der eigentliche Inhalt ist zugeklappt.
+
 **Logo-Icon repariert (v0.57):** Beim Kreis-Icon vor "insightworx" war die
 rechte Hälfte der Ringe durch einen alten Bearbeitungsfehler leicht nach
 unten/außen verschoben – dadurch wirkten die Ringe nicht mehr rund und

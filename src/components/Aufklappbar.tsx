@@ -6,7 +6,13 @@ import { ReactNode, useState } from "react";
  * Allgemeiner Ein-/Ausklapp-Baustein: zeigt zunächst nur einen Button mit
  * `buttonText" (z. B. "Kernteam sehen") und blendet den eigentlichen Inhalt
  * erst nach einem Klick ein – genutzt für Kernteam/Team im Projektcockpit,
- * damit diese (oft längeren) Bereiche nicht sofort die ganze Seite füllen.
+ * seit v0.58 zusätzlich für Kompetenzen, Reifegrad je Bereich,
+ * Phasenverlauf, Projekt-Check und Aufgaben, damit diese (oft längeren)
+ * Bereiche nicht sofort die ganze Seite füllen.
+ *
+ * Der Button ist bewusst auffällig (kräftige Akzentfarbe statt nur ein
+ * dünner Rahmen) gestaltet, damit der Klick zum Öffnen nicht übersehen
+ * wird – auf ausdrücklichen Wunsch.
  */
 export default function Aufklappbar({
   buttonText,
@@ -22,15 +28,15 @@ export default function Aufklappbar({
       <button
         type="button"
         onClick={() => setOffen(true)}
-        className="flex items-center gap-2 rounded-md border border-line px-4 py-2 text-sm font-medium text-ink transition hover:border-accent hover:text-accent"
+        className="flex items-center gap-2 rounded-md bg-accent px-4 py-2.5 text-sm font-semibold text-surface shadow-sm transition hover:bg-accent-ink"
       >
         <svg
-          width="14"
-          height="14"
+          width="16"
+          height="16"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.8"
+          strokeWidth="2.2"
           strokeLinecap="round"
           strokeLinejoin="round"
         >
