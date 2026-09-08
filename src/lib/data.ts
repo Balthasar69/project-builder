@@ -38,6 +38,27 @@ interface UserRow {
   name: string;
   is_admin: boolean;
   created_at: string;
+  einfuehrung_gesehen_am: string | null;
+}
+
+// Lazy, idempotente Migration statt eines lokalen Skripts (v0.62): das
+// bestehende `npm run db:init` kann Balthasar nicht selbst ausführen (setzt
+// `vercel env pull` voraus), deshalb legt der Server die neue Spalte beim
+// ersten echten Datenbankzugriff automatisch an. Bestehende Konten
+// bekommen dabei sofort ein Datum eingetragen ("schon gesehen"), damit nur
+// künftig NEU registrierte Personen den Willkommens-Bildschirm angezeigt
+// bekommen – deshalb der DEFAULT NOW() beim Anlegen, gefolgt von DROP
+// DEFAULT, damit spätere Registrierungen wieder bewusst NULL eintragen
+// (siehe `createUser`). `usersTableMigriert` verhindert, dass das bei jedem
+// Aufruf erneut geprüft wird (die ALTER-Befehle sind zwar idempotent, aber
+// unnötiger Overhead pro Anfrage).
+let usersTableMigriert = false;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function ensureUsersTableMigriert(sql: any) {
+  if (usersTableMigriert) return;
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS einfuehrung_gesehen_am TIMESTAMPTZ DEFAULT NOW()`;
+  await sql`ALTER TABLE users ALTER COLUMN einfuehrung_gesehen_am DROP DEFAULT`;
+  usersTableMigriert = true;
 }
 
 function getSql() {
@@ -133,6 +154,7 @@ function toUser(row: UserRow): User {
     name: row.name,
     isAdmin: row.is_admin,
     createdAt: row.created_at,
+    einfuehrungGesehenAm: row.einfuehrung_gesehen_am ?? null,
   };
 }
 
@@ -699,6 +721,7 @@ export async function setPhase(slug: string, phase: PhaseCode): Promise<Project>
 
 export async function getUserByEmail(email: string): Promise<User | null> {
   const sql = getSql();
+  await ensureUsersTableMigriert(sql);
   const rows =
     (await sql`SELECT * FROM users WHERE email = ${email.trim().toLowerCase()}`) as UserRow[];
   return rows[0] ? toUser(rows[0]) : null;
@@ -711,6 +734,7 @@ export async function createUser(params: {
   name: string;
 }): Promise<User> {
   const sql = getSql();
+  await ensureUsersTableMigriert(sql);
   const [{ count }] = (await sql`SELECT COUNT(*)::int AS count FROM users`) as {
     count: number;
   }[];
@@ -722,6 +746,21 @@ export async function createUser(params: {
     RETURNING *
   `) as UserRow[];
   return toUser(rows[0]);
+}
+
+/**
+ * Markiert den Willkommens-Bildschirm (v0.62) als gesehen – aufgerufen,
+ * sobald die Person dort auf "Los geht's" klickt. Danach führt die
+ * Startseite nicht mehr dorthin.
+ */
+export async function markiereEinfuehrungGesehen(email: string): Promise<void> {
+  const sql = getSql();
+  await ensureUsersTableMigriert(sql);
+  await sql`
+    UPDATE users
+    SET einfuehrung_gesehen_am = NOW()
+    WHERE email = ${email.trim().toLowerCase()}
+  `;
 }
 
 interface TaskNoteRow {

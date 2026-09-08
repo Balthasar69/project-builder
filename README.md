@@ -801,6 +801,20 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**Einmaliger Willkommens-Bildschirm für neue Mitglieder (v0.62):** Wer sich
+neu registriert, sieht direkt nach der Registrierung eine kurze,
+persönliche Begrüßung (`/willkommen`) statt sofort auf der
+Projektübersicht zu landen — in einfachen Worten, was die App ist, wie sie
+begleitet und dass Felder auch per Diktat ausfüllbar sind. Ein Klick auf
+"Los geht's" führt danach zur gewohnten Projektübersicht; die Begrüßung
+erscheint ab dann nicht mehr automatisch. Bereits bestehende Konten (vor
+v0.62 registriert) bekommen sie nicht nachträglich vorgesetzt. Über den
+kleinen Link "Wie funktioniert das hier?" auf der Startseite lässt sie
+sich jederzeit erneut aufrufen. Technisch: eine neue, zunächst leere
+Spalte in der Datenbank-Tabelle "users" merkt sich pro Person, ob sie die
+Begrüßung schon gesehen hat — sie wird beim ersten echten Zugriff
+automatisch angelegt (kein manueller Datenbank-Schritt nötig).
+
 **Spracheingabe (Diktat) in fast allen Textfeldern (v0.61):** Ein kleines
 Mikrofon-Symbol im Eck jedes frei auszufüllenden Text-/Notizfelds –
 draufklicken, sprechen, der erkannte Text wird direkt eingefügt (wie das

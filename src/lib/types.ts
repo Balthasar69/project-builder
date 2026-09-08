@@ -558,4 +558,13 @@ export interface User {
   /** Admins sehen und verwalten alle Projekte, unabhängig von mitglieder. */
   isAdmin: boolean;
   createdAt: string;
+  /**
+   * Wann diese Person den einmaligen Willkommens-Bildschirm (v0.62) gesehen
+   * hat – `null` heißt "noch nicht" und führt beim nächsten Aufruf der
+   * Startseite zur Weiterleitung nach `/willkommen`. Bestehende Konten von
+   * vor v0.62 bekommen beim Anlegen der Spalte automatisch ein Datum
+   * eingetragen (siehe `ensureUsersTableMigriert` in data.ts), damit ihnen
+   * der Bildschirm nicht nachträglich aufgezwungen wird.
+   */
+  einfuehrungGesehenAm: string | null;
 }

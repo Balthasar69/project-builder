@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getAllProjects } from "@/lib/data";
+import { getAllProjects, getUserByEmail } from "@/lib/data";
 import { getSession } from "@/lib/auth";
 import { berechneReifegrad } from "@/lib/scoring";
 import { PHASES } from "@/lib/types";
@@ -16,6 +16,14 @@ export default async function HomePage() {
   // leer zu bleiben.
   if (!session) redirect("/login");
 
+  // Einmaliger Willkommens-Bildschirm (v0.62): wer die Einführung noch
+  // nicht gesehen hat (neu registrierte Person, `einfuehrungGesehenAm` ist
+  // `null`), landet zuerst dort statt direkt auf der Projektübersicht.
+  const angemeldetePerson = await getUserByEmail(session.email);
+  if (angemeldetePerson && !angemeldetePerson.einfuehrungGesehenAm) {
+    redirect("/willkommen");
+  }
+
   const alleProjekte = await getAllProjects();
   const projects = session.isAdmin
     ? alleProjekte
@@ -26,6 +34,12 @@ export default async function HomePage() {
       <div className="mb-10 flex items-center justify-between">
         <Brand />
         <div className="flex items-center gap-4">
+          <Link
+            href="/willkommen"
+            className="hidden text-sm text-ink-faint underline decoration-dotted hover:text-accent sm:inline"
+          >
+            Wie funktioniert das hier?
+          </Link>
           <span className="text-sm text-ink-muted">{session.name}</span>
           <LogoutButton />
         </div>
