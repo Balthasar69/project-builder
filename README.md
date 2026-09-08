@@ -801,6 +801,14 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**Module im Projektcockpit hell hinterlegt (v0.63):** Kernteam, Team,
+Kompetenzen, Reifegrad je Bereich, Phasenverlauf, Projekt-Check & GO/NO-GO,
+Aufgaben, Ideen und Chat stehen jetzt jeweils auf einer eigenen hellen
+Fläche mit dünnem Rahmen — wie schon die Statuskacheln (Phase/Kernteam/
+Bitrix24-Deal/Zuordnung) und die Projektliste auf der Startseite. Macht die
+einzelnen Bereiche auf einen Blick als eigenständige Module erkennbar,
+statt lose auf der Seite zu stehen.
+
 **Einmaliger Willkommens-Bildschirm für neue Mitglieder (v0.62):** Wer sich
 neu registriert, sieht direkt nach der Registrierung eine kurze,
 persönliche Begrüßung (`/willkommen`) statt sofort auf der

@@ -199,7 +199,10 @@ export default async function ProjectCockpit({
       {/* Kernteam & Team stehen bewusst nebeneinander, auf einer Höhe, und
           direkt über der grafischen Projektfortschritts-Darstellung. */}
       <div className="mb-10 grid grid-cols-1 gap-8 sm:grid-cols-2">
-        <section id="kernteam" className="scroll-mt-6">
+        <section
+          id="kernteam"
+          className="scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
+        >
           <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
             <h2 className="font-display text-xl font-semibold">Kernteam</h2>
           </div>
@@ -219,7 +222,10 @@ export default async function ProjectCockpit({
           </Aufklappbar>
         </section>
 
-        <section id="team" className="scroll-mt-6">
+        <section
+          id="team"
+          className="scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
+        >
           <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
             <h2 className="font-display text-xl font-semibold">Team</h2>
             <span className="font-mono text-xs text-ink-faint">
@@ -246,7 +252,10 @@ export default async function ProjectCockpit({
 
       {/* Kompetenzen (neu seit v0.46, Teil von "Orga"): jede Person trägt
           selbst ein, was sie beitragen kann bzw. möchte. */}
-      <section id="kompetenzen" className="mb-10 scroll-mt-6">
+      <section
+        id="kompetenzen"
+        className="mb-10 scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
+      >
         <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
           <h2 className="font-display text-xl font-semibold">Kompetenzen</h2>
         </div>
@@ -317,7 +326,7 @@ export default async function ProjectCockpit({
         </div>
       </div>
 
-      <section className="mb-12">
+      <section className="mb-12 rounded-lg border border-line bg-surface p-5 sm:p-6">
         <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
           <h2 className="font-display text-xl font-semibold">
             Reifegrad je Bereich
@@ -341,7 +350,10 @@ export default async function ProjectCockpit({
           beide auf einen Blick sichtbar sind; auf schmalen Bildschirmen
           (Handy) bleiben sie wie gewohnt untereinander. */}
       <div className="mb-12 grid grid-cols-1 gap-8 sm:grid-cols-2">
-        <section id="phasenverlauf" className="scroll-mt-6">
+        <section
+          id="phasenverlauf"
+          className="scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
+        >
           <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
             <h2 className="font-display text-xl font-semibold">
               Phasenverlauf
@@ -370,7 +382,10 @@ export default async function ProjectCockpit({
           </Aufklappbar>
         </section>
 
-        <section id="bewertung" className="scroll-mt-6">
+        <section
+          id="bewertung"
+          className="scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
+        >
           <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
             <h2 className="font-display text-xl font-semibold">
               Projekt-Check &amp; GO/NO-GO
@@ -403,7 +418,10 @@ export default async function ProjectCockpit({
           zu "Dynamik" in der Hub-Navigation und passen inhaltlich
           zusammen. */}
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
-        <section id="aufgaben" className="scroll-mt-6">
+        <section
+          id="aufgaben"
+          className="scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
+        >
           <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
             <h2 className="font-display text-xl font-semibold">Aufgaben</h2>
             <span className="font-mono text-xs text-ink-faint">Kapitel 25</span>
@@ -424,7 +442,10 @@ export default async function ProjectCockpit({
           </Aufklappbar>
         </section>
 
-        <section id="ideen" className="scroll-mt-6">
+        <section
+          id="ideen"
+          className="scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
+        >
           <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
             <h2 className="font-display text-xl font-semibold">Ideen</h2>
           </div>
@@ -445,7 +466,10 @@ export default async function ProjectCockpit({
 
       {/* Chat (neu seit v0.46, Teil von "Dynamik"): interner Austausch nur
           für Kernteam & Team dieses Projekts. */}
-      <section id="chat" className="mt-12 scroll-mt-6">
+      <section
+        id="chat"
+        className="mt-12 scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
+      >
         <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
           <h2 className="font-display text-xl font-semibold">Chat</h2>
           <span className="font-mono text-xs text-ink-faint">
