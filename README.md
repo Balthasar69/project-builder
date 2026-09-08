@@ -801,6 +801,33 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**Projektübergreifendes Dashboard, nur für Balthasar (v0.66):** Neue Seite
+`/dashboard`, erreichbar über eine eigene Kachel ganz oben in der
+Projektliste ("📊 Dashboard") – diese Kachel und die Seite selbst sind
+ausschließlich für Balthasar sichtbar (geprüft über seine beiden bekannten
+E-Mail-Adressen, unabhängig vom allgemeinen Admin-Status), alle anderen
+Mitglieder sehen und merken davon nichts. Zeigt projektübergreifend:
+
+- Eine Kennzahlen-Leiste (Anzahl Projekte, davon "hemmt"/"vorangeht"/
+  "ansteht").
+- **Was hemmt:** Projekte, deren letzte Bewertung STOPP war, die seit
+  mindestens 14 Tagen keine Aktivität hatten (Bewertung, Chat, Idee,
+  Kompetenz-Eintrag oder allgemeines Speichern), oder deren älteste offene
+  Bitrix24-Aufgabe seit mindestens 14 Tagen offen ist.
+- **Was vorangeht:** Projekte mit einer aktuellen GO-Bewertung oder mit
+  Aktivität in den letzten 5 Tagen.
+- **Was ansteht:** alle übrigen Projekte, mit dem Ziel der aktuellen Phase
+  als nächstem Schritt.
+- Eine vollständige Tabelle aller Projekte (Phase, Reifegrad, Bewertung,
+  offene Aufgaben, letzte Aktivität).
+
+Nutzt bewusst ausschließlich bereits vorhandene Daten, keine zusätzliche
+KI-Einschätzung (schneller Seitenaufbau). Die Anzahl offener Bitrix24-
+Aufgaben wird nur für Projekte ermittelt, die schon eine verbundene
+Arbeitsgruppe haben (rein lesend, legt selbst nichts neu in Bitrix24 an);
+schlägt der Abruf fehl, bleibt das Feld leer, ohne das Dashboard zu
+blockieren.
+
 **"Schließen"-Button besser sichtbar (v0.65):** Der in v0.64 eingeführte
 "Schließen"-Button unter geöffneten Bereichen war zu dezent (grauer, kleiner
 Text) und wurde übersehen. Jetzt genauso auffällig gestaltet wie der

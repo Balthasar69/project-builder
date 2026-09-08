@@ -436,6 +436,13 @@ export interface Bitrix24Task {
    * `status`) an.
    */
   stage?: Bitrix24TaskStage;
+  /**
+   * Erstellungsdatum der Aufgabe in Bitrix24 (ISO-Datum, falls von Bitrix24
+   * geliefert) – Grundlage für "wie lange schon offen" im projektübergreifenden
+   * Dashboard (v0.66). Optional: ältere/abweichende Bitrix24-Antworten liefern
+   * dieses Feld nicht immer.
+   */
+  erstelltAm?: string;
 }
 
 /**

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAllProjects, getUserByEmail } from "@/lib/data";
-import { getSession } from "@/lib/auth";
+import { getSession, istBalthasar } from "@/lib/auth";
 import { berechneReifegrad } from "@/lib/scoring";
 import { PHASES } from "@/lib/types";
 import LogoutButton from "@/components/LogoutButton";
@@ -63,6 +63,28 @@ export default async function HomePage() {
           + Neues Projekt
         </Link>
       </div>
+
+      {/* Projektübergreifendes Dashboard (v0.66) – bewusst wie ein eigenes
+          Projekt in der Liste dargestellt (auf Wunsch), aber nur für
+          Balthasar sichtbar; alle anderen sehen diese Kachel gar nicht. */}
+      {istBalthasar(session.email) && (
+        <Link
+          href="/dashboard"
+          className="mb-3 flex items-center justify-between rounded-lg border border-accent/40 bg-accent-soft/40 px-5 py-4 transition hover:border-accent hover:shadow-sm"
+        >
+          <div>
+            <div className="font-display text-lg font-semibold text-accent-ink">
+              📊 Dashboard
+            </div>
+            <div className="text-sm text-ink-muted">
+              Alle Projekte im Überblick – nur für dich sichtbar
+            </div>
+          </div>
+          <span className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-accent">
+            Öffnen →
+          </span>
+        </Link>
+      )}
 
       {projects.length === 0 ? (
         <p className="rounded-lg border border-line bg-surface px-5 py-8 text-center text-sm text-ink-muted">

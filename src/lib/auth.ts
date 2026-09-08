@@ -36,6 +36,18 @@ export function effektiverAdminStatus(email: string, dbIsAdmin: boolean): boolea
   return dbIsAdmin || STANDARD_ADMIN_EMAILS.includes(email.toLowerCase());
 }
 
+/**
+ * Genau Balthasar selbst (unabhängig davon, mit welcher seiner beiden
+ * E-Mail-Adressen er gerade angemeldet ist) – strenger als `isAdmin`, das
+ * theoretisch auch andere Personen betreffen könnte (erste registrierte
+ * Person wird automatisch Admin, siehe `createUser` in data.ts). Genutzt
+ * für Dinge, die bewusst NUR für ihn gedacht sind (v0.66, projektübergreifendes
+ * Dashboard "nur für mich").
+ */
+export function istBalthasar(email: string): boolean {
+  return STANDARD_ADMIN_EMAILS.includes(email.toLowerCase());
+}
+
 /** Liest die aktuelle, bereits verifizierte Session aus dem Cookie (Server Components/API-Routen). */
 export async function getSession(): Promise<SessionPayload | null> {
   const token = cookies().get(SESSION_COOKIE)?.value;

@@ -101,6 +101,7 @@ interface RawTask {
   TITLE: string;
   STATUS: string | number;
   RESPONSIBLE_ID?: string | number;
+  CREATED_DATE?: string;
 }
 
 function toBitrix24Task(raw: RawTask): Bitrix24Task {
@@ -110,6 +111,7 @@ function toBitrix24Task(raw: RawTask): Bitrix24Task {
     status: String(raw.STATUS),
     erledigt: ERLEDIGT_STATUS.has(String(raw.STATUS)),
     responsibleId: raw.RESPONSIBLE_ID ? String(raw.RESPONSIBLE_ID) : undefined,
+    erstelltAm: raw.CREATED_DATE || undefined,
   };
 }
 
@@ -127,6 +129,8 @@ interface RawTaskV2 {
   STAGE_ID?: string | number;
   responsibleId?: string | number;
   RESPONSIBLE_ID?: string | number;
+  createdDate?: string;
+  CREATED_DATE?: string;
 }
 
 // Eine Kanban-Spalte, wie "task.stages.get" sie für eine Arbeitsgruppe
@@ -213,6 +217,7 @@ function toBitrix24TaskV2(
         ? String(raw.responsibleId ?? raw.RESPONSIBLE_ID)
         : undefined,
     stage: rateStage(status, stageId, stages, rawStages),
+    erstelltAm: raw.createdDate || raw.CREATED_DATE || undefined,
   };
 }
 
@@ -231,7 +236,7 @@ export async function listTasks(params: {
     const [taskResult, rawStagesResult, stages] = await Promise.all([
       call<{ tasks?: RawTaskV2[] } | RawTaskV2[]>("tasks.task.list", {
         filter: { GROUP_ID: params.groupId },
-        select: ["ID", "TITLE", "STATUS", "STAGE_ID", "RESPONSIBLE_ID"],
+        select: ["ID", "TITLE", "STATUS", "STAGE_ID", "RESPONSIBLE_ID", "CREATED_DATE"],
       }),
       call<Record<string, RawStage>>("task.stages.get", {
         entityid: params.groupId,
