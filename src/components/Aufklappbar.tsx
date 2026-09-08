@@ -15,10 +15,12 @@ import { ReactNode, useState } from "react";
  * wird – ohne flächigen Farbhintergrund, der auf Wunsch als zu präsent
  * empfunden wurde (v0.59).
  *
- * Seit v0.64 lässt sich ein geöffneter Bereich über einen dezenten
- * "Schließen"-Button unter dem Inhalt auch wieder einklappen (vorher: nur
- * einmaliges, dauerhaftes Öffnen) – für Übersichtlichkeit, wenn mehrere
- * Bereiche nacheinander geöffnet wurden.
+ * Seit v0.64 lässt sich ein geöffneter Bereich über einen "Schließen"-
+ * Button unter dem Inhalt auch wieder einklappen (vorher: nur einmaliges,
+ * dauerhaftes Öffnen) – für Übersichtlichkeit, wenn mehrere Bereiche
+ * nacheinander geöffnet wurden. In v0.65 bewusst genauso auffällig (fette,
+ * blaue Schrift) wie der "Hier öffnen"-Button gestaltet, statt dezent grau
+ * – zu dezent, wurde beim Testen übersehen.
  */
 export default function Aufklappbar({
   buttonText,
@@ -59,7 +61,7 @@ export default function Aufklappbar({
       <button
         type="button"
         onClick={() => setOffen(false)}
-        className="mt-4 flex items-center gap-2 rounded-md px-1 py-1.5 text-sm font-medium text-ink-faint transition hover:text-ink"
+        className="mt-5 flex items-center gap-2 rounded-md border-t border-line px-1 pt-4 pb-1.5 text-sm font-bold text-accent transition hover:text-accent-ink"
       >
         <svg
           width="16"

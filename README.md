@@ -801,6 +801,12 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**"Schließen"-Button besser sichtbar (v0.65):** Der in v0.64 eingeführte
+"Schließen"-Button unter geöffneten Bereichen war zu dezent (grauer, kleiner
+Text) und wurde übersehen. Jetzt genauso auffällig gestaltet wie der
+"Hier öffnen"-Button (fette, blaue Schrift), zusätzlich mit einer dünnen
+Trennlinie darüber, damit er klar vom Inhalt abgesetzt ist.
+
 **"Schließen"-Button für geöffnete Bereiche (v0.64):** Jeder mit "Hier
 öffnen" (bzw. "Kernteam sehen" / "Team sehen") aufgeklappte Bereich zeigt
 unter seinem Inhalt jetzt zusätzlich einen dezenten "Schließen"-Button, um
