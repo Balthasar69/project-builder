@@ -12,6 +12,7 @@ import {
   eigeneCheckFuerPhase,
 } from "@/lib/types";
 import { checkScoreRange, durchschnittFuerPhase } from "@/lib/scoring";
+import Diktierknopf from "./Diktierknopf";
 
 const EMPFEHLUNG_STYLE: Record<CheckResult["empfehlung"], string> = {
   GO: "bg-good-soft text-good",
@@ -224,13 +225,21 @@ export default function ProjectCheckForm({
             <span className="mb-1.5 block text-sm font-medium text-ink">
               Deine Notiz zur Einschätzung (optional)
             </span>
-            <textarea
-              value={notiz}
-              onChange={(e) => setNotiz(e.target.value)}
-              rows={2}
-              placeholder="z. B. Begründung, offene Fragen, Quellen…"
-              className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-            />
+            <div className="relative">
+              <textarea
+                value={notiz}
+                onChange={(e) => setNotiz(e.target.value)}
+                rows={2}
+                placeholder="z. B. Begründung, offene Fragen, Quellen…"
+                className="w-full rounded-md border border-line bg-surface px-3 py-2 pr-9 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+              />
+              <Diktierknopf
+                onText={(erkannt) =>
+                  setNotiz((bisher) => (bisher ? `${bisher} ${erkannt}` : erkannt))
+                }
+                className="absolute right-1.5 top-1.5"
+              />
+            </div>
           </label>
 
           <div className="flex items-center justify-between gap-4 border-t border-line pt-4">

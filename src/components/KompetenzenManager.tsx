@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { KompetenzBeitrag } from "@/lib/types";
+import Diktierknopf from "./Diktierknopf";
 
 /**
  * Neuer Cockpit-Bereich seit v0.46: jede Person mit Projektzugriff trägt für
@@ -90,25 +91,45 @@ export default function KompetenzenManager({
               <span className="text-xs font-medium text-ink-muted">
                 Das kann ich beitragen
               </span>
-              <textarea
-                rows={2}
-                value={kannBeitragen}
-                onChange={(e) => setKannBeitragen(e.target.value)}
-                placeholder="z. B. Erfahrung im Vertrieb, technisches Know-how, Kontakte …"
-                className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-              />
+              <div className="relative">
+                <textarea
+                  rows={2}
+                  value={kannBeitragen}
+                  onChange={(e) => setKannBeitragen(e.target.value)}
+                  placeholder="z. B. Erfahrung im Vertrieb, technisches Know-how, Kontakte …"
+                  className="w-full rounded-md border border-line bg-surface px-3 py-2 pr-9 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+                />
+                <Diktierknopf
+                  onText={(erkannt) =>
+                    setKannBeitragen((bisher) =>
+                      bisher ? `${bisher} ${erkannt}` : erkannt
+                    )
+                  }
+                  className="absolute right-1.5 top-1.5"
+                />
+              </div>
             </label>
             <label className="flex flex-col gap-1">
               <span className="text-xs font-medium text-ink-muted">
                 Das möchte ich beitragen
               </span>
-              <textarea
-                rows={2}
-                value={moechteBeitragen}
-                onChange={(e) => setMoechteBeitragen(e.target.value)}
-                placeholder="z. B. mehr Verantwortung übernehmen, in einem bestimmten Bereich mitwirken …"
-                className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-              />
+              <div className="relative">
+                <textarea
+                  rows={2}
+                  value={moechteBeitragen}
+                  onChange={(e) => setMoechteBeitragen(e.target.value)}
+                  placeholder="z. B. mehr Verantwortung übernehmen, in einem bestimmten Bereich mitwirken …"
+                  className="w-full rounded-md border border-line bg-surface px-3 py-2 pr-9 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+                />
+                <Diktierknopf
+                  onText={(erkannt) =>
+                    setMoechteBeitragen((bisher) =>
+                      bisher ? `${bisher} ${erkannt}` : erkannt
+                    )
+                  }
+                  className="absolute right-1.5 top-1.5"
+                />
+              </div>
             </label>
             <div className="flex items-center gap-3">
               <button

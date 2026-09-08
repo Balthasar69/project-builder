@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AufgabenVorschlag, KernteamMitglied, ProjektArt, ProjektstartFragebogen as Fragebogen } from "@/lib/types";
+import Diktierknopf from "./Diktierknopf";
 
 /**
  * "Aufgaben von der KI vorschlagen lassen": Admin bestimmt einen
@@ -264,35 +265,65 @@ export default function ProjektstartFragebogen({
               <label className="mb-1 block text-sm text-ink-muted">
                 Zielsituation: Was soll am Ende erreicht sein?
               </label>
-              <textarea
-                required
-                rows={3}
-                value={zielsituation}
-                onChange={(e) => setZielsituation(e.target.value)}
-                className={inputKlasse}
-              />
+              <div className="relative">
+                <textarea
+                  required
+                  rows={3}
+                  value={zielsituation}
+                  onChange={(e) => setZielsituation(e.target.value)}
+                  className={`${inputKlasse} pr-9`}
+                />
+                <Diktierknopf
+                  onText={(erkannt) =>
+                    setZielsituation((bisher) =>
+                      bisher ? `${bisher} ${erkannt}` : erkannt
+                    )
+                  }
+                  className="absolute right-1.5 top-1.5"
+                />
+              </div>
             </div>
             {projektArt === "geschaeft" && (
               <>
                 <div>
                   <label className="mb-1 block text-sm text-ink-muted">Umsatzziel</label>
-                  <textarea
-                    rows={2}
-                    value={umsatzziel}
-                    onChange={(e) => setUmsatzziel(e.target.value)}
-                    className={inputKlasse}
-                  />
+                  <div className="relative">
+                    <textarea
+                      rows={2}
+                      value={umsatzziel}
+                      onChange={(e) => setUmsatzziel(e.target.value)}
+                      className={`${inputKlasse} pr-9`}
+                    />
+                    <Diktierknopf
+                      onText={(erkannt) =>
+                        setUmsatzziel((bisher) =>
+                          bisher ? `${bisher} ${erkannt}` : erkannt
+                        )
+                      }
+                      className="absolute right-1.5 top-1.5"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="mb-1 block text-sm text-ink-muted">
                     Liquiditätslage/-planung
                   </label>
-                  <textarea
-                    rows={2}
-                    value={liquiditaet}
-                    onChange={(e) => setLiquiditaet(e.target.value)}
-                    className={inputKlasse}
-                  />
+                  <div className="relative">
+                    <textarea
+                      rows={2}
+                      value={liquiditaet}
+                      onChange={(e) => setLiquiditaet(e.target.value)}
+                      className={`${inputKlasse} pr-9`}
+                    />
+                    <Diktierknopf
+                      onText={(erkannt) =>
+                        setLiquiditaet((bisher) =>
+                          bisher ? `${bisher} ${erkannt}` : erkannt
+                        )
+                      }
+                      className="absolute right-1.5 top-1.5"
+                    />
+                  </div>
                 </div>
               </>
             )}
@@ -300,13 +331,23 @@ export default function ProjektstartFragebogen({
               <label className="mb-1 block text-sm text-ink-muted">
                 Meilensteine (ein Meilenstein pro Zeile)
               </label>
-              <textarea
-                required
-                rows={4}
-                value={meilensteine}
-                onChange={(e) => setMeilensteine(e.target.value)}
-                className={inputKlasse}
-              />
+              <div className="relative">
+                <textarea
+                  required
+                  rows={4}
+                  value={meilensteine}
+                  onChange={(e) => setMeilensteine(e.target.value)}
+                  className={`${inputKlasse} pr-9`}
+                />
+                <Diktierknopf
+                  onText={(erkannt) =>
+                    setMeilensteine((bisher) =>
+                      bisher ? `${bisher}\n${erkannt}` : erkannt
+                    )
+                  }
+                  className="absolute right-1.5 top-1.5"
+                />
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <button

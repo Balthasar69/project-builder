@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { TaskNote } from "@/lib/types";
+import Diktierknopf from "./Diktierknopf";
 
 // Max. Aufnahmedauer als Sicherheitsnetz gegen zu große Dateien (die Route
 // lehnt ohnehin alles über ca. 2,2 MB Audio serverseitig ab).
@@ -204,13 +205,21 @@ export default function TaskNotes({
       )}
 
       <div className="flex flex-col gap-2">
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={2}
-          placeholder="Notiz schreiben…"
-          className="w-full rounded-md border border-line bg-surface px-2.5 py-1.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-        />
+        <div className="relative">
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={2}
+            placeholder="Notiz schreiben…"
+            className="w-full rounded-md border border-line bg-surface px-2.5 py-1.5 pr-9 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+          />
+          <Diktierknopf
+            onText={(erkannt) =>
+              setText((bisher) => (bisher ? `${bisher} ${erkannt}` : erkannt))
+            }
+            className="absolute right-1 top-1"
+          />
+        </div>
 
         {audioVorschau && (
           <div className="flex items-center gap-2">

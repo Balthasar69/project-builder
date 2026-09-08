@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { ChatNachricht } from "@/lib/types";
+import Diktierknopf from "./Diktierknopf";
 
 /**
  * Interner Team-Chat je Projekt (neu seit v0.46) – nur für Kernteam & Team
@@ -112,13 +113,21 @@ export default function ProjectChat({
       </div>
 
       <form onSubmit={senden} className="flex items-center gap-2">
-        <input
-          type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Nachricht schreiben …"
-          className="flex-1 rounded-full border border-line bg-surface px-4 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-        />
+        <div className="relative flex-1">
+          <input
+            type="text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Nachricht schreiben …"
+            className="w-full rounded-full border border-line bg-surface px-4 py-2 pr-9 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+          />
+          <Diktierknopf
+            onText={(erkannt) =>
+              setText((bisher) => (bisher ? `${bisher} ${erkannt}` : erkannt))
+            }
+            className="absolute right-1 top-1/2 -translate-y-1/2"
+          />
+        </div>
         <button
           type="submit"
           disabled={sending || !text.trim()}

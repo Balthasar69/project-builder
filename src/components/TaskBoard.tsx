@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Bitrix24Task } from "@/lib/types";
 import TaskNotes from "./TaskNotes";
 import TaskAnalyse from "./TaskAnalyse";
+import Diktierknopf from "./Diktierknopf";
 
 // Fallback-Beschriftung für den älteren, technischen Bitrix24-Status
 // (Standard-Codes 1–7) – wird nur verwendet, wenn eine Aufgabe keine echte,
@@ -149,14 +150,22 @@ export default function TaskBoard({ slug }: { slug: string }) {
         </p>
       )}
       <form onSubmit={hinzufuegen} className="mb-4 flex gap-2">
-        <input
-          type="text"
-          required
-          placeholder="Hast du eine neue Idee? Dann gib ihr einen Titel und füge sie hinzu."
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="flex-1 rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-        />
+        <div className="relative flex-1">
+          <input
+            type="text"
+            required
+            placeholder="Hast du eine neue Idee? Dann gib ihr einen Titel und füge sie hinzu."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full rounded-md border border-line bg-surface px-3 py-2 pr-9 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+          />
+          <Diktierknopf
+            onText={(erkannt) =>
+              setTitle((bisher) => (bisher ? `${bisher} ${erkannt}` : erkannt))
+            }
+            className="absolute right-1.5 top-1/2 -translate-y-1/2"
+          />
+        </div>
         <button
           type="submit"
           disabled={saving || !title.trim()}

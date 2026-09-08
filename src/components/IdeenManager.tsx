@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Idee } from "@/lib/types";
+import Diktierknopf from "./Diktierknopf";
 
 /**
  * Loses Sammelbecken für kurze Ideen (Kapitel 25, Ergänzung "Ideen"). Jeder
@@ -135,14 +136,22 @@ export default function IdeenManager({
 
       {istKernteam && (
         <form onSubmit={hinzufuegen} className="flex flex-col gap-2">
-          <textarea
-            required
-            rows={2}
-            placeholder="Kurze Idee…"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-          />
+          <div className="relative">
+            <textarea
+              required
+              rows={2}
+              placeholder="Kurze Idee…"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              className="w-full rounded-md border border-line bg-surface px-3 py-2 pr-9 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+            />
+            <Diktierknopf
+              onText={(erkannt) =>
+                setText((bisher) => (bisher ? `${bisher} ${erkannt}` : erkannt))
+              }
+              className="absolute right-1.5 top-1.5"
+            />
+          </div>
           <button
             type="submit"
             disabled={saving || !text.trim()}

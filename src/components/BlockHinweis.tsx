@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BlockHinweisKey } from "@/lib/types";
+import Diktierknopf from "./Diktierknopf";
 
 /**
  * Kurzanweisung unter einer Cockpit-Überschrift (z. B. "Team", "Aufgaben").
@@ -52,13 +53,21 @@ export default function BlockHinweis({
   if (bearbeiten) {
     return (
       <div className="mb-4 rounded-md border border-line bg-surface-2 p-3">
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={2}
-          placeholder={standardText}
-          className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-        />
+        <div className="relative">
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={2}
+            placeholder={standardText}
+            className="w-full rounded-md border border-line bg-surface px-3 py-2 pr-9 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+          />
+          <Diktierknopf
+            onText={(erkannt) =>
+              setText((bisher) => (bisher ? `${bisher} ${erkannt}` : erkannt))
+            }
+            className="absolute right-1.5 top-1.5"
+          />
+        </div>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <button
             type="button"

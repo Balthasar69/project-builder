@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Project } from "@/lib/types";
+import Diktierknopf from "./Diktierknopf";
 
 export default function NewProjectForm() {
   const router = useRouter();
@@ -38,26 +39,42 @@ export default function NewProjectForm() {
     <form onSubmit={submit} className="flex flex-col gap-4">
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium text-ink">Projektname</span>
-        <input
-          type="text"
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="z. B. Be Happy Again"
-          className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-        />
+        <div className="relative">
+          <input
+            type="text"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="z. B. Be Happy Again"
+            className="w-full rounded-md border border-line bg-surface px-3 py-2 pr-9 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+          />
+          <Diktierknopf
+            onText={(erkannt) =>
+              setName((bisher) => (bisher ? `${bisher} ${erkannt}` : erkannt))
+            }
+            className="absolute right-1.5 top-1/2 -translate-y-1/2"
+          />
+        </div>
       </label>
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium text-ink">
           Projektbeschreibung <span className="text-ink-faint">(optional)</span>
         </span>
-        <textarea
-          value={beschreibung}
-          onChange={(e) => setBeschreibung(e.target.value)}
-          rows={3}
-          placeholder="Worum geht es? Für alle Teammitglieder sichtbar."
-          className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-        />
+        <div className="relative">
+          <textarea
+            value={beschreibung}
+            onChange={(e) => setBeschreibung(e.target.value)}
+            rows={3}
+            placeholder="Worum geht es? Für alle Teammitglieder sichtbar."
+            className="w-full rounded-md border border-line bg-surface px-3 py-2 pr-9 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+          />
+          <Diktierknopf
+            onText={(erkannt) =>
+              setBeschreibung((bisher) => (bisher ? `${bisher} ${erkannt}` : erkannt))
+            }
+            className="absolute right-1.5 top-1.5"
+          />
+        </div>
       </label>
       {error && <p className="text-sm text-bad">{error}</p>}
       <button

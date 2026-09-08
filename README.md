@@ -801,6 +801,19 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**Spracheingabe (Diktat) in fast allen Textfeldern (v0.61):** Ein kleines
+Mikrofon-Symbol im Eck jedes frei auszufüllenden Text-/Notizfelds –
+draufklicken, sprechen, der erkannte Text wird direkt eingefügt (wie das
+Diktieren am Smartphone). Betroffen sind: Projektname/-beschreibung (neues
+Projekt und Bearbeiten), Block-Hinweise, Ideen, Chat, Aufgaben-Titel,
+Aufgaben-Notizen, Fragebogen-Antworten, Kompetenzen ("kann/möchte
+beitragen") und die Notiz beim Projekt-Check. Bewusst NICHT bei
+Mitglieder-Formularen (Anmeldung/Registrierung, Kernteam/Team hinzufügen
+oder bearbeiten) – dort bleibt es bei reiner Tastatureingabe. Läuft direkt
+im Browser (Chrome/Safari) ohne eigenen Server und ohne laufende Kosten;
+in Browsern ohne Unterstützung (z. B. Firefox, Stand heute) erscheint gar
+kein Mikrofon-Symbol, statt einer Fehlermeldung.
+
 **Phasenverlauf/Projekt-Check und Aufgaben/Ideen nebeneinander auf dem
 Desktop (v0.60):** Diese vier Bereiche stehen jetzt paarweise
 nebeneinander (Phasenverlauf + Projekt-Check in einer Zeile, Aufgaben +
