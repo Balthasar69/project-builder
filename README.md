@@ -801,6 +801,13 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**Dashboard: Reifegrad-Ring je Projekt (v0.67):** In den drei Bereichen "Was
+hemmt", "Was vorangeht" und "Was als Nächstes ansteht" zeigt jede
+Projektzeile jetzt rechts zusätzlich denselben kompakten Reifegrad-Ring wie
+im Projektcockpit selbst – auf einen Blick sichtbar, statt nur als
+Prozentzahl im Text. In der Tabelle "Alle Projekte" ganz unten steht neben
+der Prozentzahl zusätzlich ein schmaler Fortschrittsbalken.
+
 **Projektübergreifendes Dashboard, nur für Balthasar (v0.66):** Neue Seite
 `/dashboard`, erreichbar über eine eigene Kachel ganz oben in der
 Projektliste ("📊 Dashboard") – diese Kachel und die Seite selbst sind

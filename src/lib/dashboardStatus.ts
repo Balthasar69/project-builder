@@ -2,6 +2,7 @@ import {
   Project,
   PHASES,
   PhaseCode,
+  BereichStatus,
   checksProPersonFuerPhase,
 } from "./types";
 import { berechneReifegrad, durchschnittFuerPhase } from "./scoring";
@@ -19,6 +20,8 @@ export interface ProjektStatus {
   name: string;
   phase: { code: PhaseCode; name: string; order: number; ziel: string };
   reifegrad: number;
+  /** Für die kompakte Ring-Grafik im Dashboard (ReifegradRingKompakt). */
+  bereichStatus: BereichStatus;
   bewertung: {
     empfehlung: "GO" | "WEITER PRÜFEN" | "STOPP";
     anzahlBewerter: number;
@@ -154,6 +157,7 @@ export async function ermittleProjektStatus(project: Project): Promise<ProjektSt
       ziel: phaseInfo.ziel,
     },
     reifegrad,
+    bereichStatus: project.bereichStatus,
     bewertung,
     letzteAktivitaetAm: aktivitaet ? aktivitaet.toISOString() : null,
     tageSeitAktivitaet,

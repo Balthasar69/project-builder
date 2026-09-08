@@ -5,6 +5,22 @@ import { getSession, istBalthasar } from "@/lib/auth";
 import { ermittleProjektStatus, ProjektStatus } from "@/lib/dashboardStatus";
 import Brand from "@/components/Brand";
 import LogoutButton from "@/components/LogoutButton";
+import ReifegradRingKompakt from "@/components/ReifegradRingKompakt";
+
+/** Dünner, horizontaler Reifegrad-Balken für die Tabelle ganz unten (kompakter als der Ring). */
+function ReifegradBalken({ wert }: { wert: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-line">
+        <div
+          className="h-full rounded-full bg-accent"
+          style={{ width: `${Math.max(0, Math.min(100, wert))}%` }}
+        />
+      </div>
+      <span className="tabular text-ink-muted">{wert}%</span>
+    </div>
+  );
+}
 
 export const dynamic = "force-dynamic";
 
@@ -123,25 +139,31 @@ export default async function DashboardPage() {
                   ⚠ Was hemmt
                 </h2>
               </div>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-5">
                 {hemmt.map((s) => (
-                  <div key={s.slug}>
-                    <Link
-                      href={`/projects/${s.slug}`}
-                      className="font-medium text-ink hover:text-accent"
-                    >
-                      {s.name}
-                    </Link>
-                    <span className="ml-2 text-xs text-ink-faint">
-                      {s.phase.order}. {s.phase.name} · {s.reifegrad}% Reifegrad
-                    </span>
-                    <ul className="mt-1 flex flex-col gap-0.5">
-                      {s.gruende.map((g, i) => (
-                        <li key={i} className="text-sm text-ink-muted">
-                          – {g}
-                        </li>
-                      ))}
-                    </ul>
+                  <div key={s.slug} className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <Link
+                        href={`/projects/${s.slug}`}
+                        className="font-medium text-ink hover:text-accent"
+                      >
+                        {s.name}
+                      </Link>
+                      <span className="ml-2 text-xs text-ink-faint">
+                        {s.phase.order}. {s.phase.name}
+                      </span>
+                      <ul className="mt-1 flex flex-col gap-0.5">
+                        {s.gruende.map((g, i) => (
+                          <li key={i} className="text-sm text-ink-muted">
+                            – {g}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <ReifegradRingKompakt
+                      aktuell={s.phase.code}
+                      bereichStatus={s.bereichStatus}
+                    />
                   </div>
                 ))}
               </div>
@@ -155,25 +177,31 @@ export default async function DashboardPage() {
                   ✓ Was vorangeht
                 </h2>
               </div>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-5">
                 {vorangeht.map((s) => (
-                  <div key={s.slug}>
-                    <Link
-                      href={`/projects/${s.slug}`}
-                      className="font-medium text-ink hover:text-accent"
-                    >
-                      {s.name}
-                    </Link>
-                    <span className="ml-2 text-xs text-ink-faint">
-                      {s.phase.order}. {s.phase.name} · {s.reifegrad}% Reifegrad
-                    </span>
-                    <ul className="mt-1 flex flex-col gap-0.5">
-                      {s.gruende.map((g, i) => (
-                        <li key={i} className="text-sm text-ink-muted">
-                          – {g}
-                        </li>
-                      ))}
-                    </ul>
+                  <div key={s.slug} className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <Link
+                        href={`/projects/${s.slug}`}
+                        className="font-medium text-ink hover:text-accent"
+                      >
+                        {s.name}
+                      </Link>
+                      <span className="ml-2 text-xs text-ink-faint">
+                        {s.phase.order}. {s.phase.name}
+                      </span>
+                      <ul className="mt-1 flex flex-col gap-0.5">
+                        {s.gruende.map((g, i) => (
+                          <li key={i} className="text-sm text-ink-muted">
+                            – {g}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <ReifegradRingKompakt
+                      aktuell={s.phase.code}
+                      bereichStatus={s.bereichStatus}
+                    />
                   </div>
                 ))}
               </div>
@@ -187,19 +215,25 @@ export default async function DashboardPage() {
                   Was als Nächstes ansteht
                 </h2>
               </div>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-5">
                 {ansteht.map((s) => (
-                  <div key={s.slug}>
-                    <Link
-                      href={`/projects/${s.slug}`}
-                      className="font-medium text-ink hover:text-accent"
-                    >
-                      {s.name}
-                    </Link>
-                    <span className="ml-2 text-xs text-ink-faint">
-                      {s.phase.order}. {s.phase.name} · {s.reifegrad}% Reifegrad
-                    </span>
-                    <p className="mt-1 text-sm text-ink-muted">{s.phase.ziel}</p>
+                  <div key={s.slug} className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <Link
+                        href={`/projects/${s.slug}`}
+                        className="font-medium text-ink hover:text-accent"
+                      >
+                        {s.name}
+                      </Link>
+                      <span className="ml-2 text-xs text-ink-faint">
+                        {s.phase.order}. {s.phase.name}
+                      </span>
+                      <p className="mt-1 text-sm text-ink-muted">{s.phase.ziel}</p>
+                    </div>
+                    <ReifegradRingKompakt
+                      aktuell={s.phase.code}
+                      bereichStatus={s.bereichStatus}
+                    />
                   </div>
                 ))}
               </div>
@@ -237,7 +271,9 @@ export default async function DashboardPage() {
                       <td className="py-2 pr-3 text-ink-muted">
                         {s.phase.order}. {s.phase.name}
                       </td>
-                      <td className="py-2 pr-3 tabular text-ink-muted">{s.reifegrad}%</td>
+                      <td className="py-2 pr-3">
+                        <ReifegradBalken wert={s.reifegrad} />
+                      </td>
                       <td className={`py-2 pr-3 font-medium ${bewertungsFarbe(s.bewertung?.empfehlung)}`}>
                         {s.bewertung?.empfehlung ?? "–"}
                       </td>
