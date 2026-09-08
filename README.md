@@ -801,6 +801,13 @@ Projektcockpits, basierend auf einer gemeinsam abgestimmten Bildschirm-Serie
   dieses Projekts sichtbar — ein fortlaufendes Protokoll mit automatischem
   Nachladen alle 15 Sekunden, ohne zusätzliche Infrastruktur.
 
+**"Schließen"-Button für geöffnete Bereiche (v0.64):** Jeder mit "Hier
+öffnen" (bzw. "Kernteam sehen" / "Team sehen") aufgeklappte Bereich zeigt
+unter seinem Inhalt jetzt zusätzlich einen dezenten "Schließen"-Button, um
+ihn wieder einzuklappen — vorher blieb ein einmal geöffneter Bereich
+dauerhaft offen. Praktisch, wenn nacheinander mehrere Bereiche angeschaut
+wurden und die Seite wieder übersichtlicher werden soll.
+
 **Module im Projektcockpit hell hinterlegt (v0.63):** Kernteam, Team,
 Kompetenzen, Reifegrad je Bereich, Phasenverlauf, Projekt-Check & GO/NO-GO,
 Aufgaben, Ideen und Chat stehen jetzt jeweils auf einer eigenen hellen
