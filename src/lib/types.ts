@@ -372,6 +372,25 @@ export interface Idee {
   bitrixGruppeZugeordnet?: boolean;
 }
 
+/**
+ * Ergebnis eines erfolgreichen Aufrufs der Steuerboard-Factory (siehe
+ * `src/lib/steuerboardFactory.ts`): die für dieses Projekt automatisch
+ * angelegte Steuerboard-Kopie für die Phasen 2–5 (Betrieb & Skalierung im
+ * größeren Steuerboard-Ökosystem, nicht zu verwechseln mit den 15 Phasen
+ * hier im Project Builder). Wird bewusst NICHT automatisch beim Anlegen
+ * eines Projekts oder bei jedem Phasenwechsel erzeugt, sondern nur durch
+ * einen bewussten Klick im Kernteam (siehe `SteuerboardLink`-Komponente).
+ */
+export interface SteuerboardInfo {
+  url: string;
+  resourceName: string;
+  vercelProjectId?: string;
+  neonProjectId?: string;
+  erstelltAm: string; // ISO-Datum
+  erstelltVonName: string;
+  erstelltVonEmail: string;
+}
+
 export interface Project {
   slug: string;
   name: string;
@@ -407,6 +426,12 @@ export interface Project {
     groupId?: number;
   };
   aktualisiertAm: string;
+  /**
+   * Gesetzt, sobald für dieses Projekt per Klick im Kernteam eine eigene
+   * Steuerboard-Kopie (Phasen 2–5 im Steuerboard-Ökosystem) angelegt wurde.
+   * Fehlt dieses Feld, wurde noch keine Kopie erzeugt.
+   */
+  steuerboard?: SteuerboardInfo;
 }
 
 /**

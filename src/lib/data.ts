@@ -11,6 +11,7 @@ import {
   PhaseCode,
   Project,
   ProjektArt,
+  SteuerboardInfo,
   TaskNote,
   User,
 } from "./types";
@@ -708,6 +709,33 @@ export async function setPhase(slug: string, phase: PhaseCode): Promise<Project>
   if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
 
   project.aktuellePhase = phase;
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/**
+ * Hinterlegt die von der Steuerboard-Factory zurückgegebenen Informationen
+ * am Projekt (Rechteprüfung – Kernteam/Admins – sitzt in der API-Route).
+ * Überschreibt ein etwaiges früheres Ergebnis nicht automatisch – die
+ * API-Route lehnt einen erneuten Aufruf ab, solange schon eine Kopie
+ * hinterlegt ist (siehe dort), diese Funktion selbst prüft das nicht noch
+ * einmal.
+ */
+export async function setSteuerboard(
+  slug: string,
+  info: SteuerboardInfo
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  project.steuerboard = info;
   project.aktualisiertAm = new Date().toISOString();
 
   const sql = getSql();
