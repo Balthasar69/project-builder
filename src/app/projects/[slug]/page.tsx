@@ -5,6 +5,7 @@ import { getSession, hatProjektZugriff, istKernteam } from "@/lib/auth";
 import { PHASES, STANDARD_HINWEISE } from "@/lib/types";
 import PhaseTracker from "@/components/PhaseTracker";
 import PhaseAdvance from "@/components/PhaseAdvance";
+import SteuerboardLink from "@/components/SteuerboardLink";
 import ReifegradMeter from "@/components/ReifegradMeter";
 import ProjectCheckForm from "@/components/ProjectCheckForm";
 import TeamManager from "@/components/TeamManager";
@@ -379,6 +380,27 @@ export default async function ProjectCockpit({
               darfSteuern={istKernteam(session, project)}
               istAdmin={session.isAdmin}
             />
+
+            {/* Löst die Einrichtung der Steuerboard-Kopie für die Phasen 2–5
+                aus (großes Steuerboard-Ökosystem) – bewusst per Klick,
+                unabhängig vom hiesigen Phasenverlauf, nie automatisch. Steht
+                bewusst direkt unter dem Phasenverlauf, da der natürliche
+                Zeitpunkt dafür meist die Projektfreigabe (GO) ist. */}
+            <div className="mt-6 border-t border-line pt-4">
+              <div className="mb-1 font-mono text-[0.65rem] uppercase tracking-wide text-ink-faint">
+                Steuerboard (Phasen 2–5)
+              </div>
+              <p className="mb-1 text-sm text-ink-muted">
+                Richtet die eigenständige Steuerboard-App für dieses Vorhaben
+                ein – für den Alltag ab der Projektfreigabe, jederzeit von
+                Kernteam oder Admins auslösbar.
+              </p>
+              <SteuerboardLink
+                slug={project.slug}
+                steuerboard={project.steuerboard}
+                darfAusloesen={istKernteam(session, project)}
+              />
+            </div>
           </Aufklappbar>
         </section>
 

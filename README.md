@@ -1069,6 +1069,46 @@ behebt sich von selbst; eine komplett lückenlose Übereinstimmung mit
 Bitrix24 wäre nur mit einer höheren Webhook-Berechtigung möglich, die
 Bitrix24 für diese Art Webhook bisher nicht zulässt.
 
+## Steuerboard-Kopie per Klick (v0.68)
+
+Der Project Builder deckt Phase 1 ("Idee & Team") des größeren
+Steuerboard-Ökosystems ab; die operative Umsetzung danach läuft in einer
+eigenen Steuerboard-App (Phasen 2–5 dort: Aufbau, Launch-Vorbereitung,
+Markteinführung, Betrieb & Skalierung — eigenständige Software, eigenes
+Repository, nicht zu verwechseln mit den 15 Phasen hier im Project
+Builder). Bislang musste dafür jemand händisch nach dem "Kopier-Rezept" im
+Steuerboard-Repo ein neues Vercel-Projekt samt Datenbank anlegen.
+
+Im Projektcockpit gibt es dafür jetzt, direkt unter dem Phasenverlauf,
+einen eigenen Knopf **„Steuerboard-Kopie erstellen“** (sichtbar für
+Kernteam-Mitglieder und Admins, mit Sicherheitsabfrage vor dem Anlegen).
+Ein Klick ruft die Steuerboard-Factory auf (siehe im Steuerboard-Repo
+`docs/factory-automatisierung.md`) und richtet automatisch eine eigene,
+sofort nutzbare Steuerboard-Kopie für dieses Projekt ein — eigenes
+Vercel-Projekt, eigene Datenbank, Standard-Spaltenvorlage, Stufe 2 "Im
+Aufbau" gesetzt. Nach Abschluss erscheint an derselben Stelle dauerhaft der
+Link zur neuen App.
+
+**Bewusst nur per Klick, nie automatisch:** Weder das Anlegen eines neuen
+Projekts noch ein Phasenwechsel hier im Project Builder lösen von selbst
+eine Steuerboard-Kopie aus — das bleibt eine bewusste Entscheidung des
+Kernteams, typischerweise nach der Projektfreigabe (GO), kann aber
+grundsätzlich in jeder Phase ausgelöst werden. Jedes Projekt bekommt
+höchstens eine Kopie: ist bereits eine hinterlegt, lehnt die App einen
+erneuten Klick ab, statt versehentlich ein zweites Vercel-/Neon-Projekt
+anzulegen.
+
+**Voraussetzung:** `STEUERBOARD_FACTORY_URL` und `STEUERBOARD_FACTORY_SECRET`
+müssen in Vercel gesetzt sein (siehe `.env.local.example`) — beides bekommt
+man von der Steuerboard-Factory-Instanz (dort als `FACTORY_SECRET`
+hinterlegt). Fehlen die Werte, bleibt der Knopf sichtbar, meldet beim Klick
+aber einen klaren Fehler; die Kopie lässt sich dann weiterhin manuell nach
+dem Kopier-Rezept anlegen. Eine mit Project Builder bereits verbundene
+Bitrix24-Arbeitsgruppe (Abschnitt "Bitrix24-Aufgaben" oben) wird dabei
+bewusst nicht automatisch übernommen — die neue Steuerboard-Kopie bekommt
+ihre eigene, unabhängige Bitrix24-Anbindung, die bei Bedarf separat nach
+dem Kopier-Rezept eingerichtet wird.
+
 ## Online stellen (Vercel)
 
 Damit auch Cindy (und Sie selbst vom Handy) die App erreichen, ohne dass
