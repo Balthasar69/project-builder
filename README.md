@@ -1080,7 +1080,7 @@ Builder). Bislang musste dafür jemand händisch nach dem "Kopier-Rezept" im
 Steuerboard-Repo ein neues Vercel-Projekt samt Datenbank anlegen.
 
 Im Projektcockpit gibt es dafür jetzt, direkt unter dem Phasenverlauf,
-einen eigenen Knopf **„Steuerboard-Kopie erstellen“** (sichtbar für
+einen eigenen Knopf **„Steuerboard-Kopie erstellen"** (sichtbar für
 Kernteam-Mitglieder und Admins, mit Sicherheitsabfrage vor dem Anlegen).
 Ein Klick ruft die Steuerboard-Factory auf (siehe im Steuerboard-Repo
 `docs/factory-automatisierung.md`) und richtet automatisch eine eigene,
