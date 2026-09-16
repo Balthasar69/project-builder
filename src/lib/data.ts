@@ -5,6 +5,7 @@ import {
   BlockHinweisKey,
   ChatNachricht,
   CheckResult,
+  CoachNachricht,
   Idee,
   KernteamMitglied,
   KompetenzBeitrag,
@@ -747,6 +748,30 @@ export async function setSteuerboard(
   return project;
 }
 
+/**
+ * Entfernt die Steuerboard-Kopie-Informationen wieder vom Projekt, nachdem
+ * die zugrundeliegenden Vercel-/Neon-Ressourcen erfolgreich gelöscht wurden
+ * (Rechteprüfung – nur Balthasar, siehe `istBalthasar` in auth.ts – sitzt in
+ * der API-Route). Wird bewusst NUR aufgerufen, wenn das Löschen der echten
+ * Ressourcen zuvor geklappt hat, damit die App nie "vergisst", dass noch
+ * reale Cloud-Ressourcen existieren.
+ */
+export async function clearSteuerboard(slug: string): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  delete project.steuerboard;
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
 export async function getUserByEmail(email: string): Promise<User | null> {
   const sql = getSql();
   await ensureUsersTableMigriert(sql);
@@ -1213,6 +1238,39 @@ export async function addChatNachricht(
     erstelltAm: new Date().toISOString(),
   };
   project.chat = [...(project.chat ?? []), neueNachricht];
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/**
+ * Hängt eine Nachricht an den Gründercoach-Bot-Chat dieses Projekts an
+ * (siehe lib/gruendercoach.ts) – analog zu addChatNachricht, aber mit
+ * `rolle`, da hier auch der Bot selbst schreibt. Für Bot-Nachrichten bleiben
+ * `autorEmail`/`autorName` leer.
+ */
+export async function addCoachNachricht(
+  slug: string,
+  params: { rolle: "bot" | "mitglied"; autorEmail?: string; autorName?: string; text: string }
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  const neueNachricht: CoachNachricht = {
+    id: randomUUID(),
+    rolle: params.rolle,
+    autorEmail: params.autorEmail?.trim().toLowerCase(),
+    autorName: params.autorName,
+    text: params.text.trim(),
+    erstelltAm: new Date().toISOString(),
+  };
+  project.coachChat = [...(project.coachChat ?? []), neueNachricht];
   project.aktualisiertAm = new Date().toISOString();
 
   const sql = getSql();
