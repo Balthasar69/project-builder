@@ -157,7 +157,7 @@ async function frageGroq(apiKey: string, modell: string, prompt: string): Promis
   return text;
 }
 
-async function frageClaude(apiKey: string, modell: string, prompt: string): Promise<string> { prompt: string): Promise<string> {
+async function frageClaude(apiKey: string, modell: string, prompt: string): Promise<string> {  
   let res: Response;
   try {
     res = await fetch("https://api.anthropic.com/v1/messages", {
