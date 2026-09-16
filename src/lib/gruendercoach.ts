@@ -157,4 +157,80 @@ async function frageGroq(apiKey: string, modell: string, prompt: string): Promis
   return text;
 }
 
-async function frageClaude(apiKey: string, modell: string, prompt: string): Promise<string> {
+async function frageClaude(apiKey: string, modell: string, prompt: string): Promise<string> { prompt: string): Promise<string> {
+  let res: Response;
+  try {
+    res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: modell,
+        max_tokens: 500,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+  } catch {
+    throw new GruendercoachError("Claude war nicht erreichbar.");
+  }
+
+  const body = (await res.json().catch(() => null)) as
+    | { content?: { type: string; text?: string }[]; error?: { message?: string } }
+    | null;
+
+  if (!res.ok || !body) {
+    throw new GruendercoachError(body?.error?.message || `HTTP ${res.status}`);
+  }
+  const text = body.content?.find((b) => b.type === "text" && b.text)?.text?.trim();
+  if (!text) throw new GruendercoachError("Keine verwertbare Antwort erhalten.");
+  return text;
+}
+
+/**
+ * Fordert eine Antwort des Gründercoach-Bots für eine Chat-Runde an –
+ * bevorzugt über den kostenlosen Groq-Zugang, ersatzweise über Claude/
+ * Anthropic (kostenpflichtig), falls vorhanden. Nutzt dieselben
+ * Umgebungsvariablen wie "Mit KI bearbeiten" (aufgabenAnalyse.ts) – kein
+ * zusätzlicher Schlüssel nötig.
+ */
+export async function holeCoachAntwort(params: {
+  project: Project;
+  verlauf: CoachNachricht[];
+  nachricht?: string;
+  aktuellerAutor?: string;
+}): Promise<string> {
+  const groqKey = process.env.GROQ_API_KEY;
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+
+  if (!groqKey && !anthropicKey) {
+    throw new GruendercoachError(
+      'Weder GROQ_API_KEY (kostenlos) noch ANTHROPIC_API_KEY (kostenpflichtig) gesetzt. Siehe README, Abschnitt "Mit KI bearbeiten".'
+    );
+  }
+
+  const prompt = buildCoachPrompt(params);
+  const fehlermeldungen: string[] = [];
+
+  if (groqKey) {
+    for (const modell of GROQ_MODELLE) {
+      try {
+        return await frageGroq(groqKey, modell, prompt);
+      } catch (err) {
+        fehlermeldungen.push(`Groq (${modell}): ${err instanceof Error ? err.message : "Fehler"}`);
+      }
+    }
+  }
+
+  if (anthropicKey) {
+    try {
+      return await frageClaude(anthropicKey, ANTHROPIC_MODELL, prompt);
+    } catch (err) {
+      fehlermeldungen.push(`Claude: ${err instanceof Error ? err.message : "Fehler"}`);
+    }
+  }
+
+  throw new GruendercoachError(`Gründercoach-Bot fehlgeschlagen (${fehlermeldungen.join(" · ")}).`);
+}
