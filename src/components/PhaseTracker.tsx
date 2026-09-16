@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckResult, KernteamMitglied, PHASES, PhaseCode } from "@/lib/types";
+import { CheckResult, KernteamMitglied, PHASES, PhaseCode, SteuerboardInfo } from "@/lib/types";
 import PhaseBewertungDetail from "./PhaseBewertungDetail";
 
 const BITRIX_LABEL: Record<string, string> = {
@@ -11,18 +11,34 @@ const BITRIX_LABEL: Record<string, string> = {
   ja: "Bitrix24",
 };
 
+// Ab hier (Marketing bis Skalierung, Order 10–14) übernimmt inhaltlich die
+// Steuerboard-Kopie (Phasen 2–5 im Ökosystem, siehe SteuerboardLink.tsx /
+// docs zur Factory) die granulare Aufgabensteuerung – "Marketing & Vertrieb"
+// bzw. "Betrieb & Skalierung" dort deckt dieselben Themen ab. Damit hier im
+// Project Builder nicht zwei Systeme parallel denselben Fortschritt
+// nachbilden, werden diese fünf Phasen nicht mehr als einzelne, klickbare
+// Zeilen mit eigener Bewertung geführt, sondern nur noch als ein einziger,
+// nicht bearbeitbarer Sammel-Hinweis auf die Steuerboard-Kopie angezeigt.
+// Phasen 7–9 (Produkt/Business Case/Pilot) bleiben davon unberührt, weil es
+// dafür keine eigene Spalte im Steuerboard gibt.
+const AB_STEUERBOARD_ORDER = 10;
+
 export default function PhaseTracker({
   aktuell,
   checkVerlauf,
   kernteam,
+  steuerboard,
 }: {
   aktuell: PhaseCode;
   checkVerlauf: CheckResult[];
   kernteam: KernteamMitglied[];
+  steuerboard?: SteuerboardInfo;
 }) {
   const [offenePhase, setOffenePhase] = useState<PhaseCode | null>(null);
   const aktuelleOrder = PHASES.find((p) => p.code === aktuell)?.order ?? 0;
-  const hauptPhasen = PHASES.filter((p) => p.code !== "parken");
+  const hauptPhasen = PHASES.filter(
+    (p) => p.code !== "parken" && p.order < AB_STEUERBOARD_ORDER
+  );
   const parken = PHASES.find((p) => p.code === "parken")!;
 
   return (
@@ -108,6 +124,38 @@ export default function PhaseTracker({
             </div>
           );
         })}
+        <div className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-4 bg-surface-2 px-4 py-2.5">
+          <span className="text-right font-mono text-sm text-ink-faint">
+            10–14
+          </span>
+          <span>
+            <span className="text-sm text-ink-muted">
+              Phasen 2–5 · Marketing bis Skalierung
+            </span>
+            <span className="block text-xs text-ink-muted">
+              Laufen ab der Projektfreigabe nicht mehr granular hier, sondern
+              in der Steuerboard-Kopie dieses Projekts.
+              {steuerboard ? (
+                <>
+                  {" "}
+                  <a
+                    href={steuerboard.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-accent hover:text-accent-ink"
+                  >
+                    Zur Steuerboard-Kopie ↗
+                  </a>
+                </>
+              ) : (
+                " Noch keine Steuerboard-Kopie eingerichtet (siehe unten)."
+              )}
+            </span>
+          </span>
+          <span className="hidden font-mono text-[0.65rem] uppercase tracking-wide text-ink-faint sm:inline">
+            Bitrix24
+          </span>
+        </div>
         <div className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-4 bg-pending-soft px-4 py-2.5">
           <span className="text-right font-mono text-sm text-ink-faint">—</span>
           <span>
