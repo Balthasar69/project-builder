@@ -37,6 +37,15 @@ export type FactoryErgebnis = FactoryErfolg | FactoryFehler;
  */
 export async function erstelleSteuerboardKopie(params: {
   projectName: string;
+  /**
+   * Alle bisherigen Informationen aus diesem Projekt (Beschreibung, Ideen,
+   * Fragebogen-Antworten, Kompetenzbeiträge – siehe `projektKontext.ts`,
+   * `buildeProjektKontext`). Wird als Snapshot in der Steuerboard-Kopie
+   * gespeichert und dort von der "KI-Hilfe" je Aufgabenkarte genutzt.
+   * Optional: fehlt der Wert, entsteht die Kopie trotzdem, nur ohne diesen
+   * Zusatzkontext.
+   */
+  projectContext?: string;
 }): Promise<FactoryErgebnis> {
   const factoryUrl = process.env.STEUERBOARD_FACTORY_URL;
   const factorySecret = process.env.STEUERBOARD_FACTORY_SECRET;
@@ -61,7 +70,10 @@ export async function erstelleSteuerboardKopie(params: {
         "Content-Type": "application/json",
         "x-factory-secret": factorySecret,
       },
-      body: JSON.stringify({ projectName: params.projectName }),
+      body: JSON.stringify({
+        projectName: params.projectName,
+        projectContext: params.projectContext,
+      }),
     });
   } catch (err) {
     return {
@@ -112,4 +124,87 @@ export async function erstelleSteuerboardKopie(params: {
     stage: data.stage ?? 2,
     columns: data.columns ?? [],
   };
+}
+
+export interface FactoryLoeschErgebnis {
+  ok: boolean;
+  status: number;
+  message?: string;
+}
+
+/**
+ * Gegenstück zu `erstelleSteuerboardKopie`: löscht das Vercel-Projekt und/
+ * oder die Neon-Datenbank einer zuvor angelegten Kopie wieder
+ * (`api/factory/delete-copy` im Steuerboard-Repo). Rechteprüfung (nur
+ * Balthasar, siehe `istBalthasar` in auth.ts) sitzt in der aufrufenden
+ * API-Route, nicht hier.
+ */
+export async function loescheSteuerboardKopie(params: {
+  vercelProjectId?: string;
+  neonProjectId?: string;
+}): Promise<FactoryLoeschErgebnis> {
+  const factoryUrl = process.env.STEUERBOARD_FACTORY_URL;
+  const factorySecret = process.env.STEUERBOARD_FACTORY_SECRET;
+
+  if (!factoryUrl || !factorySecret) {
+    return {
+      ok: false,
+      status: 503,
+      message:
+        'Steuerboard-Kopie kann nicht automatisch gelöscht werden: ' +
+        '"STEUERBOARD_FACTORY_URL" und/oder "STEUERBOARD_FACTORY_SECRET" ' +
+        "sind auf dieser Instanz nicht gesetzt. Alternativ manuell im " +
+        "Vercel-/Neon-Dashboard löschen.",
+    };
+  }
+
+  if (!params.vercelProjectId && !params.neonProjectId) {
+    // Nichts zu löschen (z.B. weil die Kopie ganz ohne die entsprechenden
+    // IDs hinterlegt wurde) – kein Fehler, einfach nichts zu tun.
+    return { ok: true, status: 200 };
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(new URL("/api/factory/delete-copy", factoryUrl), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-factory-secret": factorySecret,
+      },
+      body: JSON.stringify({
+        vercelProjectId: params.vercelProjectId,
+        neonProjectId: params.neonProjectId,
+      }),
+    });
+  } catch (err) {
+    return {
+      ok: false,
+      status: 502,
+      message:
+        "Steuerboard-Factory nicht erreichbar: " +
+        (err instanceof Error ? err.message : "Unbekannter Netzwerkfehler"),
+    };
+  }
+
+  let body: unknown;
+  try {
+    body = await res.json();
+  } catch {
+    body = null;
+  }
+
+  if (!res.ok) {
+    const message =
+      (body && typeof body === "object" && "message" in body
+        ? String((body as { message?: unknown }).message)
+        : undefined) ??
+      (body && typeof body === "object" && "error" in body
+        ? String((body as { error?: unknown }).error)
+        : undefined) ??
+      `Steuerboard-Factory antwortete mit Status ${res.status}`;
+    return { ok: false, status: res.status, message };
+  }
+
+  return { ok: true, status: 200 };
 }
