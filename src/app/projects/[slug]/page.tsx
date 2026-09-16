@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getProject, getUserByEmail } from "@/lib/data";
-import { getSession, hatProjektZugriff, istKernteam } from "@/lib/auth";
+import { getSession, hatProjektZugriff, istKernteam, istBalthasar } from "@/lib/auth";
 import { PHASES, STANDARD_HINWEISE } from "@/lib/types";
 import PhaseTracker from "@/components/PhaseTracker";
 import PhaseAdvance from "@/components/PhaseAdvance";
@@ -23,6 +23,7 @@ import ProjektHubNav from "@/components/ProjektHubNav";
 import NaechsteSchritte from "@/components/NaechsteSchritte";
 import KompetenzenManager from "@/components/KompetenzenManager";
 import ProjectChat from "@/components/ProjectChat";
+import GruendercoachChat from "@/components/GruendercoachChat";
 import Aufklappbar from "@/components/Aufklappbar";
 
 export const dynamic = "force-dynamic";
@@ -373,6 +374,7 @@ export default async function ProjectCockpit({
               aktuell={project.aktuellePhase}
               checkVerlauf={project.checkVerlauf}
               kernteam={project.kernteam}
+              steuerboard={project.steuerboard}
             />
             <PhaseAdvance
               slug={project.slug}
@@ -399,6 +401,7 @@ export default async function ProjectCockpit({
                 slug={project.slug}
                 steuerboard={project.steuerboard}
                 darfAusloesen={istKernteam(session, project)}
+                darfLoeschen={istBalthasar(session.email)}
               />
             </div>
           </Aufklappbar>
@@ -485,6 +488,26 @@ export default async function ProjectCockpit({
           />
         </section>
       </div>
+
+      {/* Gründercoach-Bot (Ökosystem-Phase 1 "Idee & Team"): projektweit
+          geteilter KI-Chat, siehe lib/gruendercoach.ts. Schwesterfunktion
+          zum "🧭 Gründercoach"-Chat im Steuerboard (dort Phasen 2-5). */}
+      <section
+        id="gruendercoach"
+        className="mt-12 scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
+      >
+        <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
+          <h2 className="font-display text-xl font-semibold">🧭 Gründercoach</h2>
+          <span className="font-mono text-xs text-ink-faint">
+            Projektweit geteilt · keine Rechts-/Steuer-/Gesundheitsauskünfte
+          </span>
+        </div>
+        <GruendercoachChat
+          slug={project.slug}
+          initial={project.coachChat ?? []}
+          sessionEmail={session.email}
+        />
+      </section>
 
       {/* Chat (neu seit v0.46, Teil von "Dynamik"): interner Austausch nur
           für Kernteam & Team dieses Projekts. */}
