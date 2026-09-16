@@ -418,6 +418,8 @@ export interface Project {
   kompetenzbeitraege?: KompetenzBeitrag[];
   /** Interner Chat-Verlauf dieses Projekts, älteste Nachricht zuerst (siehe ChatNachricht). */
   chat?: ChatNachricht[];
+  /** Verlauf des Gründercoach-Bot-Chats, älteste Nachricht zuerst (siehe CoachNachricht/lib/gruendercoach.ts). */
+  coachChat?: CoachNachricht[];
   bitrix24: {
     dealId: number;
     categoryId: number;
@@ -577,6 +579,21 @@ export interface ChatNachricht {
   id: string;
   autorEmail: string;
   autorName: string;
+  text: string;
+  erstelltAm: string; // ISO-Datum
+}
+
+/**
+ * Eine Nachricht im Gründercoach-Bot-Chat (siehe lib/gruendercoach.ts) –
+ * analog zu ChatNachricht, aber mit `rolle`, weil hier neben Mitgliedern
+ * auch der Bot selbst schreibt. Bei `rolle: "bot"` sind `autorEmail`/
+ * `autorName` leer, bei `rolle: "mitglied"` identisch zu ChatNachricht.
+ */
+export interface CoachNachricht {
+  id: string;
+  rolle: "bot" | "mitglied";
+  autorEmail?: string;
+  autorName?: string;
   text: string;
   erstelltAm: string; // ISO-Datum
 }
