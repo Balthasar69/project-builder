@@ -6,6 +6,7 @@ import { berechneReifegrad } from "@/lib/scoring";
 import { PHASES } from "@/lib/types";
 import LogoutButton from "@/components/LogoutButton";
 import Brand from "@/components/Brand";
+import DeleteProjectButton from "@/components/DeleteProjectButton";
 
 export const dynamic = "force-dynamic";
 
@@ -97,38 +98,45 @@ export default async function HomePage() {
             const phase = PHASES.find((p) => p.code === project.aktuellePhase);
             const reifegrad = berechneReifegrad(project.bereichStatus);
             return (
-              <Link
+              <div
                 key={project.slug}
-                href={`/projects/${project.slug}`}
                 className="flex items-center justify-between rounded-lg border border-line bg-surface px-5 py-4 transition hover:border-accent/50 hover:shadow-sm"
               >
-                <div>
-                  <div className="font-display text-lg font-semibold">
-                    {project.name}
-                  </div>
-                  <div className="text-sm text-ink-muted">
-                    {project.rolleImSystem}
-                  </div>
-                </div>
-                <div className="flex items-center gap-6 text-right">
+                <Link
+                  href={`/projects/${project.slug}`}
+                  className="flex flex-1 items-center justify-between gap-6"
+                >
                   <div>
-                    <div className="font-mono text-xs uppercase tracking-wide text-ink-faint">
-                      Phase
+                    <div className="font-display text-lg font-semibold">
+                      {project.name}
                     </div>
-                    <div className="text-sm font-medium">
-                      {phase?.order}. {phase?.name}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="font-mono text-xs uppercase tracking-wide text-ink-faint">
-                      Reifegrad
-                    </div>
-                    <div className="tabular text-sm font-medium">
-                      {reifegrad}%
+                    <div className="text-sm text-ink-muted">
+                      {project.rolleImSystem}
                     </div>
                   </div>
-                </div>
-              </Link>
+                  <div className="flex items-center gap-6 text-right">
+                    <div>
+                      <div className="font-mono text-xs uppercase tracking-wide text-ink-faint">
+                        Phase
+                      </div>
+                      <div className="text-sm font-medium">
+                        {phase?.order}. {phase?.name}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="font-mono text-xs uppercase tracking-wide text-ink-faint">
+                        Reifegrad
+                      </div>
+                      <div className="tabular text-sm font-medium">
+                        {reifegrad}%
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+                {istBalthasar(session.email) && (
+                  <DeleteProjectButton slug={project.slug} name={project.name} />
+                )}
+              </div>
             );
           })}
         </div>
