@@ -205,6 +205,18 @@ export async function saveCheckResult(
 }
 
 /** Legt ein neues Projekt an; die anlegende Person wird automatisch Mitglied und Kernteam. */
+/**
+ * Löscht ein Projekt unwiderruflich (inkl. seiner Aufgaben-Notizen). Nur für
+ * Balthasar über die PIN-geschützte Löschen-Funktion auf der Projektübersicht
+ * gedacht – die Berechtigungsprüfung (istBalthasar) und die PIN-Prüfung
+ * (DELETE_PIN) sitzen in der API-Route, nicht hier.
+ */
+export async function deleteProject(slug: string): Promise<void> {
+  const sql = getSql();
+  await sql`DELETE FROM task_notes WHERE slug = ${slug}`;
+  await sql`DELETE FROM projects WHERE slug = ${slug}`;
+}
+
 export async function createProject(params: {
   name: string;
   ownerEmail: string;
