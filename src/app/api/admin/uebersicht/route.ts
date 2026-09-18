@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllProjects, deleteProject } from "@/lib/data";
+import { getAllProjects, deleteProject, clearSteuerboard, setPhase } from "@/lib/data";
 import { ermittleProjektStatus } from "@/lib/dashboardStatus";
 
 export const dynamic = "force-dynamic";
@@ -80,4 +80,42 @@ export async function DELETE(req: NextRequest) {
 
   await deleteProject(body.slug);
   return NextResponse.json({ ok: true });
+}
+
+/**
+ * Setzt ein Projekt von der Steuerzentrale aus zurueck in die Project-Building-
+ * Phase: loest die Verknuepfung zur Steuerboard-Kopie (siehe clearSteuerboard)
+ * und setzt die Phase auf "kerngruppe" (letzte Project-Building-Phase vor dem
+ * Freigabe-Gate). Die eigentliche Steuerboard-Kopie (Vercel/Neon) wird NICHT
+ * hier geloescht - das uebernimmt die Steuerboard-Factory selbst, NACHDEM
+ * dieser Aufruf erfolgreich war (siehe api/factory/list-copies.js, Aktion
+ * "resetProjekt"). Gleicher DELETE_PIN-Schutz wie bei DELETE oben.
+ */
+export async function PATCH(req: NextRequest) {
+  if (!pruefeSecret(req)) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  let body: { action?: string; slug?: string; pin?: string } = {};
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "invalid_json" }, { status: 400 });
+  }
+
+  const pinErwartet = process.env.DELETE_PIN;
+  if (!pinErwartet || body.pin !== pinErwartet) {
+    return NextResponse.json({ error: "wrong_pin" }, { status: 403 });
+  }
+  if (!body.slug) {
+    return NextResponse.json({ error: "slug fehlt" }, { status: 400 });
+  }
+
+  if (body.action === "resetToBuilding") {
+    await clearSteuerboard(body.slug);
+    await setPhase(body.slug, "kerngruppe");
+    return NextResponse.json({ ok: true });
+  }
+
+  return NextResponse.json({ error: "unknown_action" }, { status: 400 });
 }
