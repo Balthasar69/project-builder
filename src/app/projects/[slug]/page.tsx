@@ -17,6 +17,7 @@ import Brand from "@/components/Brand";
 import LogoutButton from "@/components/LogoutButton";
 import ProjectDescription from "@/components/ProjectDescription";
 import DokumenteLink from "@/components/DokumenteLink";
+import ProjektLogo from "@/components/ProjektLogo";
 import ProjectProgress from "@/components/ProjectProgress";
 import BlockHinweis from "@/components/BlockHinweis";
 import ReifegradRingKompakt from "@/components/ReifegradRingKompakt";
@@ -259,12 +260,22 @@ export default async function ProjectCockpit({
       </div>
 
       {/* Titel (seit v0.73 ohne Reifegrad-Ring daneben - der Reifegrad
-          steht jetzt gesammelt ganz unten auf der Seite, siehe dort). */}
-      <div className="mb-5">
-        <h1 className="mb-1 font-display text-4xl font-semibold text-ink">
-          {project.name}
-        </h1>
-        <p className="text-ink-muted">{project.rolleImSystem}</p>
+          steht jetzt gesammelt ganz unten auf der Seite, siehe dort).
+          Seit v0.76 rechts daneben stattdessen Platz fuer ein eigenes
+          Projekt-Logo (ProjektLogo.tsx), falls eines hochgeladen wurde. */}
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="mb-1 font-display text-4xl font-semibold text-ink">
+            {project.name}
+          </h1>
+          <p className="text-ink-muted">{project.rolleImSystem}</p>
+        </div>
+        <ProjektLogo
+          slug={project.slug}
+          name={project.name}
+          projektLogo={project.projektLogo ?? ""}
+          darfBearbeiten={istKernteam(session, project)}
+        />
       </div>
 
       {/* Projektbeschreibung steht bewusst direkt unter dem Projektnamen –
