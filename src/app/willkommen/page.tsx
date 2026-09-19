@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import Brand from "@/components/Brand";
 import WillkommenClient from "@/components/WillkommenClient";
+import Aufklappbar from "@/components/Aufklappbar";
+import { PHASES } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -18,9 +20,9 @@ function ersterVorname(name: string): string {
  * `User.einfuehrungGesehenAm`), und ist danach jederzeit über den kleinen
  * Link "Wie funktioniert das hier?" auf der Startseite erneut erreichbar.
  *
- * Bewusst kurz und ohne Fachbegriffe gehalten (siehe Vorgabe: die
- * Mitglieder haben in der Regel keine Projektmanagement- oder
- * IT-Kenntnisse) – drei einfache Blöcke statt einer langen Anleitung.
+ * Text ab der Überschrift bis zur Phasenübersicht (v0.69) ist bewusst
+ * wörtlich vorgegeben und nicht KI-frei formuliert – Änderungen daran
+ * bitte nur direkt hier im Code vornehmen, nicht automatisch umschreiben.
  */
 export default async function WillkommenPage() {
   const session = await getSession();
@@ -34,27 +36,49 @@ export default async function WillkommenPage() {
         <Brand />
       </div>
 
-      <h1 className="mb-3 font-display text-3xl font-semibold text-ink sm:text-4xl">
-        Willkommen, {vorname}!
+      <h1 className="mb-6 font-display text-3xl font-semibold text-ink sm:text-4xl">
+        Willkommen {vorname} bei insightworx, deinem Projektmanagement.
       </h1>
-      <div className="mb-6 rounded-lg border border-line bg-surface px-5 py-4">
-        <div className="mb-1 font-display text-base font-semibold text-ink">
-          insightworx &amp; die Entscheiderakademie
-        </div>
-        <p className="text-sm text-ink-muted">
-          Hier entwickeln wir gemeinsam Projektideen – von der ersten Idee
-          bis zum fertigen Angebot. Was reif genug ist, geht anschließend
-          über die Entscheiderakademie an echte Kunden: Sie präsentiert,
-          verwaltet und rechnet ab, damit ihr euch ganz auf die Idee selbst
-          konzentrieren könnt.
-        </p>
-      </div>
 
-      <p className="mb-10 max-w-[55ch] text-ink-muted">
-        Schön, dass du dabei bist. Diese App begleitet euch Schritt für
-        Schritt dabei, aus einer Idee ein echtes, erfolgreiches Projekt zu
-        machen – von der ersten Idee bis zum ersten zahlenden Kunden.
+      <p className="mb-4 max-w-[55ch] text-ink-muted">
+        Hier setzt du deine Ideen mit deinem Team zusammen mit der
+        Entscheiderakademie um. Du kannst hier all deine Ideen sammeln, alle
+        Fähigkeiten und deine Vorstellungen des Teams festhalten. Die
+        Entscheiderakademie begleitet das Vorhaben und führt es zu einer
+        Business-Idee, und du kannst dich strukturiert und konzentriert auf
+        deine Kompetenzen konzentrieren.
       </p>
+
+      <p className="mb-8 max-w-[55ch] text-ink-muted">
+        Im ersten Schritt sammeln wir, was Du und Dein Team an Kompetenz,
+        Kapazität und an Zielen hast, danach schreiten wir in den nächsten
+        Prozessabschnitt.
+      </p>
+
+      <div className="mb-10">
+        <Aufklappbar buttonText="Phasenübersicht ansehen">
+          <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line">
+            {PHASES.filter((phase) => phase.code !== "parken").map((phase) => (
+              <div
+                key={phase.code}
+                className="flex items-start gap-4 bg-surface px-4 py-2.5"
+              >
+                <span className="w-8 shrink-0 text-right font-mono text-sm text-ink-faint">
+                  {String(phase.order).padStart(2, "0")}
+                </span>
+                <span>
+                  <span className="text-sm font-medium text-ink">
+                    {phase.name}
+                  </span>
+                  <span className="block text-xs text-ink-muted">
+                    {phase.ziel}
+                  </span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </Aufklappbar>
+      </div>
 
       <div className="mb-10 flex flex-col gap-4">
         <div className="rounded-lg border border-line bg-surface px-5 py-4">
