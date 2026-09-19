@@ -208,9 +208,15 @@ export default async function ProjectCockpit({
           Kompetenz, Kapazität und an Zielen hast, danach schreiten wir
           in den nächsten Prozessabschnitt.
         </p>
-        <div className="mb-6">
+        <div className="mb-6 flex flex-wrap items-center gap-3">
           <SteuerungUebergang
             url={project.steuerboard?.url}
+            hervorgehoben={(aktuellePhase?.order ?? 0) > 6}
+          />
+          <DokumenteLink
+            slug={project.slug}
+            dokumenteLink={project.dokumenteLink ?? ""}
+            darfBearbeiten={istKernteam(session, project)}
             hervorgehoben={(aktuellePhase?.order ?? 0) > 6}
           />
         </div>
@@ -266,14 +272,6 @@ export default async function ProjectCockpit({
       <ProjectDescription
         slug={project.slug}
         beschreibung={project.beschreibung ?? ""}
-        darfBearbeiten={istKernteam(session, project)}
-      />
-
-      {/* Link zur externen Dokumenten-Ablage (Google Drive) – direkt unter
-          der Projektbeschreibung, für alle Teammitglieder sichtbar. */}
-      <DokumenteLink
-        slug={project.slug}
-        dokumenteLink={project.dokumenteLink ?? ""}
         darfBearbeiten={istKernteam(session, project)}
       />
 
