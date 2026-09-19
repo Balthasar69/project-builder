@@ -401,6 +401,13 @@ export interface Project {
   hinweise?: Partial<Record<BlockHinweisKey, string>>;
   /** Link zur externen Dokumenten-Ablage (aktuell: Google-Drive-Ordner), für alle Teammitglieder sichtbar. */
   dokumenteLink?: string;
+  /**
+   * Eigenes Projekt-Logo (v0.76), steht rechts neben dem Projektnamen im
+   * Cockpit. Wird als data-URL (Base64) direkt im Projekt gespeichert –
+   * kein separater Datei-Speicher, darum bewusst auf kleine Bilddateien
+   * begrenzt (siehe ProjektLogo.tsx / API-Route).
+   */
+  projektLogo?: string;
   aktuellePhase: PhaseCode;
   kernteam: KernteamMitglied[];
   /** E-Mail-Adressen der Personen mit Zugriff auf dieses Projekt in der App. */
