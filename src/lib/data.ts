@@ -599,6 +599,36 @@ export async function setDokumenteLink(
 }
 
 /**
+ * Setzt/ändert das eigene Projekt-Logo (v0.76), gespeichert als
+ * Base64-Data-URL direkt im Projekt (keine separate Datei-Ablage). Ein
+ * leerer Text löscht das Logo wieder. Die Größen-/Format-Prüfung
+ * übernimmt die API-Route.
+ */
+export async function setProjektLogo(
+  slug: string,
+  projektLogo: string
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  const getrimmt = projektLogo.trim();
+  if (getrimmt) {
+    project.projektLogo = getrimmt;
+  } else {
+    delete project.projektLogo;
+  }
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/**
  * Setzt/ändert die individuelle Kurzanweisung eines einzelnen Cockpit-Blocks
  * (Rechteprüfung sitzt in der API-Route: Kernteam/Admins). Ein leerer Text
  * löscht die individuelle Anweisung wieder – dann greift automatisch
