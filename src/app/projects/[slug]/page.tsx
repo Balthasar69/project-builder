@@ -80,6 +80,43 @@ export default async function ProjectCockpit({
 
   const aktuellePhase = PHASES.find((p) => p.code === project.aktuellePhase);
   const vorname = session.name.trim().split(/\s+/)[0] || session.name;
+
+  // Farbliche Gruppierung der Phasenübersicht (v0.72) – bewusst grobe
+  // Cluster statt 14 gleich aussehender Einzelphasen, damit auf einen
+  // Blick klar ist, in welchem großen Abschnitt sich ein Projekt gerade
+  // befindet. Ordnung/Bezeichnung fest vorgegeben.
+  const PHASE_GRUPPEN = [
+    {
+      label: "Project Builder",
+      von: 1,
+      bis: 9,
+      stil: { punkt: "bg-accent", text: "text-accent", rand: "border-accent" },
+    },
+    {
+      label: "Projektumsetzung – Businessplan",
+      von: 10,
+      bis: 10,
+      stil: { punkt: "bg-pending", text: "text-ink-muted", rand: "border-pending" },
+    },
+    {
+      label: "Marketing/Vertrieb",
+      von: 11,
+      bis: 11,
+      stil: { punkt: "bg-warn", text: "text-warn", rand: "border-warn" },
+    },
+    {
+      label: "Umsatz",
+      von: 12,
+      bis: 12,
+      stil: { punkt: "bg-good", text: "text-good", rand: "border-good" },
+    },
+    {
+      label: "Optimierung und Skalierung",
+      von: 13,
+      bis: 14,
+      stil: { punkt: "bg-bad", text: "text-bad", rand: "border-bad" },
+    },
+  ];
   const darfHinweiseBearbeiten = istKernteam(session, project);
 
   // Team-Liste (`mitglieder`) speichert nur E-Mail-Adressen – für die
@@ -170,23 +207,37 @@ export default async function ProjectCockpit({
           in den nächsten Prozessabschnitt.
         </p>
         <Aufklappbar buttonText="Phasenübersicht ansehen">
-          <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line">
-            {PHASES.filter((phase) => phase.code !== "parken").map((phase) => (
-              <div
-                key={phase.code}
-                className="flex items-start gap-4 bg-surface px-4 py-2.5"
-              >
-                <span className="w-8 shrink-0 text-right font-mono text-sm text-ink-faint">
-                  {String(phase.order).padStart(2, "0")}
-                </span>
-                <span>
-                  <span className="text-sm font-medium text-ink">
-                    {phase.name}
-                  </span>
-                  <span className="block text-xs text-ink-muted">
-                    {phase.ziel}
-                  </span>
-                </span>
+          <div className="flex flex-col gap-4">
+            {PHASE_GRUPPEN.map((gruppe) => (
+              <div key={gruppe.label}>
+                <div
+                  className={`mb-1.5 flex items-center gap-2 font-mono text-[0.65rem] uppercase tracking-wide ${gruppe.stil.text}`}
+                >
+                  <span className={`h-2 w-2 rounded-full ${gruppe.stil.punkt}`} />
+                  {gruppe.label}
+                </div>
+                <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line">
+                  {PHASES.filter(
+                    (phase) => phase.order >= gruppe.von && phase.order <= gruppe.bis
+                  ).map((phase) => (
+                    <div
+                      key={phase.code}
+                      className={`flex items-start gap-4 border-l-4 bg-surface px-4 py-2.5 ${gruppe.stil.rand}`}
+                    >
+                      <span className="w-8 shrink-0 text-right font-mono text-sm text-ink-faint">
+                        {String(phase.order).padStart(2, "0")}
+                      </span>
+                      <span>
+                        <span className="text-sm font-medium text-ink">
+                          {phase.name}
+                        </span>
+                        <span className="block text-xs text-ink-muted">
+                          {phase.ziel}
+                        </span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
