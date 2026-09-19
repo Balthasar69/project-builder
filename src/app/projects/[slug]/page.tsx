@@ -25,6 +25,7 @@ import KompetenzenManager from "@/components/KompetenzenManager";
 import ProjectChat from "@/components/ProjectChat";
 import GruendercoachChat from "@/components/GruendercoachChat";
 import Aufklappbar from "@/components/Aufklappbar";
+import SteuerungUebergang from "@/components/SteuerungUebergang";
 
 export const dynamic = "force-dynamic";
 
@@ -206,6 +207,9 @@ export default async function ProjectCockpit({
           Kompetenz, Kapazität und an Zielen hast, danach schreiten wir
           in den nächsten Prozessabschnitt.
         </p>
+        <div className="mb-6">
+          <SteuerungUebergang url={project.steuerboard?.url} />
+        </div>
         <Aufklappbar buttonText="Phasenübersicht ansehen">
           <div className="flex flex-col gap-4">
             {PHASE_GRUPPEN.map((gruppe) => (
