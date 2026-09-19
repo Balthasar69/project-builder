@@ -570,6 +570,35 @@ export async function setBeschreibung(slug: string, beschreibung: string): Promi
 }
 
 /**
+ * Setzt/ändert den Link zur externen Dokumenten-Ablage (aktuell: ein
+ * Google-Drive-Ordner) – Rechteprüfung sitzt in der API-Route
+ * (Kernteam/Admins). Ein leerer Text löscht den Link wieder.
+ */
+export async function setDokumenteLink(
+  slug: string,
+  dokumenteLink: string
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  const getrimmt = dokumenteLink.trim();
+  if (getrimmt) {
+    project.dokumenteLink = getrimmt;
+  } else {
+    delete project.dokumenteLink;
+  }
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/**
  * Setzt/ändert die individuelle Kurzanweisung eines einzelnen Cockpit-Blocks
  * (Rechteprüfung sitzt in der API-Route: Kernteam/Admins). Ein leerer Text
  * löscht die individuelle Anweisung wieder – dann greift automatisch
