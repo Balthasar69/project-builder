@@ -399,6 +399,8 @@ export interface Project {
   beschreibung?: string;
   /** Individuelle Kurzanweisungen je Block, überschreiben `STANDARD_HINWEISE`. */
   hinweise?: Partial<Record<BlockHinweisKey, string>>;
+  /** Link zur externen Dokumenten-Ablage (aktuell: Google-Drive-Ordner), für alle Teammitglieder sichtbar. */
+  dokumenteLink?: string;
   aktuellePhase: PhaseCode;
   kernteam: KernteamMitglied[];
   /** E-Mail-Adressen der Personen mit Zugriff auf dieses Projekt in der App. */
