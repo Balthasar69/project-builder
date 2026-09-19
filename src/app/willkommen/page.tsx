@@ -37,6 +37,19 @@ export default async function WillkommenPage() {
       <h1 className="mb-3 font-display text-3xl font-semibold text-ink sm:text-4xl">
         Willkommen, {vorname}!
       </h1>
+      <div className="mb-6 rounded-lg border border-line bg-surface px-5 py-4">
+        <div className="mb-1 font-display text-base font-semibold text-ink">
+          insightworx &amp; die Entscheiderakademie
+        </div>
+        <p className="text-sm text-ink-muted">
+          Hier entwickeln wir gemeinsam Projektideen – von der ersten Idee
+          bis zum fertigen Angebot. Was reif genug ist, geht anschließend
+          über die Entscheiderakademie an echte Kunden: Sie präsentiert,
+          verwaltet und rechnet ab, damit ihr euch ganz auf die Idee selbst
+          konzentrieren könnt.
+        </p>
+      </div>
+
       <p className="mb-10 max-w-[55ch] text-ink-muted">
         Schön, dass du dabei bist. Diese App begleitet euch Schritt für
         Schritt dabei, aus einer Idee ein echtes, erfolgreiches Projekt zu
