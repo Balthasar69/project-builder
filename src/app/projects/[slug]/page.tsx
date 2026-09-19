@@ -146,21 +146,51 @@ export default async function ProjectCockpit({
         </div>
       </div>
 
-      {/* Kurzeinleitung: was das Projektcockpit ist und wie es genutzt wird.
-          Bewusst statischer Text (kein BlockHinweis) — gilt gleich für alle
-          Projekte, nicht projektspezifisch editierbar. */}
+      {/* Kurzeinleitung (v0.71): fest vorgegebener insightworx/Entscheider-
+          akademie-Text plus aufklappbare Phasenübersicht – bewusst
+          statischer Text (kein BlockHinweis), gilt gleich für alle
+          Projekte und alle Phasen im Project Builder (nicht im
+          Steuerboard), nicht projektspezifisch editierbar. Text wörtlich
+          vorgegeben – bitte nicht automatisch umschreiben. */}
       <div className="mb-8 border-b border-line pb-6">
-        <p className="mb-2 text-sm text-ink-muted">
-          Der Project Builder zeigt auf einen Blick Phase, Team und offene
-          Aufgaben eines Projekts. Der aktuelle Status ist Grundlage für die
-          Jourfixe des Teams.
+        <h2 className="mb-3 font-display text-xl font-semibold text-ink">
+          Willkommen {vorname} bei insightworx, deinem Projektmanagement.
+        </h2>
+        <p className="mb-4 max-w-[65ch] text-sm text-ink-muted">
+          Hier setzt du deine Ideen mit deinem Team zusammen mit der
+          Entscheiderakademie um. Du kannst hier all deine Ideen sammeln,
+          alle Fähigkeiten und deine Vorstellungen des Teams festhalten.
+          Die Entscheiderakademie begleitet das Vorhaben und führt es zu
+          einer Business-Idee, und du kannst dich strukturiert und
+          konzentriert auf deine Kompetenzen konzentrieren.
         </p>
-        <p className="text-sm text-ink-muted">
-          Der Project Builder bündelt Phase, Team, Bewertung und Aufgaben
-          eines Projekts an einem Ort. Die Aufgaben kommen automatisch aus
-          Bitrix24, wo das Tagesgeschäft im Detail läuft – so entsteht eine
-          durchgehende Planung von Aufgaben bis Reporting.
+        <p className="mb-4 max-w-[65ch] text-sm text-ink-muted">
+          Im ersten Schritt sammeln wir, was Du und Dein Team an
+          Kompetenz, Kapazität und an Zielen hast, danach schreiten wir
+          in den nächsten Prozessabschnitt.
         </p>
+        <Aufklappbar buttonText="Phasenübersicht ansehen">
+          <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line">
+            {PHASES.filter((phase) => phase.code !== "parken").map((phase) => (
+              <div
+                key={phase.code}
+                className="flex items-start gap-4 bg-surface px-4 py-2.5"
+              >
+                <span className="w-8 shrink-0 text-right font-mono text-sm text-ink-faint">
+                  {String(phase.order).padStart(2, "0")}
+                </span>
+                <span>
+                  <span className="text-sm font-medium text-ink">
+                    {phase.name}
+                  </span>
+                  <span className="block text-xs text-ink-muted">
+                    {phase.ziel}
+                  </span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </Aufklappbar>
       </div>
 
       {/* Titel + kompakter Reifegrad-Ring nebeneinander (seit v0.46) –
@@ -186,57 +216,6 @@ export default async function ProjectCockpit({
         beschreibung={project.beschreibung ?? ""}
         darfBearbeiten={istKernteam(session, project)}
       />
-
-      {/* Phase-1-Einstieg (v0.70): fest vorgegebener Einordnungs-/
-          Begrüßungstext (insightworx & Entscheiderakademie) plus
-          aufklappbare Phasenübersicht – nur sichtbar, solange sich DIESES
-          Projekt in Phase 1 ("Idee") befindet. Bewusst hier statt in der
-          generischen Kurzeinleitung oben (die gilt phasenunabhängig für
-          alle Projekte) und statt nur in der einmaligen /willkommen-Seite,
-          damit alle Mitglieder es zuverlässig sehen, solange es relevant
-          ist. Text wörtlich vorgegeben – bitte nicht automatisch umschreiben. */}
-      {aktuellePhase?.code === "idee" && (
-        <div className="mb-8 rounded-lg border border-line bg-surface px-5 py-5 sm:px-6">
-          <h2 className="mb-3 font-display text-xl font-semibold text-ink">
-            Willkommen {vorname} bei insightworx, deinem Projektmanagement.
-          </h2>
-          <p className="mb-4 max-w-[65ch] text-sm text-ink-muted">
-            Hier setzt du deine Ideen mit deinem Team zusammen mit der
-            Entscheiderakademie um. Du kannst hier all deine Ideen sammeln,
-            alle Fähigkeiten und deine Vorstellungen des Teams festhalten.
-            Die Entscheiderakademie begleitet das Vorhaben und führt es zu
-            einer Business-Idee, und du kannst dich strukturiert und
-            konzentriert auf deine Kompetenzen konzentrieren.
-          </p>
-          <p className="mb-4 max-w-[65ch] text-sm text-ink-muted">
-            Im ersten Schritt sammeln wir, was Du und Dein Team an
-            Kompetenz, Kapazität und an Zielen hast, danach schreiten wir
-            in den nächsten Prozessabschnitt.
-          </p>
-          <Aufklappbar buttonText="Phasenübersicht ansehen">
-            <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg border border-line">
-              {PHASES.filter((phase) => phase.code !== "parken").map((phase) => (
-                <div
-                  key={phase.code}
-                  className="flex items-start gap-4 bg-surface px-4 py-2.5"
-                >
-                  <span className="w-8 shrink-0 text-right font-mono text-sm text-ink-faint">
-                    {String(phase.order).padStart(2, "0")}
-                  </span>
-                  <span>
-                    <span className="text-sm font-medium text-ink">
-                      {phase.name}
-                    </span>
-                    <span className="block text-xs text-ink-muted">
-                      {phase.ziel}
-                    </span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          </Aufklappbar>
-        </div>
-      )}
 
       {/* Persönlicher KI-Hinweis "Für dich als Nächstes" – ganz oben, noch
           vor den drei Hub-Spalten (siehe NaechsteSchritte.tsx). */}
