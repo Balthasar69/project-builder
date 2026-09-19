@@ -208,7 +208,10 @@ export default async function ProjectCockpit({
           in den nächsten Prozessabschnitt.
         </p>
         <div className="mb-6">
-          <SteuerungUebergang url={project.steuerboard?.url} />
+          <SteuerungUebergang
+            url={project.steuerboard?.url}
+            hervorgehoben={(aktuellePhase?.order ?? 0) > 6}
+          />
         </div>
         <Aufklappbar buttonText="Phasenübersicht ansehen">
           <div className="flex flex-col gap-4">
