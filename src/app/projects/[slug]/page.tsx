@@ -366,26 +366,6 @@ export default async function ProjectCockpit({
         </Aufklappbar>
       </section>
 
-      {/* Gründercoach-Bot (Ökosystem-Phase 1 "Idee & Team"): projektweit
-          geteilter KI-Chat, siehe lib/gruendercoach.ts. Schwesterfunktion
-          zum "🧭 Gründercoach"-Chat im Steuerboard (dort Phasen 2-5). */}
-      <section
-        id="gruendercoach"
-        className="mt-12 scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
-      >
-        <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
-          <h2 className="font-display text-xl font-semibold">🧭 Gründercoach</h2>
-          <span className="font-mono text-xs text-ink-faint">
-            Projektweit geteilt · keine Rechts-/Steuer-/Gesundheitsauskünfte
-          </span>
-        </div>
-        <GruendercoachChat
-          slug={project.slug}
-          initial={project.coachChat ?? []}
-          sessionEmail={session.email}
-        />
-      </section>
-
       {/* Chat (neu seit v0.46, Teil von "Dynamik"): interner Austausch nur
           für Kernteam & Team dieses Projekts. */}
       <section
@@ -423,6 +403,47 @@ export default async function ProjectCockpit({
           slug={project.slug}
           ideen={project.ideen ?? []}
           istKernteam={istKernteam(session, project)}
+        />
+
+        <a
+          href="#gruendercoach"
+          className="mt-5 inline-flex w-fit items-center gap-3 rounded-md bg-accent px-5 py-3 text-sm font-semibold text-surface shadow-sm transition hover:bg-accent-ink"
+        >
+          <span className="relative block h-8 w-8 shrink-0 overflow-hidden rounded-full bg-surface">
+            <img
+              src="/logo.png?v=57"
+              alt=""
+              aria-hidden="true"
+              className="absolute"
+              style={{ width: "145px", height: "46px", left: "-7px", top: "-7px" }}
+            />
+          </span>
+          <span className="text-left leading-tight">
+            Ideen mit dem Gründercoach besprechen
+            <span className="block text-xs font-normal opacity-85">
+              Dein KI-Assistent
+            </span>
+          </span>
+        </a>
+      </section>
+
+      {/* Gründercoach-Bot (Ökosystem-Phase 1 "Idee & Team"): projektweit
+          geteilter KI-Chat, siehe lib/gruendercoach.ts. Schwesterfunktion
+          zum "🧭 Gründercoach"-Chat im Steuerboard (dort Phasen 2-5). */}
+      <section
+        id="gruendercoach"
+        className="mt-12 scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
+      >
+        <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
+          <h2 className="font-display text-xl font-semibold">🧭 Gründercoach</h2>
+          <span className="font-mono text-xs text-ink-faint">
+            Projektweit geteilt · keine Rechts-/Steuer-/Gesundheitsauskünfte
+          </span>
+        </div>
+        <GruendercoachChat
+          slug={project.slug}
+          initial={project.coachChat ?? []}
+          sessionEmail={session.email}
         />
       </section>
 
