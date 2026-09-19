@@ -347,3 +347,27 @@ export async function addWorkgroupMembers(
   if (userIds.length === 0) return;
   await call("sonet_group.user.add", { GROUP_ID: groupId, USER_ID: userIds });
 }
+
+/**
+ * Löscht eine bereits nach Bitrix24 übernommene Aufgabe wieder, wenn sie im
+ * Project Builder entfernt wird (z. B. eine Idee oder ein Aufgaben-Vorschlag,
+ * die/der schon übernommen war, aber doch verworfen wird) – damit
+ * Löschungen genauso synchron laufen wie das Anlegen (siehe `removeIdee`
+ * und `entferneAufgabenVorschlag` in `data.ts`). Best effort: ist die
+ * Aufgabe in Bitrix24 bereits gelöscht oder Bitrix24 gerade nicht
+ * erreichbar, wird der Fehler von den Aufrufern bewusst verschluckt, damit
+ * das Löschen im Project Builder trotzdem gelingt (siehe Kommentar bei
+ * `ensureBitrixGroupId` oben).
+ */
+export async function deleteTask(taskId: string): Promise<void> {
+  await call("task.item.delete", { TASKID: taskId });
+}
+
+/**
+ * Löscht die Bitrix24-Arbeitsgruppe eines Projekts, wenn das Projekt selbst
+ * im Project Builder unwiderruflich gelöscht wird (siehe `deleteProject` in
+ * `data.ts`) – damit auch auf Bitrix24-Seite nichts verwaist zurückbleibt.
+ */
+export async function deleteWorkgroup(groupId: number): Promise<void> {
+  await call("sonet_group.delete", { GROUP_ID: groupId });
+}
