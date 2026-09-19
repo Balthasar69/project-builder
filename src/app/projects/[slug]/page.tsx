@@ -16,6 +16,7 @@ import IdeenManager from "@/components/IdeenManager";
 import Brand from "@/components/Brand";
 import LogoutButton from "@/components/LogoutButton";
 import ProjectDescription from "@/components/ProjectDescription";
+import DokumenteLink from "@/components/DokumenteLink";
 import ProjectProgress from "@/components/ProjectProgress";
 import BlockHinweis from "@/components/BlockHinweis";
 import ReifegradRingKompakt from "@/components/ReifegradRingKompakt";
@@ -272,6 +273,14 @@ export default async function ProjectCockpit({
       <ProjectDescription
         slug={project.slug}
         beschreibung={project.beschreibung ?? ""}
+        darfBearbeiten={istKernteam(session, project)}
+      />
+
+      {/* Link zur externen Dokumenten-Ablage (Google Drive) – direkt unter
+          der Projektbeschreibung, für alle Teammitglieder sichtbar. */}
+      <DokumenteLink
+        slug={project.slug}
+        dokumenteLink={project.dokumenteLink ?? ""}
         darfBearbeiten={istKernteam(session, project)}
       />
 
