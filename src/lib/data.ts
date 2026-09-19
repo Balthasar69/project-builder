@@ -17,7 +17,13 @@ import {
   User,
 } from "./types";
 import { randomUUID } from "crypto";
-import { addWorkgroupMembers, createWorkgroup, setTaskGroup } from "./bitrix24";
+import {
+  addWorkgroupMembers,
+  createWorkgroup,
+  deleteTask,
+  deleteWorkgroup,
+  setTaskGroup,
+} from "./bitrix24";
 
 // Datenhaltung über Postgres (Neon, via Vercel Marketplace-Integration).
 // Jede Zeile ist ein Projekt als JSON-Dokument – bewusst einfach (kein
@@ -209,9 +215,23 @@ export async function saveCheckResult(
  * Löscht ein Projekt unwiderruflich (inkl. seiner Aufgaben-Notizen). Nur für
  * Balthasar über die PIN-geschützte Löschen-Funktion auf der Projektübersicht
  * gedacht – die Berechtigungsprüfung (istBalthasar) und die PIN-Prüfung
- * (DELETE_PIN) sitzen in der API-Route, nicht hier.
+ * (DELETE_PIN) sitzen in der API-Route, nicht hier. Hat das Projekt eine
+ * verbundene Bitrix24-Arbeitsgruppe, wird diese best effort mitgelöscht,
+ * damit auf Bitrix24-Seite nichts verwaist zurückbleibt (siehe Kommentar bei
+ * `ensureBitrixGroupId`) – schlägt das fehl (z. B. Bitrix24 nicht erreichbar
+ * oder Gruppe dort bereits gelöscht), wird das Löschen im Project Builder
+ * trotzdem durchgeführt.
  */
 export async function deleteProject(slug: string): Promise<void> {
+  const project = await getProject(slug);
+  if (project?.bitrix24.groupId) {
+    try {
+      await deleteWorkgroup(project.bitrix24.groupId);
+    } catch {
+      // best effort, siehe Kommentar bei ensureBitrixGroupId
+    }
+  }
+
   const sql = getSql();
   await sql`DELETE FROM task_notes WHERE slug = ${slug}`;
   await sql`DELETE FROM projects WHERE slug = ${slug}`;
@@ -983,10 +1003,24 @@ export async function addIdee(
   return project;
 }
 
-/** Entfernt eine noch nicht übernommene Idee wieder (Rechteprüfung: Kernteam). */
+/**
+ * Entfernt eine Idee wieder (Rechteprüfung: Kernteam). War sie bereits nach
+ * Bitrix24 übernommen, wird die dortige Aufgabe best effort mitgelöscht,
+ * damit Löschungen genauso synchron laufen wie das Anlegen (siehe Kommentar
+ * bei `ensureBitrixGroupId`).
+ */
 export async function removeIdee(slug: string, ideeId: string): Promise<Project> {
   const project = await getProject(slug);
   if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  const idee = (project.ideen ?? []).find((i) => i.id === ideeId);
+  if (idee?.uebernommenAlsTaskId) {
+    try {
+      await deleteTask(idee.uebernommenAlsTaskId);
+    } catch {
+      // best effort, siehe Kommentar bei ensureBitrixGroupId
+    }
+  }
 
   project.ideen = (project.ideen ?? []).filter((i) => i.id !== ideeId);
   project.aktualisiertAm = new Date().toISOString();
@@ -1200,13 +1234,27 @@ export async function setProjektstartFehler(
   return project;
 }
 
-/** Entfernt einen noch nicht übernommenen Aufgaben-Vorschlag wieder (Rechteprüfung: Kernteam). */
+/**
+ * Entfernt einen Aufgaben-Vorschlag wieder (Rechteprüfung: Kernteam). War er
+ * bereits nach Bitrix24 übernommen, wird die dortige Aufgabe best effort
+ * mitgelöscht, damit Löschungen genauso synchron laufen wie das Anlegen
+ * (siehe Kommentar bei `ensureBitrixGroupId`).
+ */
 export async function entferneAufgabenVorschlag(
   slug: string,
   vorschlagId: string
 ): Promise<Project> {
   const project = await getProject(slug);
   if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  const vorschlag = (project.aufgabenVorschlaege ?? []).find((v) => v.id === vorschlagId);
+  if (vorschlag?.uebernommenAlsTaskId) {
+    try {
+      await deleteTask(vorschlag.uebernommenAlsTaskId);
+    } catch {
+      // best effort, siehe Kommentar bei ensureBitrixGroupId
+    }
+  }
 
   project.aufgabenVorschlaege = (project.aufgabenVorschlaege ?? []).filter(
     (v) => v.id !== vorschlagId
