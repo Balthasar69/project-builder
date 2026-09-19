@@ -252,20 +252,13 @@ export default async function ProjectCockpit({
         </Aufklappbar>
       </div>
 
-      {/* Titel + kompakter Reifegrad-Ring nebeneinander (seit v0.46) –
-          Prozentzahl steht bewusst UNTER dem Ring, nicht mehr darin, damit
-          sie bei dieser kleinen Größe gut lesbar bleibt. */}
-      <div className="mb-5 flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <h1 className="mb-1 font-display text-4xl font-semibold text-ink">
-            {project.name}
-          </h1>
-          <p className="text-ink-muted">{project.rolleImSystem}</p>
-        </div>
-        <ReifegradRingKompakt
-          aktuell={project.aktuellePhase}
-          bereichStatus={project.bereichStatus}
-        />
+      {/* Titel (seit v0.73 ohne Reifegrad-Ring daneben - der Reifegrad
+          steht jetzt gesammelt ganz unten auf der Seite, siehe dort). */}
+      <div className="mb-5">
+        <h1 className="mb-1 font-display text-4xl font-semibold text-ink">
+          {project.name}
+        </h1>
+        <p className="text-ink-muted">{project.rolleImSystem}</p>
       </div>
 
       {/* Projektbeschreibung steht bewusst direkt unter dem Projektnamen –
@@ -373,6 +366,66 @@ export default async function ProjectCockpit({
         </Aufklappbar>
       </section>
 
+      {/* Gründercoach-Bot (Ökosystem-Phase 1 "Idee & Team"): projektweit
+          geteilter KI-Chat, siehe lib/gruendercoach.ts. Schwesterfunktion
+          zum "🧭 Gründercoach"-Chat im Steuerboard (dort Phasen 2-5). */}
+      <section
+        id="gruendercoach"
+        className="mt-12 scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
+      >
+        <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
+          <h2 className="font-display text-xl font-semibold">🧭 Gründercoach</h2>
+          <span className="font-mono text-xs text-ink-faint">
+            Projektweit geteilt · keine Rechts-/Steuer-/Gesundheitsauskünfte
+          </span>
+        </div>
+        <GruendercoachChat
+          slug={project.slug}
+          initial={project.coachChat ?? []}
+          sessionEmail={session.email}
+        />
+      </section>
+
+      {/* Chat (neu seit v0.46, Teil von "Dynamik"): interner Austausch nur
+          für Kernteam & Team dieses Projekts. */}
+      <section
+        id="chat"
+        className="mt-12 scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
+      >
+        <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
+          <h2 className="font-display text-xl font-semibold">Chat</h2>
+          <span className="font-mono text-xs text-ink-faint">
+            Nur für Kernteam &amp; Team sichtbar
+          </span>
+        </div>
+        <ProjectChat
+          slug={project.slug}
+          initial={project.chat ?? []}
+          sessionEmail={session.email}
+        />
+      </section>
+
+      <section
+        id="ideen"
+        className="mt-12 mb-10 scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
+      >
+        <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
+          <h2 className="font-display text-xl font-semibold">Ideen</h2>
+        </div>
+        <BlockHinweis
+          slug={project.slug}
+          blockKey="ideen"
+          individuellerText={project.hinweise?.ideen ?? ""}
+          standardText={STANDARD_HINWEISE.ideen}
+          darfBearbeiten={darfHinweiseBearbeiten}
+        />
+        <IdeenManager
+          slug={project.slug}
+          ideen={project.ideen ?? []}
+          istKernteam={istKernteam(session, project)}
+        />
+      </section>
+
       {/* Die KI-Fragen zum Projektstart stehen bewusst direkt unter
           Kernteam/Team/Kompetenzen – bevor es weiter unten um Fortschritt,
           Bewertung und Aufgaben geht. */}
@@ -425,25 +478,6 @@ export default async function ProjectCockpit({
           <div className="text-sm font-medium">{project.bitrix24.zuordnung}</div>
         </div>
       </div>
-
-      <section className="mb-12 rounded-lg border border-line bg-surface p-5 sm:p-6">
-        <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
-          <h2 className="font-display text-xl font-semibold">
-            Reifegrad je Bereich
-          </h2>
-          <span className="font-mono text-xs text-ink-faint">Kapitel 9</span>
-        </div>
-        <Aufklappbar buttonText="Hier öffnen">
-          <BlockHinweis
-            slug={project.slug}
-            blockKey="reifegrad"
-            individuellerText={project.hinweise?.reifegrad ?? ""}
-            standardText={STANDARD_HINWEISE.reifegrad}
-            darfBearbeiten={darfHinweiseBearbeiten}
-          />
-          <ReifegradMeter status={project.bereichStatus} />
-        </Aufklappbar>
-      </section>
 
       {/* Phasenverlauf und Projekt-Check stehen auf dem Desktop
           nebeneinander (ab "sm") statt untereinander – auf Wunsch, damit
@@ -537,93 +571,62 @@ export default async function ProjectCockpit({
         </section>
       </div>
 
-      {/* Aufgaben und Ideen ebenso nebeneinander (ab "sm") – beide gehören
-          zu "Dynamik" in der Hub-Navigation und passen inhaltlich
-          zusammen. */}
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
-        <section
-          id="aufgaben"
-          className="scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
-        >
-          <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
-            <h2 className="font-display text-xl font-semibold">Aufgaben</h2>
-            <span className="font-mono text-xs text-ink-faint">Kapitel 25</span>
-          </div>
-          {/* Ursprünglich erst ab der Kerngruppen-Phase sichtbar (Kapitel 6) –
-              auf Wunsch jetzt in jeder Phase nutzbar, damit Aufgaben schon
-              früher koordiniert werden können. Steht bewusst unter dem
-              Projekt-Check (Bewertungsmodul), nicht mehr davor. */}
-          <Aufklappbar buttonText="Hier öffnen">
-            <BlockHinweis
-              slug={project.slug}
-              blockKey="aufgaben"
-              individuellerText={project.hinweise?.aufgaben ?? ""}
-              standardText={STANDARD_HINWEISE.aufgaben}
-              darfBearbeiten={darfHinweiseBearbeiten}
-            />
-            <TaskBoard slug={project.slug} />
-          </Aufklappbar>
-        </section>
-
-        <section
-          id="ideen"
-          className="scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
-        >
-          <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
-            <h2 className="font-display text-xl font-semibold">Ideen</h2>
-          </div>
+      {/* Aufgaben (seit v0.73 nicht mehr neben "Ideen" - die stehen jetzt
+          weiter oben direkt bei Kompetenzen/Bot/Chat). */}
+      <section
+        id="aufgaben"
+        className="mb-12 scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
+      >
+        <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
+          <h2 className="font-display text-xl font-semibold">Aufgaben</h2>
+          <span className="font-mono text-xs text-ink-faint">Kapitel 25</span>
+        </div>
+        {/* Ursprünglich erst ab der Kerngruppen-Phase sichtbar (Kapitel 6) –
+            auf Wunsch jetzt in jeder Phase nutzbar, damit Aufgaben schon
+            früher koordiniert werden können. Steht bewusst unter dem
+            Projekt-Check (Bewertungsmodul), nicht mehr davor. */}
+        <Aufklappbar buttonText="Hier öffnen">
           <BlockHinweis
             slug={project.slug}
-            blockKey="ideen"
-            individuellerText={project.hinweise?.ideen ?? ""}
-            standardText={STANDARD_HINWEISE.ideen}
+            blockKey="aufgaben"
+            individuellerText={project.hinweise?.aufgaben ?? ""}
+            standardText={STANDARD_HINWEISE.aufgaben}
             darfBearbeiten={darfHinweiseBearbeiten}
           />
-          <IdeenManager
-            slug={project.slug}
-            ideen={project.ideen ?? []}
-            istKernteam={istKernteam(session, project)}
-          />
-        </section>
-      </div>
-
-      {/* Gründercoach-Bot (Ökosystem-Phase 1 "Idee & Team"): projektweit
-          geteilter KI-Chat, siehe lib/gruendercoach.ts. Schwesterfunktion
-          zum "🧭 Gründercoach"-Chat im Steuerboard (dort Phasen 2-5). */}
-      <section
-        id="gruendercoach"
-        className="mt-12 scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
-      >
-        <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
-          <h2 className="font-display text-xl font-semibold">🧭 Gründercoach</h2>
-          <span className="font-mono text-xs text-ink-faint">
-            Projektweit geteilt · keine Rechts-/Steuer-/Gesundheitsauskünfte
-          </span>
-        </div>
-        <GruendercoachChat
-          slug={project.slug}
-          initial={project.coachChat ?? []}
-          sessionEmail={session.email}
-        />
+          <TaskBoard slug={project.slug} />
+        </Aufklappbar>
       </section>
 
-      {/* Chat (neu seit v0.46, Teil von "Dynamik"): interner Austausch nur
-          für Kernteam & Team dieses Projekts. */}
       <section
-        id="chat"
-        className="mt-12 scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
+        id="reifegrad"
+        className="mb-12 scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
       >
         <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
-          <h2 className="font-display text-xl font-semibold">Chat</h2>
-          <span className="font-mono text-xs text-ink-faint">
-            Nur für Kernteam &amp; Team sichtbar
-          </span>
+          <h2 className="font-display text-xl font-semibold">
+            Reifegrad je Bereich
+          </h2>
+          <span className="font-mono text-xs text-ink-faint">Kapitel 9</span>
         </div>
-        <ProjectChat
-          slug={project.slug}
-          initial={project.chat ?? []}
-          sessionEmail={session.email}
-        />
+        <div className="mb-4 flex items-center gap-4">
+          <ReifegradRingKompakt
+            aktuell={project.aktuellePhase}
+            bereichStatus={project.bereichStatus}
+          />
+          <p className="text-sm text-ink-muted">
+            Kompakte Übersicht des Gesamt-Reifegrads - Details je Bereich
+            gibt es beim Aufklappen unten.
+          </p>
+        </div>
+        <Aufklappbar buttonText="Hier öffnen">
+          <BlockHinweis
+            slug={project.slug}
+            blockKey="reifegrad"
+            individuellerText={project.hinweise?.reifegrad ?? ""}
+            standardText={STANDARD_HINWEISE.reifegrad}
+            darfBearbeiten={darfHinweiseBearbeiten}
+          />
+          <ReifegradMeter status={project.bereichStatus} />
+        </Aufklappbar>
       </section>
     </main>
   );
