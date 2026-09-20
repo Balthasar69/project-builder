@@ -65,8 +65,9 @@ export default function ProjectProgress({
                 opacity={erreicht ? 1 : 0.16}
               >
                 <title>
-                  {phase.order}. {phase.name}
-                  {istAktuell ? " (aktuell)" : erreicht ? " (erledigt)" : " (offen)"}
+                  {`${phase.order}. ${phase.name}${
+                    istAktuell ? " (aktuell)" : erreicht ? " (erledigt)" : " (offen)"
+                  }`}
                 </title>
               </circle>
             );

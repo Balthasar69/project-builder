@@ -85,21 +85,25 @@ const GUIDE_STEPS = [
     id: "chat",
     label: "Chat",
     text: "Im Chat tauschst du dich direkt mit deinem Team aus.",
+    audio: "/balthes-audio/tour-chat.m4a",
   },
   {
     id: "ideen",
     label: "Ideen",
     text: "Unter Ideen sammelt ihr Gedanken und Vorschläge rund ums Projekt.",
+    audio: "/balthes-audio/tour-ideen.m4a",
   },
   {
     id: "aufgaben",
     label: "Aufgaben",
     text: "Unter Aufgaben haltet ihr fest, was als Nächstes ausgearbeitet werden muss.",
+    audio: "/balthes-audio/tour-aufgaben.m4a",
   },
   {
     id: "gruendercoach",
     label: "Gründercoach",
     text: "Und falls unterwegs Fragen aufkommen: Der Gründercoach (KI-Bot) ist jederzeit für dich da.",
+    audio: "/balthes-audio/tour-gruendercoach.m4a",
   },
 ] as const;
 
@@ -108,6 +112,100 @@ const GUIDE_STEPS = [
 // vollständige Zeichenkette auftauchen (siehe ProjektHubNav.tsx), deshalb
 // hier bewusst ausgeschrieben statt zusammengesetzt.
 const HIGHLIGHT_CLASSES = ["ring-2", "ring-accent", "ring-offset-2"];
+
+/**
+ * Lässt Balthes vorab aufgenommene Audiodateien abspielen (feste Sprachaufnahmen
+ * unter /public/balthes-audio, einmalig erzeugt – siehe README-Hinweis in
+ * diesem Ordner). Dadurch hört jeder Nutzer, auf jedem Gerät, exakt dieselbe
+ * Stimme – unabhängig von den auf seinem eigenen Gerät installierten
+ * Sprachausgaben. `istAmSprechen` steuert die kleine "spricht gerade"-
+ * Animation am Avatarbild.
+ */
+function useSprechen() {
+  const [istAmSprechen, setIstAmSprechen] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    return () => {
+      audioRef.current?.pause();
+    };
+  }, []);
+
+  function sprechen(dateipfad: string) {
+    if (!dateipfad) return;
+    audioRef.current?.pause();
+    const audio = new Audio(dateipfad);
+    audioRef.current = audio;
+    audio.onplay = () => setIstAmSprechen(true);
+    audio.onended = () => setIstAmSprechen(false);
+    audio.onpause = () => setIstAmSprechen(false);
+    audio.onerror = () => setIstAmSprechen(false);
+    audio.play().catch(() => setIstAmSprechen(false));
+  }
+
+  function stoppen() {
+    audioRef.current?.pause();
+    setIstAmSprechen(false);
+  }
+
+  return { sprechen, stoppen, istAmSprechen };
+}
+
+/** Balthes-Bild mit kleiner "spricht gerade"-Anzeige (Tonbalken) unten. */
+function BalthesBild({
+  className,
+  istAmSprechen,
+}: {
+  className: string;
+  istAmSprechen: boolean;
+}) {
+  return (
+    <span className={`relative block overflow-hidden ${className}`}>
+      <img src="/balthes.png" alt="Balthes" className="h-full w-full object-cover" />
+      {istAmSprechen && (
+        <span className="absolute inset-x-0 bottom-0 flex h-3.5 items-end justify-center gap-[2px] bg-ink/50 pb-0.5">
+          <span className="h-1.5 w-[3px] animate-pulse rounded-full bg-surface [animation-delay:0ms]" />
+          <span className="h-2.5 w-[3px] animate-pulse rounded-full bg-surface [animation-delay:150ms]" />
+          <span className="h-1.5 w-[3px] animate-pulse rounded-full bg-surface [animation-delay:300ms]" />
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** Kleiner Knopf zum Vorlesen-lassen bzw. Stoppen von Balthes' Aufnahme. */
+function SprechenKnopf({
+  sprechen,
+  stoppen,
+  istAmSprechen,
+  className = "",
+}: {
+  sprechen: () => void;
+  stoppen: () => void;
+  istAmSprechen: boolean;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => (istAmSprechen ? stoppen() : sprechen())}
+      aria-label={istAmSprechen ? "Vorlesen stoppen" : "Balthes vorlesen lassen"}
+      title={istAmSprechen ? "Vorlesen stoppen" : "Balthes vorlesen lassen"}
+      className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-ink-faint transition hover:border-accent hover:text-accent ${className}`}
+    >
+      {istAmSprechen ? (
+        <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor" aria-hidden="true">
+          <rect x="4" y="4" width="12" height="12" rx="1.5" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 20 20" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
+          <path d="M3 8v4h3l4 4V4L6 8H3z" fill="currentColor" stroke="none" />
+          <path d="M13 7.2a3.2 3.2 0 010 5.6" strokeLinecap="round" />
+        </svg>
+      )}
+    </button>
+  );
+}
 
 export default function BalthesGuide({
   slug,
@@ -127,6 +225,7 @@ export default function BalthesGuide({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [guideIndex, setGuideIndex] = useState<number | null>(null);
+  const { sprechen, stoppen, istAmSprechen } = useSprechen();
 
   const heroRef = useRef<HTMLDivElement>(null);
   const highlightedElRef = useRef<HTMLElement | null>(null);
@@ -250,6 +349,7 @@ export default function BalthesGuide({
   function endGuide() {
     clearHighlight();
     setGuideIndex(null);
+    stoppen();
   }
 
   async function speichernUndWeiter() {
@@ -275,6 +375,20 @@ export default function BalthesGuide({
     }
   }
 
+  const dialogAudioPfad = `/balthes-audio/dialog-${step}.m4a`;
+
+  useEffect(() => {
+    if (!open) return;
+    sprechen(dialogAudioPfad);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, step]);
+
+  useEffect(() => {
+    if (guideIndex === null) return;
+    sprechen(GUIDE_STEPS[guideIndex].audio);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guideIndex]);
+
   const summaryPreview = [buildBlock1(), buildBlock2()].filter(Boolean).join("\n\n") ||
     "Noch keine Angaben erfasst.";
 
@@ -284,7 +398,14 @@ export default function BalthesGuide({
       <div ref={heroRef} className="mb-2 flex items-start justify-end gap-3">
         {heroVisible && (
           <div className="w-52 shrink-0 rounded-lg border border-line bg-surface px-3.5 py-3 text-left shadow-sm">
-            <p className="mb-1 text-xs font-semibold text-ink">Balthes</p>
+            <div className="mb-1 flex items-center gap-1.5">
+              <p className="text-xs font-semibold text-ink">Balthes</p>
+              <SprechenKnopf
+                sprechen={() => sprechen("/balthes-audio/hero.m4a")}
+                stoppen={stoppen}
+                istAmSprechen={istAmSprechen}
+              />
+            </div>
             <p className="mb-2.5 text-xs leading-snug text-ink-muted">
               Lass uns zusammen starten – ich führe dich durch die ersten Schritte.
             </p>
@@ -313,7 +434,7 @@ export default function BalthesGuide({
           className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-accent"
         >
           <span className="absolute inset-[-4px] animate-ping rounded-full border-2 border-accent opacity-40" />
-          <img src="/balthes.png" alt="Balthes" className="relative h-full w-full object-cover" />
+          <BalthesBild className="relative h-full w-full" istAmSprechen={istAmSprechen} />
         </button>
       </div>
 
@@ -334,23 +455,35 @@ export default function BalthesGuide({
         <div
           className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 sm:items-center"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setOpen(false);
+            if (e.target === e.currentTarget) {
+              stoppen();
+              setOpen(false);
+            }
           }}
         >
           <div className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-surface sm:rounded-2xl">
             <div className="flex shrink-0 items-center gap-3 border-b border-line px-5 py-4">
-              <img
-                src="/balthes.png"
-                alt="Balthes"
-                className="h-9 w-9 rounded-full border border-accent object-cover"
+              <BalthesBild
+                className="h-9 w-9 rounded-full border border-accent"
+                istAmSprechen={istAmSprechen}
               />
               <div>
-                <p className="text-sm font-semibold text-ink">Balthes</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-semibold text-ink">Balthes</p>
+                  <SprechenKnopf
+                    sprechen={() => sprechen(dialogAudioPfad)}
+                    stoppen={stoppen}
+                    istAmSprechen={istAmSprechen}
+                  />
+                </div>
                 <p className="text-xs text-ink-faint">Dein Guide für den Einstieg</p>
               </div>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  stoppen();
+                  setOpen(false);
+                }}
                 aria-label="Schließen"
                 className="ml-auto text-xl leading-none text-ink-faint hover:text-ink"
               >
@@ -611,7 +744,10 @@ export default function BalthesGuide({
                 <>
                   <button
                     type="button"
-                    onClick={() => setOpen(false)}
+                    onClick={() => {
+                      stoppen();
+                      setOpen(false);
+                    }}
                     className="rounded-md border border-line px-4 py-2 text-sm text-ink-muted hover:bg-surface-2"
                   >
                     Abbrechen
@@ -672,15 +808,22 @@ export default function BalthesGuide({
       {guideIndex !== null && (
         <div className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-4">
           <div className="flex w-full max-w-md items-start gap-3 rounded-xl border border-line bg-surface px-4 py-3.5 shadow-lg">
-            <img
-              src="/balthes.png"
-              alt="Balthes"
-              className="h-9 w-9 shrink-0 rounded-full border border-accent object-cover"
+            <BalthesBild
+              className="h-9 w-9 shrink-0 rounded-full border border-accent"
+              istAmSprechen={istAmSprechen}
             />
             <div className="flex-1">
-              <p className="mb-2 text-sm leading-snug text-ink">
-                {GUIDE_STEPS[guideIndex].text}
-              </p>
+              <div className="mb-2 flex items-start gap-1.5">
+                <p className="text-sm leading-snug text-ink">
+                  {GUIDE_STEPS[guideIndex].text}
+                </p>
+                <SprechenKnopf
+                  sprechen={() => sprechen(GUIDE_STEPS[guideIndex].audio)}
+                  stoppen={stoppen}
+                  istAmSprechen={istAmSprechen}
+                  className="mt-0.5"
+                />
+              </div>
               <button
                 type="button"
                 onClick={() => {
