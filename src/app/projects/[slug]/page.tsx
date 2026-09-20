@@ -28,6 +28,7 @@ import ProjectChat from "@/components/ProjectChat";
 import GruendercoachChat from "@/components/GruendercoachChat";
 import Aufklappbar from "@/components/Aufklappbar";
 import SteuerungUebergang from "@/components/SteuerungUebergang";
+import BalthesGuide from "@/components/BalthesGuide";
 
 export const dynamic = "force-dynamic";
 
@@ -193,6 +194,7 @@ export default async function ProjectCockpit({
           Steuerboard), nicht projektspezifisch editierbar. Text wörtlich
           vorgegeben – bitte nicht automatisch umschreiben. */}
       <div className="mb-8 border-b border-line pb-6">
+        <BalthesGuide slug={project.slug} name={session.name} />
         <h2 className="mb-3 font-display text-xl font-semibold text-ink">
           Willkommen {vorname} bei insightworx, deinem Projektmanagement.
         </h2>
