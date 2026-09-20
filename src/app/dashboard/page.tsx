@@ -67,7 +67,7 @@ export default async function DashboardPage() {
   const ansteht = status.filter((s) => s.status === "ansteht");
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
+    <main className="mx-auto max-w-3xl px-6 py-16 lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl">
       <div className="mb-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <Brand size="gross" />

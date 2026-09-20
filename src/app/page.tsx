@@ -31,7 +31,7 @@ export default async function HomePage() {
     : alleProjekte.filter((p) => p.mitglieder.includes(session.email));
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
+    <main className="mx-auto max-w-3xl px-6 py-16 lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl">
       <div className="mb-10 flex items-center justify-between">
         <Brand />
         <div className="flex items-center gap-4">
