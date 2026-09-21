@@ -1,7 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import { Bitrix24Task } from "@/lib/types";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Bitrix24Task, Bitrix24TaskStage } from "@/lib/types";
 import TaskNotes from "./TaskNotes";
 import TaskAnalyse from "./TaskAnalyse";
 import Diktierknopf from "./Diktierknopf";
@@ -26,8 +26,8 @@ function statusFallbackBadge(status: string) {
 }
 
 // Wandelt eine Bitrix24-Farbe (z. B. "00C4FB") in einen leicht transparenten
-// Hintergrundton fürs Label um. Fällt bei unbekannten/fehlerhaften Werten
-// auf ein neutrales Grau zurück, statt kaputt auszusehen.
+// Hintergrundton um. Fällt bei unbekannten/fehlerhaften Werten auf ein
+// neutrales Grau zurück, statt kaputt auszusehen.
 function hexZuHintergrund(hex: string | undefined, alpha: number): string {
   const wert = parseInt((hex ?? "").replace("#", ""), 16);
   if (Number.isNaN(wert)) return `rgba(140, 140, 140, ${alpha})`;
@@ -40,10 +40,11 @@ function hexZuHintergrund(hex: string | undefined, alpha: number): string {
 // Zeigt die echte, in Bitrix24 selbst benannte Kanban-Spalte (Name + Farbe)
 // einer Aufgabe – oder, falls diese Arbeitsgruppe (noch) keine eigenen
 // Spalten nutzt, ersatzweise den technischen Status.
-function statusBadge(t: Bitrix24Task): { label: string; style?: React.CSSProperties; klasse?: string } {
+function statusBadge(t: Bitrix24Task): { label: string; style?: React.CSSProperties; klasse?: string; farbe?: string } {
   if (t.stage) {
     return {
       label: t.stage.title,
+      farbe: t.stage.color,
       style: {
         backgroundColor: hexZuHintergrund(t.stage.color, 0.16),
         color: t.stage.color ? `#${t.stage.color}` : undefined,
@@ -74,6 +75,61 @@ function sortSchluessel(t: Bitrix24Task): number {
   return STATUS_REIHENFOLGE[t.status] ?? 0;
 }
 
+/** Eine Kanban-Spalte – wie im Bitrix24-Arbeitsgruppen-Board, nur zum Ansehen (kein Verschieben per Drag & Drop). */
+interface Spalte {
+  key: string;
+  label: string;
+  farbe?: string;
+  klasse?: string;
+  sort: number;
+  tasks: Bitrix24Task[];
+}
+
+/**
+ * Baut die Spalten primär aus den echten Bitrix24-Kanban-Spalten der
+ * Arbeitsgruppe (`stages`, siehe `getGroupStages` in lib/bitrix24.ts) – so
+ * erscheint jede Spalte genau wie im Bitrix24-Board, auch wenn sie gerade
+ * leer ist (z. B. "Neu 0"), statt nur Spalten zu zeigen, in denen bereits
+ * Aufgaben liegen. Nur wenn eine Arbeitsgruppe (noch) gar keine eigenen
+ * Spalten hat, fällt die Funktion auf eine Gruppierung nach dem
+ * technischen Status zurück.
+ */
+function spaltenAusTasks(tasks: Bitrix24Task[], stages: Bitrix24TaskStage[]): Spalte[] {
+  const nachSchluessel = new Map<string, Spalte>();
+
+  for (const stage of stages) {
+    nachSchluessel.set(`stage:${stage.id}`, {
+      key: `stage:${stage.id}`,
+      label: stage.title,
+      farbe: stage.color,
+      sort: stage.sort,
+      tasks: [],
+    });
+  }
+
+  for (const t of tasks) {
+    const schluessel = t.stage ? `stage:${t.stage.id}` : `status:${t.status}`;
+    let spalte = nachSchluessel.get(schluessel);
+    if (!spalte) {
+      // Kommt nur vor, wenn die Aufgabe keiner der oben geladenen
+      // Bitrix24-Spalten zugeordnet werden konnte (z. B. Arbeitsgruppe ganz
+      // ohne eigene Spalten) – dann Fallback auf den technischen Status.
+      const badge = statusBadge(t);
+      spalte = {
+        key: schluessel,
+        label: badge.label,
+        farbe: badge.farbe,
+        klasse: badge.klasse,
+        sort: sortSchluessel(t),
+        tasks: [],
+      };
+      nachSchluessel.set(schluessel, spalte);
+    }
+    spalte.tasks.push(t);
+  }
+  return [...nachSchluessel.values()].sort((a, b) => a.sort - b.sort);
+}
+
 /**
  * Bitrix24-Arbeitsgruppe: Projekte werden seit v0.52 automatisch beim
  * Anlegen bzw. spätestens beim ersten Laden dieser Liste damit verbunden
@@ -81,9 +137,15 @@ function sortSchluessel(t: Bitrix24Task): number {
  * mehr nötig. Nebenbei ordnet der Aufruf auch alle vorher "verlorenen",
  * schon übernommenen KI-Aufgaben-Vorschläge/Ideen automatisch nach
  * (`repariereVerwaisteBitrixAufgaben`) und meldet, wie viele das waren.
+ *
+ * Anzeige seit v0.9x als Kanban-Board mit echten Bitrix24-Spalten
+ * nebeneinander (wie im Bitrix24-Arbeitsgruppen-Board) – bewusst nur zum
+ * Ansehen: Verschieben einer Aufgabe in eine andere Spalte geht weiterhin
+ * nur in Bitrix24 selbst.
  */
 export default function TaskBoard({ slug }: { slug: string }) {
   const [tasks, setTasks] = useState<Bitrix24Task[] | null>(null);
+  const [stages, setStages] = useState<Bitrix24TaskStage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reparaturHinweis, setReparaturHinweis] = useState<string | null>(null);
@@ -100,6 +162,7 @@ export default function TaskBoard({ slug }: { slug: string }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Laden fehlgeschlagen");
       setTasks(data.tasks);
+      setStages(data.stages ?? []);
       if (typeof data.repariert === "number" && data.repariert > 0) {
         setReparaturHinweis(
           `${data.repariert} bereits übernommene Aufgabe${
@@ -121,6 +184,11 @@ export default function TaskBoard({ slug }: { slug: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
+  const spalten = useMemo(
+    () => (tasks ? spaltenAusTasks(tasks, stages) : []),
+    [tasks, stages]
+  );
+
   async function hinzufuegen(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -140,6 +208,45 @@ export default function TaskBoard({ slug }: { slug: string }) {
     } finally {
       setSaving(false);
     }
+  }
+
+  function aufgabenKarte(t: Bitrix24Task) {
+    return (
+      <div key={t.id} className="rounded-md border border-line bg-surface p-3">
+        <p
+          className={`text-sm font-medium ${
+            t.erledigt ? "text-ink-faint line-through" : "text-ink"
+          }`}
+        >
+          {t.title}
+        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <button
+            type="button"
+            onClick={() => setOffeneAnalyse((o) => (o === t.id ? null : t.id))}
+            className="font-mono text-xs uppercase tracking-wide text-ink-faint hover:text-accent"
+          >
+            {offeneAnalyse === t.id ? "Mit KI bearbeiten ▲" : "Mit KI bearbeiten ▾"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setOffenNotizen((o) => (o === t.id ? null : t.id))}
+            className="font-mono text-xs uppercase tracking-wide text-ink-faint hover:text-accent"
+          >
+            {offenNotizen === t.id ? "Notizen ▲" : "Notizen ▾"}
+          </button>
+        </div>
+        {offeneAnalyse === t.id && (
+          <TaskAnalyse
+            slug={slug}
+            taskId={t.id}
+            titel={t.title}
+            onClose={() => setOffeneAnalyse(null)}
+          />
+        )}
+        {offenNotizen === t.id && <TaskNotes slug={slug} taskId={t.id} />}
+      </div>
+    );
   }
 
   return (
@@ -179,71 +286,29 @@ export default function TaskBoard({ slug }: { slug: string }) {
       {loading && tasks === null && (
         <p className="mb-4 text-sm text-ink-muted">Lädt Aufgaben…</p>
       )}
-      {tasks && tasks.length === 0 && (
+      {tasks && tasks.length === 0 && spalten.length === 0 && (
         <p className="mb-4 text-sm text-ink-muted">Noch keine Aufgaben.</p>
       )}
-      {tasks && tasks.length > 0 && (
-        <div className="mb-4 flex flex-col gap-2">
-          {[...tasks]
-            .sort((a, b) => sortSchluessel(a) - sortSchluessel(b))
-            .map((t) => {
-              const badge = statusBadge(t);
-              return (
-            <div
-              key={t.id}
-              className="rounded-md border border-line bg-surface px-4 py-2.5"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <span
-                  className={`text-sm font-medium ${
-                    t.erledigt ? "text-ink-faint line-through" : "text-ink"
-                  }`}
-                >
-                  {t.title}
-                </span>
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`whitespace-nowrap rounded-full px-2.5 py-0.5 font-mono text-[0.65rem] uppercase tracking-wide ${
-                      badge.klasse ?? ""
-                    }`}
-                    style={badge.style}
-                  >
-                    {badge.label}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setOffeneAnalyse((o) => (o === t.id ? null : t.id))
-                    }
-                    className="font-mono text-xs uppercase tracking-wide text-ink-faint hover:text-accent"
-                  >
-                    {offeneAnalyse === t.id
-                      ? "Mit KI bearbeiten ▲"
-                      : "Mit KI bearbeiten ▾"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setOffenNotizen((o) => (o === t.id ? null : t.id))
-                    }
-                    className="font-mono text-xs uppercase tracking-wide text-ink-faint hover:text-accent"
-                  >
-                    {offenNotizen === t.id ? "Notizen ▲" : "Notizen ▾"}
-                  </button>
-                </div>
+      {tasks && spalten.length > 0 && (
+        <div className="-mx-1 flex gap-3 overflow-x-auto pb-2">
+          {spalten.map((s) => (
+            <div key={s.key} className="w-72 shrink-0 px-1">
+              <div
+                className={`flex items-center justify-between rounded-t-md px-3 py-2 ${s.klasse ?? ""}`}
+                style={
+                  s.farbe
+                    ? { backgroundColor: hexZuHintergrund(s.farbe, 0.28), color: `#${s.farbe}` }
+                    : undefined
+                }
+              >
+                <span className="text-sm font-semibold">{s.label}</span>
+                <span className="font-mono text-xs tabular">{s.tasks.length}</span>
               </div>
-              {offeneAnalyse === t.id && (
-                <TaskAnalyse
-                  slug={slug}
-                  taskId={t.id}
-                  titel={t.title}
-                  onClose={() => setOffeneAnalyse(null)}
-                />
-              )}
-              {offenNotizen === t.id && <TaskNotes slug={slug} taskId={t.id} />}
+              <div className="flex min-h-16 flex-col gap-2 rounded-b-md border border-t-0 border-line bg-surface-2/60 p-2">
+                {s.tasks.map((t) => aufgabenKarte(t))}
+              </div>
             </div>
-              );
-            })}
+          ))}
         </div>
       )}
     </div>

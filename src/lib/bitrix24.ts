@@ -150,7 +150,7 @@ interface RawStage {
  * hat), wird einfach eine leere Liste zurückgegeben, statt die ganze
  * Aufgabenliste scheitern zu lassen.
  */
-async function getGroupStages(groupId: number): Promise<Bitrix24TaskStage[]> {
+export async function getGroupStages(groupId: number): Promise<Bitrix24TaskStage[]> {
   try {
     const result = await call<Record<string, RawStage>>("task.stages.get", {
       entityid: groupId,

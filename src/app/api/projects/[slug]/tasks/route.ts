@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureBitrixGroupId, getProject, repariereVerwaisteBitrixAufgaben } from "@/lib/data";
 import { getSession, hatProjektZugriff } from "@/lib/auth";
-import { createTask, listTasks } from "@/lib/bitrix24";
+import { createTask, getGroupStages, listTasks } from "@/lib/bitrix24";
 import { Project } from "@/lib/types";
 import { SessionPayload } from "@/lib/session";
 
@@ -47,11 +47,17 @@ export async function GET(
     const { project: verbundenesProjekt, groupId } = await ensureBitrixGroupId(project);
     const { repariert } = await repariereVerwaisteBitrixAufgaben(verbundenesProjekt);
 
-    const tasks = await listTasks({
-      groupId,
-      dealId: verbundenesProjekt.bitrix24.dealId || undefined,
-    });
-    return NextResponse.json({ tasks, repariert });
+    // Alle Kanban-Spalten der Arbeitsgruppe (auch leere, z. B. "Neu 0") –
+    // fuers Board-Layout im Client, damit es genau wie in Bitrix24 aussieht
+    // und nicht nur Spalten zeigt, in denen gerade Aufgaben liegen.
+    const [tasks, stages] = await Promise.all([
+      listTasks({
+        groupId,
+        dealId: verbundenesProjekt.bitrix24.dealId || undefined,
+      }),
+      getGroupStages(groupId),
+    ]);
+    return NextResponse.json({ tasks, stages, repariert });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Unbekannter Fehler" },
