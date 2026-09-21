@@ -139,9 +139,12 @@ function spaltenAusTasks(tasks: Bitrix24Task[], stages: Bitrix24TaskStage[]): Sp
  * (`repariereVerwaisteBitrixAufgaben`) und meldet, wie viele das waren.
  *
  * Anzeige seit v0.9x als Kanban-Board mit echten Bitrix24-Spalten
- * nebeneinander (wie im Bitrix24-Arbeitsgruppen-Board) – bewusst nur zum
- * Ansehen: Verschieben einer Aufgabe in eine andere Spalte geht weiterhin
- * nur in Bitrix24 selbst.
+ * nebeneinander (wie im Bitrix24-Arbeitsgruppen-Board). Karten lassen sich
+ * per Drag & Drop in eine andere Spalte ziehen – das schreibt die neue
+ * Spalte sofort nach Bitrix24 zurück (`moveTaskStage`/POST .../stage),
+ * damit beide Ansichten synchron bleiben. Nur möglich, solange die
+ * Arbeitsgruppe eigene Bitrix24-Spalten hat (`stages.length > 0`) – ohne
+ * echte Spalten-IDs gäbe es kein Ziel zum Zurückschreiben.
  */
 export default function TaskBoard({ slug }: { slug: string }) {
   const [tasks, setTasks] = useState<Bitrix24Task[] | null>(null);
@@ -153,6 +156,9 @@ export default function TaskBoard({ slug }: { slug: string }) {
   const [saving, setSaving] = useState(false);
   const [offenNotizen, setOffenNotizen] = useState<string | null>(null);
   const [offeneAnalyse, setOffeneAnalyse] = useState<string | null>(null);
+  const [verschiebeFehler, setVerschiebeFehler] = useState<string | null>(null);
+  const [gezogenerTaskId, setGezogenerTaskId] = useState<string | null>(null);
+  const [zielSpalte, setZielSpalte] = useState<string | null>(null);
 
   async function ladeAufgaben() {
     setLoading(true);
@@ -210,9 +216,66 @@ export default function TaskBoard({ slug }: { slug: string }) {
     }
   }
 
+  /**
+   * Schreibt eine per Drag & Drop verschobene Aufgabe sofort nach
+   * Bitrix24 zurück. Optimistisch: die Karte springt schon vor der Antwort
+   * des Servers in die neue Spalte; schlägt das Verschieben in Bitrix24
+   * fehl (z. B. keine Verbindung), springt sie automatisch zurück und es
+   * erscheint eine Fehlermeldung.
+   */
+  async function verschieben(taskId: string, zielSpalteObj: Spalte) {
+    const stageId = zielSpalteObj.key.startsWith("stage:")
+      ? zielSpalteObj.key.slice("stage:".length)
+      : null;
+    if (!stageId || !tasks) return;
+
+    const aktuelleAufgabe = tasks.find((t) => t.id === taskId);
+    if (!aktuelleAufgabe || aktuelleAufgabe.stage?.id === stageId) return;
+
+    const vorherigeAufgaben = tasks;
+    const neueStage = stages.find((s) => s.id === stageId);
+    setTasks(
+      tasks.map((t) => (t.id === taskId ? { ...t, stage: neueStage ?? t.stage } : t))
+    );
+    setVerschiebeFehler(null);
+
+    try {
+      const res = await fetch(`/api/projects/${slug}/tasks/${taskId}/stage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stageId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Verschieben fehlgeschlagen");
+    } catch (err) {
+      setTasks(vorherigeAufgaben);
+      setVerschiebeFehler(
+        err instanceof Error ? err.message : "Verschieben fehlgeschlagen"
+      );
+    }
+  }
+
   function aufgabenKarte(t: Bitrix24Task) {
+    const ziehbar = stages.length > 0;
     return (
-      <div key={t.id} className="rounded-md border border-line bg-surface p-3">
+      <div
+        key={t.id}
+        draggable={ziehbar}
+        onDragStart={(e) => {
+          e.dataTransfer.setData("text/plain", t.id);
+          e.dataTransfer.effectAllowed = "move";
+          setGezogenerTaskId(t.id);
+        }}
+        onDragEnd={() => setGezogenerTaskId(null)}
+        className={`rounded-md border border-line bg-surface p-3 ${
+          ziehbar ? "cursor-grab select-none active:cursor-grabbing" : ""
+        } ${gezogenerTaskId === t.id ? "opacity-40" : ""}`}
+        style={
+          ziehbar
+            ? ({ WebkitUserSelect: "none", userSelect: "none" } as React.CSSProperties)
+            : undefined
+        }
+      >
         <p
           className={`text-sm font-medium ${
             t.erledigt ? "text-ink-faint line-through" : "text-ink"
@@ -282,6 +345,11 @@ export default function TaskBoard({ slug }: { slug: string }) {
         </button>
       </form>
       {error && <p className="mb-4 text-sm text-bad">{error}</p>}
+      {verschiebeFehler && (
+        <p className="mb-4 text-sm text-bad">
+          Verschieben fehlgeschlagen: {verschiebeFehler}
+        </p>
+      )}
 
       {loading && tasks === null && (
         <p className="mb-4 text-sm text-ink-muted">Lädt Aufgaben…</p>
@@ -291,24 +359,51 @@ export default function TaskBoard({ slug }: { slug: string }) {
       )}
       {tasks && spalten.length > 0 && (
         <div className="-mx-1 flex gap-3 overflow-x-auto pb-2">
-          {spalten.map((s) => (
-            <div key={s.key} className="w-72 shrink-0 px-1">
-              <div
-                className={`flex items-center justify-between rounded-t-md px-3 py-2 ${s.klasse ?? ""}`}
-                style={
-                  s.farbe
-                    ? { backgroundColor: hexZuHintergrund(s.farbe, 0.28), color: `#${s.farbe}` }
-                    : undefined
-                }
-              >
-                <span className="text-sm font-semibold">{s.label}</span>
-                <span className="font-mono text-xs tabular">{s.tasks.length}</span>
+          {spalten.map((s) => {
+            const nimmtDrops = s.key.startsWith("stage:");
+            return (
+              <div key={s.key} className="w-72 shrink-0 px-1">
+                <div
+                  className={`flex items-center justify-between rounded-t-md px-3 py-2 ${s.klasse ?? ""}`}
+                  style={
+                    s.farbe
+                      ? { backgroundColor: hexZuHintergrund(s.farbe, 0.28), color: `#${s.farbe}` }
+                      : undefined
+                  }
+                >
+                  <span className="text-sm font-semibold">{s.label}</span>
+                  <span className="font-mono text-xs tabular">{s.tasks.length}</span>
+                </div>
+                <div
+                  onDragOver={(e) => {
+                    if (!nimmtDrops) return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                  }}
+                  onDragEnter={() => {
+                    if (nimmtDrops) setZielSpalte(s.key);
+                  }}
+                  onDragLeave={() =>
+                    setZielSpalte((z) => (z === s.key ? null : z))
+                  }
+                  onDrop={(e) => {
+                    if (!nimmtDrops) return;
+                    e.preventDefault();
+                    const taskId = e.dataTransfer.getData("text/plain");
+                    setZielSpalte(null);
+                    if (taskId) verschieben(taskId, s);
+                  }}
+                  className={`flex min-h-16 flex-col gap-2 rounded-b-md border border-t-0 bg-surface-2/60 p-2 transition-colors ${
+                    zielSpalte === s.key
+                      ? "border-accent bg-accent-soft/40"
+                      : "border-line"
+                  }`}
+                >
+                  {s.tasks.map((t) => aufgabenKarte(t))}
+                </div>
               </div>
-              <div className="flex min-h-16 flex-col gap-2 rounded-b-md border border-t-0 border-line bg-surface-2/60 p-2">
-                {s.tasks.map((t) => aufgabenKarte(t))}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -304,6 +304,18 @@ export async function setTaskGroup(taskId: string, groupId: number): Promise<voi
 }
 
 /**
+ * Verschiebt eine Aufgabe in eine andere Kanban-Spalte (Drag & Drop im
+ * Aufgaben-Board, v0.9x) – schreibt direkt nach Bitrix24 zurück, damit
+ * beide Ansichten synchron bleiben. Nutzt bewusst dieselbe ältere Methode
+ * "task.item.update" wie `setTaskGroup` oben (siehe Hinweis ganz oben in
+ * dieser Datei: die neuere Methodenfamilie "tasks.task.*" verweigert
+ * Schreibzugriffe über einfache Webhooks).
+ */
+export async function moveTaskStage(taskId: string, stageId: string): Promise<void> {
+  await call("task.item.update", { TASKID: taskId, FIELDS: { STAGE_ID: stageId } });
+}
+
+/**
  * Postet eine Notiz aus dem Project Builder (Text und/oder vertextete
  * Sprachnotiz) als Kommentar bei der zugehörigen Bitrix24-Aufgabe – so
  * sehen auch Team-Mitglieder, die nur in Bitrix24 arbeiten, die Notiz,
