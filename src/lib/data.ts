@@ -1369,6 +1369,40 @@ export async function addChatNachricht(
 }
 
 /**
+ * Ändert den Text einer bestehenden Chatnachricht nachträglich (siehe
+ * `CHAT_BEARBEITEN_MINUTEN` in lib/types.ts). Wer das darf – die eigene
+ * Autorin/der eigene Autor nur innerhalb des Zeitfensters, Admins jederzeit
+ * – prüft die aufrufende API-Route, nicht diese Funktion.
+ */
+export async function editChatNachricht(
+  slug: string,
+  params: { nachrichtId: string; text: string }
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  const chat = project.chat ?? [];
+  const index = chat.findIndex((n) => n.id === params.nachrichtId);
+  if (index === -1) throw new Error("Nachricht nicht gefunden");
+
+  const aktualisiert: ChatNachricht = {
+    ...chat[index],
+    text: params.text.trim(),
+    bearbeitetAm: new Date().toISOString(),
+  };
+  project.chat = [...chat.slice(0, index), aktualisiert, ...chat.slice(index + 1)];
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/**
  * Hängt eine Nachricht an den Gründercoach-Bot-Chat dieses Projekts an
  * (siehe lib/gruendercoach.ts) – analog zu addChatNachricht, aber mit
  * `rolle`, da hier auch der Bot selbst schreibt. Für Bot-Nachrichten bleiben

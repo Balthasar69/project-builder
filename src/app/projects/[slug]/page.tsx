@@ -393,6 +393,7 @@ export default async function ProjectCockpit({
           slug={project.slug}
           initial={project.chat ?? []}
           sessionEmail={session.email}
+          istAdmin={session.isAdmin}
         />
       </section>
 
@@ -594,8 +595,9 @@ export default async function ProjectCockpit({
               slug={project.slug}
               phase={project.aktuellePhase}
               checkVerlauf={project.checkVerlauf}
-              darfBewerten={istKernteam(session, project)}
-              kernteam={project.kernteam}
+              darfBewerten={hatProjektZugriff(session, project)}
+              istAdmin={session.isAdmin}
+              teilnehmer={kompetenzTeilnehmer}
               bewerterEmail={session.email}
               bewerterName={session.name}
             />

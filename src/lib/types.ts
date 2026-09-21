@@ -335,7 +335,7 @@ export const STANDARD_HINWEISE: Record<BlockHinweisKey, string> = {
   phasenverlauf:
     'Das Projekt durchläuft feste Phasen. Wenn die aktuelle Phase erledigt ist, schaltet das Kernteam mit „Weiter zu: …" eine Stufe weiter — nur Admins können eine Phase auch direkt setzen oder zurücksetzen.',
   kernteam:
-    'Das Kernteam trifft die Entscheidungen zu diesem Projekt: nur Kernteam-Mitglieder und Admins dürfen die Phase wechseln und die Bewertung unten abgeben. Hinzufügen/Entfernen können nur Admins.',
+    'Das Kernteam trifft die Entscheidungen zu diesem Projekt: nur Kernteam-Mitglieder und Admins dürfen die Phase wechseln. Hinzufügen/Entfernen können nur Admins.',
   team:
     "Wer hier mit E-Mail-Adresse eingetragen ist, kann dieses Projekt in der App sehen und mitbearbeiten. Neue Personen bekommen automatisch eine Einladungs-E-Mail und brauchen ein eigenes Konto.",
   aufgaben:
@@ -343,7 +343,7 @@ export const STANDARD_HINWEISE: Record<BlockHinweisKey, string> = {
   ideen:
     'Loses Sammelbecken für kurze Ideen, bevor sie eine richtige Aufgabe werden. Nur das Kernteam kann Ideen eintragen. Eine Idee bleibt zunächst nur hier in der App — erst wenn das Kernteam sie „in Bitrix24 übernimmt", wird daraus eine echte, synchronisierte Aufgabe.',
   check:
-    "Nur Kernteam-Mitglieder und Admins bewerten hier ehrlich den aktuellen Stand der Phase — jede Person mit eigener Bewertungsreihe je Frage. Der gemeinsame Score ist der Durchschnitt aller Bewertungen; ab einem bestimmten Punktestand gibt es eine GO-Empfehlung, sonst WEITER oder STOPP.",
+    "Alle Mitglieder mit Zugriff auf dieses Projekt bewerten hier ehrlich den aktuellen Stand der Phase — jede Person mit eigener Bewertungsreihe je Frage, jederzeit änderbar. Der gemeinsame Score ist der Durchschnitt aller Bewertungen; ab einem bestimmten Punktestand gibt es eine GO-Empfehlung, sonst WEITER oder STOPP.",
 };
 
 /**
@@ -579,10 +579,19 @@ export interface KompetenzBeitrag {
 }
 
 /**
+ * Wie viele Minuten nach dem Senden eine Chatnachricht noch von der
+ * Autorin/dem Autor selbst bearbeitet werden kann (siehe ProjectChat.tsx /
+ * api/projects/[slug]/chat route.ts). Admins dürfen unabhängig davon jede
+ * Nachricht jederzeit bearbeiten (Moderation).
+ */
+export const CHAT_BEARBEITEN_MINUTEN = 10;
+
+/**
  * Eine einzelne Nachricht im internen Projekt-Chat (neuer Cockpit-Bereich
  * seit v0.46) – nur für Kernteam & Team dieses Projekts sichtbar. Bewusst
- * einfach gehalten: keine Threads, kein Bearbeiten/Löschen im ersten
- * Schritt, nur ein fortlaufendes Protokoll je Projekt.
+ * einfach gehalten: keine Threads, kein Löschen, aber die eigene Nachricht
+ * ist innerhalb von `CHAT_BEARBEITEN_MINUTEN` nach dem Senden bearbeitbar
+ * (Admins zeitlich unbegrenzt).
  */
 export interface ChatNachricht {
   id: string;
@@ -590,6 +599,8 @@ export interface ChatNachricht {
   autorName: string;
   text: string;
   erstelltAm: string; // ISO-Datum
+  /** Gesetzt, sobald die Nachricht nachträglich geändert wurde. */
+  bearbeitetAm?: string; // ISO-Datum
 }
 
 /**
