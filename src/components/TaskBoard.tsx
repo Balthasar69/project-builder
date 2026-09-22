@@ -266,7 +266,10 @@ export default function TaskBoard({ slug }: { slug: string }) {
           e.dataTransfer.effectAllowed = "move";
           setGezogenerTaskId(t.id);
         }}
-        onDragEnd={() => setGezogenerTaskId(null)}
+        onDragEnd={() => {
+          setGezogenerTaskId(null);
+          setZielSpalte(null);
+        }}
         className={`rounded-md border border-line bg-surface p-3 ${
           ziehbar ? "cursor-grab select-none active:cursor-grabbing" : ""
         } ${gezogenerTaskId === t.id ? "opacity-40" : ""}`}
@@ -379,18 +382,20 @@ export default function TaskBoard({ slug }: { slug: string }) {
                     if (!nimmtDrops) return;
                     e.preventDefault();
                     e.dataTransfer.dropEffect = "move";
+                    // Laufend statt per dragenter/dragleave-Paar setzen:
+                    // dragleave feuert sonst schon beim Wechsel auf eine
+                    // Karte INNERHALB derselben Spalte und liess das
+                    // Ziehen durch die vielen dadurch ausgeloesten
+                    // Neuzeichnungen "zaeh" wirken. React ueberspringt bei
+                    // gleichem Wert ohnehin ein erneutes Rendern.
+                    setZielSpalte(s.key);
                   }}
-                  onDragEnter={() => {
-                    if (nimmtDrops) setZielSpalte(s.key);
-                  }}
-                  onDragLeave={() =>
-                    setZielSpalte((z) => (z === s.key ? null : z))
-                  }
                   onDrop={(e) => {
                     if (!nimmtDrops) return;
                     e.preventDefault();
                     const taskId = e.dataTransfer.getData("text/plain");
                     setZielSpalte(null);
+                    setGezogenerTaskId(null);
                     if (taskId) verschieben(taskId, s);
                   }}
                   className={`flex min-h-16 flex-col gap-2 rounded-b-md border border-t-0 bg-surface-2/60 p-2 transition-colors ${
