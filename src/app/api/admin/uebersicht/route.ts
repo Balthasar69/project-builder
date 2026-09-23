@@ -37,6 +37,7 @@ export async function GET(req: NextRequest) {
     bewertung: status[i].bewertung,
     offeneAufgaben: status[i].offeneAufgaben,
     letzteAktivitaetAm: status[i].letzteAktivitaetAm,
+    letzteAktivitaeten: status[i].letzteAktivitaeten,
     naechsteAufgabe: status[i].phase.ziel,
     zustaendig: p.kernteam.length ? p.kernteam.map((k) => k.name).join(", ") : null,
     steuerboard: p.steuerboard

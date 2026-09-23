@@ -14,6 +14,8 @@ import { listTasks } from "./bitrix24";
 // Kompetenz-Eintrag oder ein allgemeines Speichern (aktualisiertAm).
 const TAGE_STILL = 14; // ab so vielen Tagen ohne Aktivität gilt ein Projekt als "hemmt"
 const TAGE_AKTIV = 5; // bis zu so vielen Tagen gilt ein Projekt als "gerade aktiv"
+const TAGE_AKTIVITAETS_FEED = 7; // Fenster fuer die "Letzte Aktivitaet(en)"-Spalte in der Steuerzentrale (v0.9x)
+const MAX_AKTIVITAETEN = 3; // hoechstens so viele Eintraege je Projekt an die Steuerzentrale melden
 
 export interface ProjektStatus {
   slug: string;
@@ -29,6 +31,14 @@ export interface ProjektStatus {
   } | null;
   letzteAktivitaetAm: string | null;
   tageSeitAktivitaet: number | null;
+  /**
+   * Einzelne Aktivitaeten der letzten Tage (siehe TAGE_AKTIVITAETS_FEED),
+   * neueste zuerst - fuer die "Letzte Aktivitaet"-Spalte in der
+   * Steuerzentrale (public/dashboard.html der Steuerboard-Factory).
+   * Bewusst getrennt von `letzteAktivitaetAm` oben (nur der reine
+   * Zeitstempel, wird u.a. fuer den hemmt/vorangeht-Status gebraucht).
+   */
+  letzteAktivitaeten: { wer: string; was: string; wann: string }[];
   /** `null` = keine Bitrix24-Arbeitsgruppe verbunden oder Abruf fehlgeschlagen. */
   offeneAufgaben: number | null;
   aeltesteOffeneAufgabeTage: number | null;
@@ -51,6 +61,52 @@ function letzteAktivitaet(project: Project): Date | null {
     .filter((t) => !Number.isNaN(t));
   if (valid.length === 0) return null;
   return new Date(Math.max(...valid));
+}
+
+interface AktivitaetsEintrag { wer: string; was: string; wann: string }
+
+/**
+ * Sammelt einzelne Aktivitaeten (nicht nur den reinen Zeitstempel wie
+ * `letzteAktivitaet` oben) aus denselben vier Quellen, begrenzt auf die
+ * letzten `TAGE_AKTIVITAETS_FEED` Tage und auf `MAX_AKTIVITAETEN` Eintraege -
+ * fuer die "Letzte Aktivitaet"-Spalte in der Steuerzentrale. Kompetenz-
+ * Eintraege liefern absichtlich nur einen Zeitpunkt (aktualisiertAm), da
+ * dort nicht unterschieden wird, ob neu angelegt oder nur geaendert wurde.
+ */
+function letzteAktivitaeten(project: Project): AktivitaetsEintrag[] {
+  const grenze = Date.now() - TAGE_AKTIVITAETS_FEED * 24 * 60 * 60 * 1000;
+  const eintraege: AktivitaetsEintrag[] = [];
+
+  (project.checkVerlauf ?? []).forEach((c) => {
+    if (!c.durchgefuehrtAm) return;
+    const t = new Date(c.durchgefuehrtAm).getTime();
+    if (Number.isNaN(t) || t < grenze) return;
+    eintraege.push({ wer: c.bewerterName || "Unbekannt", was: "Bewertung abgegeben", wann: c.durchgefuehrtAm });
+  });
+
+  (project.chat ?? []).forEach((m) => {
+    if (!m.erstelltAm) return;
+    const t = new Date(m.erstelltAm).getTime();
+    if (Number.isNaN(t) || t < grenze) return;
+    eintraege.push({ wer: m.autorName || "Unbekannt", was: "Chat-Nachricht", wann: m.erstelltAm });
+  });
+
+  (project.ideen ?? []).forEach((i) => {
+    if (!i.erstelltAm) return;
+    const t = new Date(i.erstelltAm).getTime();
+    if (Number.isNaN(t) || t < grenze) return;
+    eintraege.push({ wer: i.erstelltVonName || "Unbekannt", was: "Idee ergänzt", wann: i.erstelltAm });
+  });
+
+  (project.kompetenzbeitraege ?? []).forEach((k) => {
+    if (!k.aktualisiertAm) return;
+    const t = new Date(k.aktualisiertAm).getTime();
+    if (Number.isNaN(t) || t < grenze) return;
+    eintraege.push({ wer: k.name || "Unbekannt", was: "Kompetenz-Eintrag aktualisiert", wann: k.aktualisiertAm });
+  });
+
+  eintraege.sort((a, b) => new Date(b.wann).getTime() - new Date(a.wann).getTime());
+  return eintraege.slice(0, MAX_AKTIVITAETEN);
 }
 
 function tageSeit(datum: Date | null): number | null {
@@ -161,6 +217,7 @@ export async function ermittleProjektStatus(project: Project): Promise<ProjektSt
     bewertung,
     letzteAktivitaetAm: aktivitaet ? aktivitaet.toISOString() : null,
     tageSeitAktivitaet,
+    letzteAktivitaeten: letzteAktivitaeten(project),
     offeneAufgaben,
     aeltesteOffeneAufgabeTage,
     status,
