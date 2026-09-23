@@ -103,7 +103,7 @@ export default function ProjektLogo({
         <img
           src={projektLogo}
           alt={`${name} Logo`}
-          className="h-14 w-auto max-w-[160px] object-contain sm:h-16"
+          className="h-28 w-auto max-w-[320px] object-contain sm:h-32"
         />
         {darfBearbeiten && (
           <div className="flex items-center gap-3">

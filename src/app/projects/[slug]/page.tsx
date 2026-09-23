@@ -373,6 +373,7 @@ export default async function ProjectCockpit({
             teilnehmer={kompetenzTeilnehmer}
             beitraege={project.kompetenzbeitraege ?? []}
             sessionEmail={session.email}
+            istAdmin={session.isAdmin}
           />
         </Aufklappbar>
       </section>
