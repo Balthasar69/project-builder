@@ -269,10 +269,11 @@ export default async function ProjectCockpit({
           bewusst nicht mehr an den rechten Rand gedrueckt (justify-between
           + flex-1), sondern direkt neben dem Titel, damit Titel und Logo
           erkennbar zusammengehoeren. Rechts daneben (durch justify-between
-          auf der aeusseren Zeile an den Rand gedrueckt) der runde Button
-          "Aktuelle Zusammenfassung": fuehrt direkt zur ausfuehrlichen KI-
-          Ausarbeitung weiter unten auf der Seite (Projekt-Zusammenfassung,
-          siehe #zusammenfassung) und oeffnet sie dabei automatisch. */}
+          auf der aeusseren Zeile an den Rand gedrueckt) der quadratische,
+          dunkelrote Button "Aktuelle Zusammenfassung" (zweizeilig): fuehrt
+          direkt zur ausfuehrlichen KI-Ausarbeitung weiter unten auf der
+          Seite (Projekt-Zusammenfassung, siehe #zusammenfassung) und
+          oeffnet sie dabei automatisch. */}
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-wrap items-start gap-4">
           <div className="min-w-0">
@@ -290,9 +291,10 @@ export default async function ProjectCockpit({
         </div>
         <a
           href="#zusammenfassung"
-          className="inline-flex w-fit shrink-0 items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-surface shadow-sm transition hover:bg-accent-ink"
+          className="flex h-28 w-28 shrink-0 flex-col items-center justify-center gap-0.5 rounded-md bg-bad px-1 text-center text-[11px] font-semibold leading-tight text-surface shadow-sm transition hover:bg-bad/90"
         >
-          Aktuelle Zusammenfassung
+          <span>Aktuelle</span>
+          <span>Zusammenfassung</span>
         </a>
       </div>
 
