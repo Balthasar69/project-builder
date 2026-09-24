@@ -84,6 +84,16 @@ export async function POST(_req: NextRequest, { params }: { params: { slug: stri
         text: n.transcript || n.text || "(Sprachnotiz ohne Text)",
         erstelltAm: n.erstelltAm,
       })),
+      // Aufgabeninhaber (nur fuer offene Aufgaben in der Ausarbeitung
+      // relevant, siehe projektZusammenfassung.ts): Bitrix24 liefert nur die
+      // technische responsibleId, darum hier gegen die Kernteam-Liste
+      // aufgeloest (dieselbe Zuordnung wie beim Anlegen neuer Aufgaben,
+      // siehe tasks/route.ts).
+      inhaber: t.responsibleId
+        ? verbundenesProjekt.kernteam.find(
+            (m) => m.bitrix24UserId !== undefined && String(m.bitrix24UserId) === t.responsibleId
+          )?.name
+        : undefined,
     }));
   } catch {
     // Bitrix24 gerade nicht erreichbar o. ae. – die Zusammenfassung soll

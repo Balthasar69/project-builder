@@ -63,6 +63,11 @@ export interface ZusammenfassungAufgabe {
   erledigt: boolean;
   erstelltAm?: string;
   notizen: ZusammenfassungAufgabenNotiz[];
+  /** Name des zustaendigen Kernteam-Mitglieds (ueber Bitrix24-responsibleId
+   *  aufgeloest, siehe zusammenfassung/route.ts) - fehlt, wenn sich die
+   *  Bitrix24-responsibleId keinem Kernteam-Mitglied zuordnen liess. Nur
+   *  fuer offene Aufgaben in der Ausarbeitung relevant (siehe buildPrompt). */
+  inhaber?: string;
 }
 
 export interface ZusammenfassungParams {
@@ -142,18 +147,26 @@ function buildPrompt(params: ZusammenfassungParams): string {
         .join("\n") + kompetenzen.hinweis
     : "(keine Kompetenz-Einträge bisher)";
 
-  const aufgabenText = aufgaben.eintraege.length
-    ? aufgaben.eintraege
-        .map((a) => {
-          const notizenText = a.notizen.length
-            ? a.notizen
-                .map((n) => `    · ${formatDatum(n.erstelltAm)} ${n.autorName}: ${n.text}`)
-                .join("\n")
-            : "    (keine Notizen zu dieser Aufgabe)";
-          return `- "${a.titel}" – Status: ${a.status}${a.erledigt ? " (erledigt)" : ""}\n${notizenText}`;
-        })
-        .join("\n") + aufgaben.hinweis
-    : "(noch keine Bitrix24-Aufgaben angelegt)";
+  function formatAufgabe(a: ZusammenfassungAufgabe, mitInhaber: boolean): string {
+    const notizenText = a.notizen.length
+      ? a.notizen
+          .map((n) => `    · ${formatDatum(n.erstelltAm)} ${n.autorName}: ${n.text}`)
+          .join("\n")
+      : "    (keine Notizen zu dieser Aufgabe)";
+    const inhaberText = mitInhaber ? ` · Zuständig: ${a.inhaber || "noch niemandem zugeordnet"}` : "";
+    return `- "${a.titel}" – Status: ${a.status}${inhaberText}\n${notizenText}`;
+  }
+
+  const erledigteAufgaben = aufgaben.eintraege.filter((a) => a.erledigt);
+  const offeneAufgaben = aufgaben.eintraege.filter((a) => !a.erledigt);
+
+  const erledigteAufgabenText = erledigteAufgaben.length
+    ? erledigteAufgaben.map((a) => formatAufgabe(a, false)).join("\n") + aufgaben.hinweis
+    : "(keine erledigten Aufgaben bisher)";
+
+  const offeneAufgabenText = offeneAufgaben.length
+    ? offeneAufgaben.map((a) => formatAufgabe(a, true)).join("\n")
+    : "(keine offenen Aufgaben)";
 
   return `Du unterstützt ein kleines Projektteam. Erstelle eine sehr AUSFÜHRLICHE schriftliche Ausarbeitung des bisherigen Projektverlaufs – ausdrücklich KEINE knappe Zusammenfassung, sondern ein detailliertes Dokument (ruhig 900–1500 Wörter), das jemand lesen kann, um wirklich zu verstehen, was in diesem Projekt passiert ist, wo es gerade steht und was ansteht.
 
@@ -173,18 +186,19 @@ ${ideenText}
 === Kompetenz-Einträge im Team ===
 ${kompetenzenText}
 
-=== Bitrix24-Aufgaben mit ihren Notizen ===
-${aufgabenText}
+=== Bereits erledigte Aufgaben mit ihren Notizen ===
+${erledigteAufgabenText}
 
-Schreibe die Ausarbeitung auf Deutsch, gegliedert in diese Abschnitte, jeweils mit einer eigenen Überschrift im Format "## Überschrift":
-1. Ausgangslage & aktueller Stand
-2. Verlauf & wichtige Entwicklungen (chronologisch aus Chat, Ideen und Bewertungen zusammengeführt – mit konkreten Daten und Namen)
-3. Kompetenzen im Team
-4. Aufgabenstand im Detail (je Aufgabe kurz Status und die wichtigsten Punkte aus den Notizen)
-5. Offene Punkte, Risiken und Bremsen
-6. Empfehlung für die nächsten Schritte
+=== Noch offene Aufgaben mit ihren Notizen und ihrem Aufgabeninhaber ===
+${offeneAufgabenText}
 
-Nutze konkrete Namen, Daten und sinngemäße Zitate aus den obigen Quellen statt allgemeiner Floskeln. Schreibe überwiegend in vollständigen Absätzen (kein reines Aufzählen), kurze Listen sind innerhalb eines Abschnitts erlaubt, wenn es der Übersicht dient. Liegt zu einem Abschnitt nichts vor, schreibe das kurz und ehrlich (z. B. "Bisher keine Ideen eingetragen."), statt etwas zu erfinden. Antworte direkt mit der Ausarbeitung, ohne einleitenden Satz wie "Hier ist die Ausarbeitung".`;
+Schreibe die Ausarbeitung auf Deutsch, in genau diesen zwei Teilen:
+
+1. Ein ausführlicher, zusammenhängender FLIESSTEXT (ganze Absätze, keine Aufzählung, keine Zwischenüberschriften) über den bisherigen Projektverlauf: Ausgangslage, wichtige Entwicklungen aus Chat, Ideen und Bewertungen (mit konkreten Daten und Namen), die Kompetenzen im Team – und darin eingebettet die bereits ERLEDIGTEN Aufgaben: erzähle in ganzen Sätzen, was gemacht wurde und was dabei herauskam, statt sie nur aufzuzählen.
+
+2. Direkt im Anschluss, unter der Überschrift "## Offene Aufgaben", eine Liste der noch NICHT erledigten Aufgaben – pro Zeile die Aufgabe, ihr Status und ihr Aufgabeninhaber, z. B. "- „Titel" (Status) – zuständig: Name". Steht kein Aufgabeninhaber dabei, übernimm das wörtlich so ("noch niemandem zugeordnet"). Fasse hier nicht die Notizen aus, nur Titel/Status/Zuständigkeit je Zeile.
+
+Nutze konkrete Namen, Daten und sinngemäße Zitate aus den obigen Quellen statt allgemeiner Floskeln. Liegt zu einem Bereich nichts vor, schreibe das im Fließtext kurz und ehrlich (z. B. "Bisher keine Ideen eingetragen."), statt etwas zu erfinden. Antworte direkt mit dem Fließtext (Teil 1 bekommt KEINE eigene Überschrift), ohne einleitenden Satz wie "Hier ist die Ausarbeitung".`;
 }
 
 async function frageGroq(apiKey: string, modell: string, prompt: string): Promise<string> {
