@@ -264,10 +264,13 @@ export default async function ProjectCockpit({
 
       {/* Titel (seit v0.73 ohne Reifegrad-Ring daneben - der Reifegrad
           steht jetzt gesammelt ganz unten auf der Seite, siehe dort).
-          Seit v0.76 rechts daneben stattdessen Platz fuer ein eigenes
-          Projekt-Logo (ProjektLogo.tsx), falls eines hochgeladen wurde. */}
-      <div className="mb-5 flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
+          Seit v0.76 daneben Platz fuer ein eigenes Projekt-Logo
+          (ProjektLogo.tsx), falls eines hochgeladen wurde - seit v0.9x
+          bewusst nicht mehr an den rechten Rand gedrueckt (justify-between
+          + flex-1), sondern direkt neben dem Titel, damit Titel und Logo
+          erkennbar zusammengehoeren. */}
+      <div className="mb-3 flex flex-wrap items-start gap-4">
+        <div className="min-w-0">
           <h1 className="mb-1 font-display text-4xl font-semibold text-ink">
             {project.name}
           </h1>
@@ -280,6 +283,17 @@ export default async function ProjectCockpit({
           darfBearbeiten={istKernteam(session, project)}
         />
       </div>
+
+      {/* "STATUS des PROJEKTES" (v0.9x): fuehrt direkt zur ausfuehrlichen
+          KI-Ausarbeitung weiter unten auf der Seite (Projekt-Zusammenfassung,
+          siehe #zusammenfassung) und oeffnet sie dabei automatisch - dieselbe
+          Schaltflaeche gibt es auch im Steuerboard-Dashboard. */}
+      <a
+        href="#zusammenfassung"
+        className="mb-6 inline-flex w-fit items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-surface shadow-sm transition hover:bg-accent-ink"
+      >
+        STATUS des PROJEKTES
+      </a>
 
       {/* Projektbeschreibung steht bewusst direkt unter dem Projektnamen –
           noch vor dem KI-Hinweis und der Hub-Navigation. */}
@@ -680,7 +694,7 @@ export default async function ProjectCockpit({
             Bewertungen · Chat · Ideen · Kompetenzen · Aufgaben
           </span>
         </div>
-        <Aufklappbar buttonText="Hier öffnen">
+        <Aufklappbar buttonText="Hier öffnen" oeffneBeiHash="#zusammenfassung">
           <ProjektZusammenfassung slug={project.slug} projektName={project.name} />
         </Aufklappbar>
       </section>

@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 
 /**
  * Allgemeiner Ein-/Ausklapp-Baustein: zeigt zunächst nur einen Button mit
@@ -25,11 +25,27 @@ import { ReactNode, useState } from "react";
 export default function Aufklappbar({
   buttonText,
   children,
+  oeffneBeiHash,
 }: {
   buttonText: string;
   children: ReactNode;
+  /** Optional: z. B. "#zusammenfassung" - ist der URL-Hash beim Laden oder
+   *  per Klick auf einen anderen Link auf der selben Seite (z. B. den
+   *  "STATUS des PROJEKTES"-Button oben im Cockpit) gleich diesem Wert,
+   *  klappt sich dieser Bereich automatisch auf (v0.9x). */
+  oeffneBeiHash?: string;
 }) {
   const [offen, setOffen] = useState(false);
+
+  useEffect(() => {
+    if (!oeffneBeiHash) return;
+    function pruefen() {
+      if (window.location.hash === oeffneBeiHash) setOffen(true);
+    }
+    pruefen();
+    window.addEventListener("hashchange", pruefen);
+    return () => window.removeEventListener("hashchange", pruefen);
+  }, [oeffneBeiHash]);
 
   if (!offen) {
     return (
