@@ -268,32 +268,33 @@ export default async function ProjectCockpit({
           (ProjektLogo.tsx), falls eines hochgeladen wurde - seit v0.9x
           bewusst nicht mehr an den rechten Rand gedrueckt (justify-between
           + flex-1), sondern direkt neben dem Titel, damit Titel und Logo
-          erkennbar zusammengehoeren. */}
-      <div className="mb-3 flex flex-wrap items-start gap-4">
-        <div className="min-w-0">
-          <h1 className="mb-1 font-display text-4xl font-semibold text-ink">
-            {project.name}
-          </h1>
-          <p className="text-ink-muted">{project.rolleImSystem}</p>
+          erkennbar zusammengehoeren. Rechts daneben (durch justify-between
+          auf der aeusseren Zeile an den Rand gedrueckt) der runde Button
+          "Aktuelle Zusammenfassung": fuehrt direkt zur ausfuehrlichen KI-
+          Ausarbeitung weiter unten auf der Seite (Projekt-Zusammenfassung,
+          siehe #zusammenfassung) und oeffnet sie dabei automatisch. */}
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-wrap items-start gap-4">
+          <div className="min-w-0">
+            <h1 className="mb-1 font-display text-4xl font-semibold text-ink">
+              {project.name}
+            </h1>
+            <p className="text-ink-muted">{project.rolleImSystem}</p>
+          </div>
+          <ProjektLogo
+            slug={project.slug}
+            name={project.name}
+            projektLogo={project.projektLogo ?? ""}
+            darfBearbeiten={istKernteam(session, project)}
+          />
         </div>
-        <ProjektLogo
-          slug={project.slug}
-          name={project.name}
-          projektLogo={project.projektLogo ?? ""}
-          darfBearbeiten={istKernteam(session, project)}
-        />
+        <a
+          href="#zusammenfassung"
+          className="inline-flex w-fit shrink-0 items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-surface shadow-sm transition hover:bg-accent-ink"
+        >
+          Aktuelle Zusammenfassung
+        </a>
       </div>
-
-      {/* "STATUS des PROJEKTES" (v0.9x): fuehrt direkt zur ausfuehrlichen
-          KI-Ausarbeitung weiter unten auf der Seite (Projekt-Zusammenfassung,
-          siehe #zusammenfassung) und oeffnet sie dabei automatisch - dieselbe
-          Schaltflaeche gibt es auch im Steuerboard-Dashboard. */}
-      <a
-        href="#zusammenfassung"
-        className="mb-6 inline-flex w-fit items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-surface shadow-sm transition hover:bg-accent-ink"
-      >
-        STATUS des PROJEKTES
-      </a>
 
       {/* Projektbeschreibung steht bewusst direkt unter dem Projektnamen –
           noch vor dem KI-Hinweis und der Hub-Navigation. */}
