@@ -29,6 +29,7 @@ import GruendercoachChat from "@/components/GruendercoachChat";
 import Aufklappbar from "@/components/Aufklappbar";
 import SteuerungUebergang from "@/components/SteuerungUebergang";
 import BalthesGuide from "@/components/BalthesGuide";
+import ProjektZusammenfassung from "@/components/ProjektZusammenfassung";
 
 export const dynamic = "force-dynamic";
 
@@ -661,6 +662,26 @@ export default async function ProjectCockpit({
             darfBearbeiten={darfHinweiseBearbeiten}
           />
           <ReifegradMeter status={project.bereichStatus} />
+        </Aufklappbar>
+      </section>
+
+      {/* Projekt-Zusammenfassung (v0.9x): fuehrt Bewertungen, Chat, Ideen,
+          Kompetenzen und Aufgaben+Notizen zu einer ausfuehrlichen KI-
+          Ausarbeitung zusammen - fuer alle mit Projektzugriff nutzbar. */}
+      <section
+        id="zusammenfassung"
+        className="mb-12 scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
+      >
+        <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
+          <h2 className="font-display text-xl font-semibold">
+            Projekt-Zusammenfassung
+          </h2>
+          <span className="font-mono text-xs text-ink-faint">
+            Bewertungen · Chat · Ideen · Kompetenzen · Aufgaben
+          </span>
+        </div>
+        <Aufklappbar buttonText="Hier öffnen">
+          <ProjektZusammenfassung slug={project.slug} projektName={project.name} />
         </Aufklappbar>
       </section>
     </main>

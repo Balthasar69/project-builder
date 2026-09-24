@@ -45,6 +45,13 @@ export interface ProjektStatus {
   status: "hemmt" | "vorangeht" | "ansteht";
   /** Begründung(en) für den Status – leer bei "ansteht" (neutraler Normalfall). */
   gruende: string[];
+  /**
+   * Kurzstatus der ausfuehrlichen Projekt-Zusammenfassung (siehe
+   * ProjektZusammenfassung in types.ts) fuer die gleichnamige Spalte in der
+   * Steuerzentrale - bewusst nur Vorhandensein + Zeitpunkt, nicht der volle
+   * (teils sehr lange) Text, der stattdessen direkt im Projekt liegt.
+   */
+  zusammenfassung: { erstelltAm: string; erstelltVonName: string } | null;
 }
 
 function letzteAktivitaet(project: Project): Date | null {
@@ -222,5 +229,11 @@ export async function ermittleProjektStatus(project: Project): Promise<ProjektSt
     aeltesteOffeneAufgabeTage,
     status,
     gruende,
+    zusammenfassung: project.zusammenfassung
+      ? {
+          erstelltAm: project.zusammenfassung.erstelltAm,
+          erstelltVonName: project.zusammenfassung.erstelltVonName,
+        }
+      : null,
   };
 }

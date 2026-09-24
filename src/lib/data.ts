@@ -12,6 +12,7 @@ import {
   PhaseCode,
   Project,
   ProjektArt,
+  ProjektZusammenfassung,
   SteuerboardInfo,
   TaskNote,
   User,
@@ -1081,6 +1082,45 @@ export async function setAufgabenAnalyse(
     ...(project.aufgabenAnalysen ?? {}),
     [taskId]: analyse,
   };
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/**
+ * Alle Text-/Sprachnotizen ueber SAEMTLICHE Aufgaben eines Projekts hinweg,
+ * aelteste zuerst - anders als `listTaskNotes` (eine einzelne Aufgabe) fuer
+ * die Projekt-Zusammenfassung gedacht, die den gesamten Notizen-Bestand auf
+ * einen Blick braucht statt Aufgabe fuer Aufgabe einzeln nachzufragen.
+ */
+export async function listTaskNotesForSlug(slug: string): Promise<TaskNote[]> {
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT * FROM task_notes
+    WHERE slug = ${slug}
+    ORDER BY created_at ASC
+  `) as TaskNoteRow[];
+  return rows.map(toTaskNote);
+}
+
+/**
+ * Speichert die aktuelle (per Klick neu erstellte) Projekt-Zusammenfassung.
+ * Ersetzt eine vorhandene Fassung vollstaendig - siehe `ProjektZusammenfassung`.
+ */
+export async function setProjektZusammenfassung(
+  slug: string,
+  zusammenfassung: ProjektZusammenfassung
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  project.zusammenfassung = zusammenfassung;
   project.aktualisiertAm = new Date().toISOString();
 
   const sql = getSql();

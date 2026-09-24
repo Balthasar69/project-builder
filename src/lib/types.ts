@@ -419,6 +419,8 @@ export interface Project {
   ideen?: Idee[];
   /** Von Claude erstellte Hilfestellungen je Bitrix24-Aufgaben-ID (siehe `AufgabenAnalyse`). */
   aufgabenAnalysen?: Record<string, AufgabenAnalyse>;
+  /** Ausfuehrliche KI-Ausarbeitung des gesamten Projektverlaufs, siehe `ProjektZusammenfassung`. */
+  zusammenfassung?: ProjektZusammenfassung;
   /** Laufender oder zuletzt abgeschlossener Projektstart-Fragebogen, siehe `ProjektstartFragebogen`. */
   projektstartFragebogen?: ProjektstartFragebogen;
   /** Von der KI aus dem Projektstart-Fragebogen abgeleitete, noch nicht durchgesehene Aufgaben-Vorschläge. */
@@ -517,6 +519,24 @@ export interface TaskNote {
 export interface AufgabenAnalyse {
   text: string;
   erstelltAm: string; // ISO-Datum
+}
+
+/**
+ * Sehr ausfuehrliche, von der KI erstellte Ausarbeitung des gesamten
+ * bisherigen Projektverlaufs (v0.9x, "Projekt-Zusammenfassung"): fuehrt
+ * Bewertungen, Chat, Ideen, Kompetenz-Beitraege und Bitrix24-Aufgaben samt
+ * ihren Notizen zu einem einzigen, lesbaren Status-Dokument fuers ganze
+ * Team zusammen - bewusst als ausfuehrliche Ausarbeitung angelegt, nicht
+ * als knappe Zusammenfassung. Wird im Projekt selbst gespeichert (siehe
+ * `Project.zusammenfassung`); ein erneuter Klick auf "Neu erstellen"
+ * ersetzt eine vorhandene Fassung durch eine neue - es gibt bewusst keine
+ * Versionshistorie, nur den jeweils aktuellen Stand.
+ */
+export interface ProjektZusammenfassung {
+  text: string;
+  erstelltAm: string; // ISO-Datum
+  erstelltVonName: string;
+  erstelltVonEmail: string;
 }
 
 /** Ob ein Projekt geschäftlich oder privat/persönlich ist – entscheidet über
