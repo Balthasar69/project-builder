@@ -21,6 +21,14 @@ import { SessionPayload } from "@/lib/session";
 // automatisch auf das jeweilige Maximum begrenzt.
 export const maxDuration = 60;
 
+// Server-zu-Server-Zugriff fuers Steuerboard-Oekosystem (anderes Repo):
+// zeigt den fertigen Businessplan dort unten im Board an, ohne dass dort
+// ein Project-Builder-Login besteht (siehe GET unten). Manuell in beiden
+// Vercel-Projekten auf denselben Wert gesetzt, analog zu
+// STEUERBOARD_FACTORY_SECRET in steuerboardFactory.ts (nur eben in die
+// umgekehrte Richtung: Steuerboard-Kopie -> Project Builder).
+const BUSINESSPLAN_LESE_SECRET = process.env.BUSINESSPLAN_LESE_SECRET;
+
 async function pruefeZugriff(
   slug: string
 ): Promise<{ error: NextResponse } | { session: SessionPayload; project: Project }> {
@@ -42,8 +50,28 @@ async function pruefeZugriff(
   return { session, project };
 }
 
-/** Liefert die bereits gespeicherte Zusammenfassung, falls vorhanden. */
-export async function GET(_req: NextRequest, { params }: { params: { slug: string } }) {
+/**
+ * Liefert die bereits gespeicherte Zusammenfassung (Businessplan), falls
+ * vorhanden. Zwei Zugriffswege:
+ * 1) Eingeloggte Session mit Projektzugriff (normaler App-Gebrauch).
+ * 2) Server-zu-Server mit korrektem "x-businessplan-secret"-Header (siehe
+ *    BUSINESSPLAN_LESE_SECRET oben) - genutzt von einer Steuerboard-Kopie,
+ *    um den Businessplan unten im Board anzuzeigen. Liefert in diesem Fall
+ *    bewusst NUR den Businessplan-Text zurueck, keine weiteren, u.U.
+ *    sensiblen Projektdaten - und prueft NICHT erneut Kernteam/Team-
+ *    Mitgliedschaft, weil das Steuerboard keine Project-Builder-Session hat;
+ *    der Secret-Header selbst ist die Zugriffsschranke.
+ */
+export async function GET(req: NextRequest, { params }: { params: { slug: string } }) {
+  const secretHeader = req.headers.get("x-businessplan-secret");
+  if (BUSINESSPLAN_LESE_SECRET && secretHeader === BUSINESSPLAN_LESE_SECRET) {
+    const project = await getProject(params.slug);
+    if (!project) {
+      return NextResponse.json({ error: "Projekt nicht gefunden" }, { status: 404 });
+    }
+    return NextResponse.json({ zusammenfassung: project.zusammenfassung ?? null });
+  }
+
   const check = await pruefeZugriff(params.slug);
   if ("error" in check) return check.error;
 
