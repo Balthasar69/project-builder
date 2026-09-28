@@ -15,26 +15,52 @@ function formatiereZeit(iso: string): string {
 
 /** Sehr einfache Darstellung des KI-Textes: Zeilen, die mit "## " beginnen,
  *  werden als Zwischenueberschrift dargestellt, alle anderen als Absaetze
- *  (Leerzeile trennt Absaetze). Bewusst kein vollwertiger Markdown-Renderer
- *  - der Prompt gibt nur dieses eine Muster vor (siehe projektZusammenfassung.ts). */
+ *  (Leerzeile trennt mehrere Absaetze). Bewusst kein vollwertiger Markdown-
+ *  Renderer - der Prompt gibt nur dieses eine Muster vor (siehe
+ *  projektZusammenfassung.ts). Zeilenweise statt blockweise geparst, WEIL
+ *  die KI eine Ueberschriftzeile oft direkt ohne Leerzeile von ihrem ersten
+ *  Absatz gefolgt schreibt (z.B. "## Titel\nErster Satz...") - ein reiner
+ *  Split an Leerzeilen (fruehere Fassung) haette Ueberschrift + Absatz dann
+ *  faelschlich zu einem einzigen, als Ueberschrift dargestellten Block
+ *  zusammengefasst (sichtbar als ein einziger fett gesetzter Textblock ohne
+ *  erkennbare Gliederung, obwohl der Text selbst korrekt strukturiert war). */
 function ZusammenfassungText({ text }: { text: string }) {
-  const bloecke = text.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
+  type Block = { typ: "heading" | "absatz"; text: string };
+  const bloecke: Block[] = [];
+  let aktuellerAbsatz: string[] = [];
+
+  function absatzAbschliessen() {
+    const inhalt = aktuellerAbsatz.join("\n").trim();
+    if (inhalt) bloecke.push({ typ: "absatz", text: inhalt });
+    aktuellerAbsatz = [];
+  }
+
+  for (const zeile of text.split("\n")) {
+    const getrimmt = zeile.trim();
+    if (getrimmt.startsWith("## ")) {
+      absatzAbschliessen();
+      bloecke.push({ typ: "heading", text: getrimmt.replace(/^##\s*/, "") });
+    } else if (getrimmt === "") {
+      absatzAbschliessen();
+    } else {
+      aktuellerAbsatz.push(zeile);
+    }
+  }
+  absatzAbschliessen();
+
   return (
     <div className="space-y-4">
-      {bloecke.map((block, i) => {
-        if (block.startsWith("## ")) {
-          return (
-            <h3 key={i} className="font-display text-base font-semibold text-ink">
-              {block.replace(/^##\s*/, "")}
-            </h3>
-          );
-        }
-        return (
+      {bloecke.map((block, i) =>
+        block.typ === "heading" ? (
+          <h3 key={i} className="font-display text-base font-semibold text-ink">
+            {block.text}
+          </h3>
+        ) : (
           <p key={i} className="whitespace-pre-wrap text-sm leading-relaxed text-ink-muted">
-            {block}
+            {block.text}
           </p>
-        );
-      })}
+        )
+      )}
     </div>
   );
 }
