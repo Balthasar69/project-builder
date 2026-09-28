@@ -115,7 +115,7 @@ export default function ProjektZusammenfassung({
   function herunterladen() {
     if (!zusammenfassung) return;
     const datum = zusammenfassung.erstelltAm.slice(0, 10);
-    const dateiname = `${projektName.replace(/[^a-z0-9äöüß]+/gi, "-")}-zusammenfassung-${datum}.md`;
+    const dateiname = `${projektName.replace(/[^a-z0-9äöüß]+/gi, "-")}-businessplan-${datum}.md`;
     ladeDateiHerunter(dateiname, zusammenfassung.text);
   }
 
@@ -128,10 +128,12 @@ export default function ProjektZusammenfassung({
 
       {zusammenfassung === null && !ladefehler && (
         <p className="mb-4 text-sm text-ink-muted">
-          Es gibt noch keine Zusammenfassung. Ein Klick auf den Button unten
+          Es gibt noch keinen Businessplan. Ein Klick auf den Button unten
           lässt die KI aus allen bisherigen Bewertungen, Chat-Nachrichten,
-          Ideen, Kompetenz-Einträgen und Aufgaben (samt Notizen) eine
-          ausführliche Ausarbeitung des Projektverlaufs erstellen.
+          Ideen, Kompetenz-Einträgen und Aufgaben (samt Notizen) einen
+          Businessplan mit klassischer Gliederung erstellen (Finanzplanung
+          bewusst nur als Platzhalter, da dafür noch keine Zahlen in der
+          App erfasst werden).
         </p>
       )}
 
@@ -164,7 +166,7 @@ export default function ProjektZusammenfassung({
           ? "Wird erstellt… (kann eine Weile dauern)"
           : zusammenfassung
             ? "Neu erstellen"
-            : "Zusammenfassung erstellen"}
+            : "Businessplan erstellen"}
       </button>
       {error && <p className="mt-2 text-sm text-bad">{error}</p>}
       {speicherHinweis && (

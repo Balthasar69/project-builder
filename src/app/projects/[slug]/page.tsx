@@ -293,8 +293,8 @@ export default async function ProjectCockpit({
           href="#zusammenfassung"
           className="flex h-28 w-28 shrink-0 flex-col items-center justify-center gap-0.5 rounded-md bg-bad px-1 text-center text-[11px] font-semibold leading-tight text-surface shadow-sm transition hover:bg-bad/90"
         >
-          <span>Aktuelle</span>
-          <span>Zusammenfassung</span>
+          <span>Aktueller</span>
+          <span>Businessplan</span>
         </a>
       </div>
 
@@ -691,7 +691,7 @@ export default async function ProjectCockpit({
       >
         <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
           <h2 className="font-display text-xl font-semibold">
-            Projekt-Zusammenfassung
+            Businessplan
           </h2>
           <span className="font-mono text-xs text-ink-faint">
             Bewertungen · Chat · Ideen · Kompetenzen · Aufgaben

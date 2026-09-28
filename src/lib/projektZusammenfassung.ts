@@ -1,9 +1,15 @@
-// "Projekt-Zusammenfassung": fuehrt den GESAMTEN bisherigen Verlauf eines
-// Projekts - Bewertungen, Chat, Ideen, Kompetenz-Beitraege und Bitrix24-
-// Aufgaben samt ihren Notizen - zu einer sehr ausfuehrlichen, von der KI
-// geschriebenen Ausarbeitung zusammen. Bewusst KEINE knappe Zusammenfassung,
-// sondern ein langes, detailliertes Dokument, das jemand lesen kann, um den
-// Projektverlauf wirklich nachzuvollziehen (siehe ProjektZusammenfassung.tsx).
+// "Businessplan" (vormals "Projekt-Zusammenfassung", siehe Git-Historie):
+// fuehrt den GESAMTEN bisherigen Verlauf eines Projekts - Bewertungen, Chat,
+// Ideen, Kompetenz-Beitraege und Bitrix24-Aufgaben samt ihren Notizen - zu
+// einem von der KI geschriebenen Businessplan mit klassischer Gliederung
+// zusammen (Executive Summary, Geschaeftsidee, Markt & Wettbewerb, Team,
+// Marketing & Vertrieb, bisheriger Verlauf, Chancen & Risiken, Finanzplanung
+// als bewusster Platzhalter - dafuer werden aktuell keine Zahlen erfasst -,
+// zuletzt die offenen Aufgaben). Siehe ProjektZusammenfassung.tsx fuer die
+// Anzeige; Variablen-/Routen-/Feldnamen heissen bewusst weiter "Zusammen-
+// fassung" (u.a. weil das Steuerboard-Oekosystem in einem anderen Repo
+// darauf verlinkt, siehe PROJEKT_ZUSAMMENFASSUNG_URL) - nur die fuer
+// Nutzer sichtbaren Texte wurden auf "Businessplan" umbenannt.
 //
 // Nutzt denselben Zwei-Anbieter-Mechanismus wie "Mit KI bearbeiten" fuer
 // einzelne Aufgaben (siehe aufgabenAnalyse.ts): Groq (GROQ_API_KEY,
@@ -178,7 +184,7 @@ function buildPrompt(params: ZusammenfassungParams): string {
         .join("\n")
     : "(keine offenen Aufgaben)";
 
-  return `Du unterstützt ein kleines Projektteam. Erstelle eine sehr AUSFÜHRLICHE schriftliche Ausarbeitung des bisherigen Projektverlaufs – ausdrücklich KEINE knappe Zusammenfassung, sondern ein detailliertes Dokument (ruhig 900–1500 Wörter), das jemand lesen kann, um wirklich zu verstehen, was in diesem Projekt passiert ist, wo es gerade steht und was ansteht.
+  return `Du unterstützt ein kleines Projektteam dabei, aus dem bisherigen Projektverlauf einen echten BUSINESSPLAN mit klassischer Gliederung zu erstellen – kein loser Verlaufsbericht, sondern ein Dokument, das jemand (z. B. eine Bank, ein Partner oder das Team selbst) lesen kann, um Geschäftsidee, Markt, Team und nächste Schritte zu verstehen. Ruhig ausführlich (1200–1800 Wörter insgesamt).
 
 Projekt: "${params.projektName}"
 Beschreibung: ${params.projektBeschreibung?.trim() || "(keine hinterlegt)"}
@@ -202,13 +208,19 @@ ${erledigteAufgabenText}
 === Offene Aufgaben mit ihrem Aufgabeninhaber ===
 ${offeneAufgabenText}
 
-Schreibe die Ausarbeitung auf Deutsch, klar STRUKTURIERT mit Zwischenüberschriften – keine einzige lange Textwüste. Baue sie aus genau diesen Teilen auf, jeder mit eigener Zwischenüberschrift im Format "## Überschrift" auf eigener Zeile:
+Gliedere den Businessplan auf Deutsch in GENAU diese Abschnitte, jeweils mit eigener Zwischenüberschrift im Format "## Überschrift" auf eigener Zeile, in dieser Reihenfolge:
 
-1. Mehrere thematische Abschnitte (je nach vorhandenem Material typischerweise 3–5, z. B. "## Ausgangslage", "## Verlauf & wichtige Entwicklungen", "## Team & Kompetenzen", "## Erledigte Aufgaben" – Titel sinngemäß an das Projekt anpassen, nicht stur diese Namen übernehmen). Jeder Abschnitt besteht aus 1–3 kurzen FLIESSTEXT-Absätzen (ganze Sätze, KEINE Aufzählung innerhalb der Abschnitte) über Ausgangslage, wichtige Entwicklungen aus Chat, Ideen und Bewertungen (mit konkreten Daten und Namen), die Kompetenzen im Team – und darin eingebettet die bereits ERLEDIGTEN Aufgaben: erzähle in ganzen Sätzen, was gemacht wurde und was dabei herauskam, statt sie aufzuzählen. Gehe in diesen Abschnitten NICHT auf die noch OFFENEN Aufgaben ein, die kommen ausschließlich im letzten Abschnitt.
+1. "## Executive Summary" – ein kurzer, dichter Überblick (1 Absatz): worum es geht, wo das Projekt gerade steht, wohin es soll.
+2. "## Geschäftsidee & Angebot" – was genau angeboten wird und welchen Nutzen es für wen stiftet, basierend auf Beschreibung, Ideen und Chat.
+3. "## Markt & Wettbewerb" – was sich aus den Quellen zu Zielgruppe, Marktumfeld und Wettbewerb ablesen lässt. Ist dazu kaum etwas hinterlegt, schreibe das ehrlich (z. B. "Eine systematische Markt- und Wettbewerbsanalyse liegt bisher nicht vor.") statt etwas zu erfinden.
+4. "## Team & Kompetenzen" – wer ist beteiligt, mit welchen Stärken und welchem Beitrag (aus den Kompetenz-Einträgen).
+5. "## Marketing & Vertrieb" – was aus Ideen/Chat zu Vertriebsweg, Ansprache oder Preismodell hervorgeht; fehlt das, ehrlich vermerken statt zu erfinden.
+6. "## Bisheriger Verlauf & Meilensteine" – FLIESSTEXT (ganze Sätze, keine Aufzählung) über die wichtigsten Entwicklungen aus Chat, Ideen und Bewertungen (mit konkreten Daten und Namen) sowie die bereits ERLEDIGTEN Aufgaben: erzähle, was gemacht wurde und was dabei herauskam, statt es aufzuzählen.
+7. "## Chancen & Risiken" – aus den Quellen erkennbare Chancen und Risiken/Bremsen, sachlich und konkret statt allgemein.
+8. "## Finanzplanung" – dieser Abschnitt bleibt bewusst ein PLATZHALTER: schreibe deutlich, dass dazu (Kapitalbedarf, Umsatz- und Kostenplanung, Rentabilitäts- und Liquiditätsvorschau) noch keine Zahlen in der App erfasst sind und vom Team nachgetragen werden müssen. ERFINDE UNTER KEINEN UMSTÄNDEN Beträge, Prozentzahlen oder Zeiträume.
+9. "## Offene Aufgaben" – ausschließlich eine kurze, klare Liste der noch offenen bzw. als Nächstes anstehenden Aufgaben, pro Zeile nur die Aufgabe und ihre Zuständigkeit, sonst nichts, z. B. "- „Titel" – zuständig: Name". Ist niemand zugeordnet, übernimm das wörtlich so ("noch niemandem zugeordnet"). Erledigte Aufgaben tauchen hier nicht auf.
 
-2. Als letzter Abschnitt, unter der Überschrift "## Offene Aufgaben", ausschließlich eine kurze, klare Liste der noch offenen bzw. als Nächstes anstehenden Aufgaben – pro Zeile nur die Aufgabe und ihre Zuständigkeit, sonst nichts, z. B. "- „Titel" – zuständig: Name". Ist niemand zugeordnet, übernimm das wörtlich so ("noch niemandem zugeordnet"). Erledigte Aufgaben tauchen hier nicht auf.
-
-Nutze konkrete Namen, Daten und sinngemäße Zitate aus den obigen Quellen statt allgemeiner Floskeln. Liegt zu einem Bereich nichts vor, schreibe das kurz und ehrlich (z. B. "Bisher keine Ideen eingetragen."), statt etwas zu erfinden. Beginne direkt mit der ersten "## Überschrift" (keine Einleitung, keine Zusammenfassung vorweg, kein Satz wie "Hier ist die Ausarbeitung"). Verwende AUSSCHLIESSLICH "## " für Überschriften, keine anderen Markdown-Elemente wie Tabellen, "#", "###" oder nummerierte Überschriften ("1.", "2." usw.) – die Anzeige unterstützt nur "## " als Zwischenüberschrift und Text in Absätzen.`;
+Innerhalb jedes Abschnitts (außer Abschnitt 9) nur FLIESSTEXT in 1–3 kurzen Absätzen, KEINE Aufzählungen. Nutze konkrete Namen, Daten und sinngemäße Zitate aus den obigen Quellen statt allgemeiner Floskeln. Liegt zu einem Abschnitt nichts vor, schreibe das kurz und ehrlich statt etwas zu erfinden. Beginne direkt mit "## Executive Summary" (keine Einleitung davor, kein Satz wie "Hier ist der Businessplan"). Verwende AUSSCHLIESSLICH "## " für Überschriften, keine anderen Markdown-Elemente wie Tabellen, "#", "###" oder nummerierte Überschriften – die Anzeige unterstützt nur "## " als Zwischenüberschrift und Text in Absätzen.`;
 }
 
 async function frageGroq(apiKey: string, modell: string, prompt: string): Promise<string> {
