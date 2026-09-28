@@ -46,6 +46,14 @@ export async function erstelleSteuerboardKopie(params: {
    * Zusatzkontext.
    */
   projectContext?: string;
+  /**
+   * Slug dieses Projekts hier im Project Builder (v0.9x): die Factory
+   * hinterlegt daraus in der neuen Steuerboard-Kopie einen direkten Link
+   * zurück zur "Aktuelle Zusammenfassung" dieses Projekts (Phase 1), siehe
+   * `PROJEKT_ZUSAMMENFASSUNG_URL` in create-copy.js. Optional: fehlt der
+   * Slug, entsteht die Kopie trotzdem, nur ohne diesen Rücklink.
+   */
+  slug: string;
 }): Promise<FactoryErgebnis> {
   const factoryUrl = process.env.STEUERBOARD_FACTORY_URL;
   const factorySecret = process.env.STEUERBOARD_FACTORY_SECRET;
@@ -73,6 +81,7 @@ export async function erstelleSteuerboardKopie(params: {
       body: JSON.stringify({
         projectName: params.projectName,
         projectContext: params.projectContext,
+        projectBuilderSlug: params.slug,
       }),
     });
   } catch (err) {

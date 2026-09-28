@@ -80,6 +80,7 @@ export async function POST(
   const ergebnis = await erstelleSteuerboardKopie({
     projectName: project.name,
     projectContext: buildeProjektKontext(project),
+    slug: params.slug,
   });
 
   if (!ergebnis.ok) {
