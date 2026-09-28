@@ -841,6 +841,44 @@ export async function setSteuerboard(
 }
 
 /**
+ * Korrigiert nachtraeglich nur die gespeicherte Steuerboard-URL eines
+ * Projekts, ohne die Kopie neu anzulegen oder ihre uebrigen Metadaten
+ * (resourceName, vercelProjectId, neonProjectId, erstelltAm/-Von...) zu
+ * veraendern.
+ *
+ * Hintergrund: create-copy.js gab frueher (vor dem Fix in
+ * VERCEL-Steuerboard-Factory, Commit "Stabile Projekt-Domain statt
+ * eingefrorener Deployment-URL zurueckgeben") eine deployment-spezifische
+ * URL zurueck, die nie wieder aktualisiert wird, sobald spaetere Pushes
+ * neue Deployments erzeugen - fuer vor diesem Fix angelegte Kopien blieb
+ * dadurch ein eingefrorener, irgendwann falscher Link gespeichert. Diese
+ * Funktion (ueber PATCH .../steuerboard, siehe dortige Rechtepruefung)
+ * erlaubt es, so einen Alt-Link gezielt auf die stabile Projekt-Domain zu
+ * korrigieren, ohne die reale Vercel-/Neon-Infrastruktur anzufassen.
+ */
+export async function updateSteuerboardUrl(
+  slug: string,
+  url: string
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+  if (!project.steuerboard) {
+    throw new Error(`Projekt "${slug}" hat keine Steuerboard-Kopie hinterlegt`);
+  }
+
+  project.steuerboard = { ...project.steuerboard, url };
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/**
  * Entfernt die Steuerboard-Kopie-Informationen wieder vom Projekt, nachdem
  * die zugrundeliegenden Vercel-/Neon-Ressourcen erfolgreich gelöscht wurden
  * (Rechteprüfung – nur Balthasar, siehe `istBalthasar` in auth.ts – sitzt in

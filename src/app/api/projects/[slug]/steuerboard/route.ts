@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getProject, setSteuerboard, clearSteuerboard } from "@/lib/data";
+import { getProject, setSteuerboard, clearSteuerboard, updateSteuerboardUrl } from "@/lib/data";
 import { getSession, istKernteam, istBalthasar } from "@/lib/auth";
 import { erstelleSteuerboardKopie, loescheSteuerboardKopie } from "@/lib/steuerboardFactory";
 import { buildeProjektKontext } from "@/lib/projektKontext";
@@ -105,6 +105,61 @@ export async function POST(
     ausloeserEmail: session.email,
   });
 
+  return NextResponse.json({ project: updated });
+}
+
+/**
+ * Korrigiert nachträglich nur die gespeicherte Steuerboard-URL, ohne die
+ * Kopie neu anzulegen (siehe `updateSteuerboardUrl` in `@/lib/data` für den
+ * Hintergrund: ältere Kopien können noch eine eingefrorene
+ * Deployment-URL statt der stabilen Projekt-Domain gespeichert haben).
+ * Bewusst nur für Balthasar selbst, wie das Löschen unten — das ist eine
+ * Infrastruktur-Korrektur, keine normale Kernteam-Aktion.
+ */
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { slug: string } }
+) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
+  }
+
+  const project = await getProject(params.slug);
+  if (!project) {
+    return NextResponse.json({ error: "Projekt nicht gefunden" }, { status: 404 });
+  }
+
+  if (!istBalthasar(session.email)) {
+    return NextResponse.json(
+      { error: "Nur Balthasar selbst darf die Steuerboard-URL korrigieren." },
+      { status: 403 }
+    );
+  }
+
+  if (!project.steuerboard) {
+    return NextResponse.json(
+      { error: "Für dieses Projekt existiert keine Steuerboard-Kopie." },
+      { status: 404 }
+    );
+  }
+
+  let body: { url?: unknown };
+  try {
+    body = await req.json();
+  } catch (err) {
+    return NextResponse.json({ error: "Ungültiges JSON" }, { status: 400 });
+  }
+
+  const url = typeof body.url === "string" ? body.url.trim() : "";
+  if (!url || !/^https?:\/\//i.test(url)) {
+    return NextResponse.json(
+      { error: "url muss mit http:// bzw. https:// beginnen" },
+      { status: 400 }
+    );
+  }
+
+  const updated = await updateSteuerboardUrl(params.slug, url);
   return NextResponse.json({ project: updated });
 }
 
