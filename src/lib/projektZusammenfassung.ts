@@ -147,13 +147,27 @@ function buildPrompt(params: ZusammenfassungParams): string {
         .join("\n") + kompetenzen.hinweis
     : "(keine Kompetenz-Einträge bisher)";
 
-  // Bewusst NUR die offenen Aufgaben, ohne erledigte Aufgaben und ohne
-  // Notizen (v0.9x, nach Feedback "unuebersichtlich"): die Ausarbeitung
-  // soll hier eine kurze, klare Liste sein - Aufgabe + Zustaendigkeit,
-  // sonst nichts. Der bisherige Verlauf (inkl. erledigter Aufgaben) wird
-  // nicht mehr separat aufgefuehrt, sondern hoechstens im Fliesstext von
-  // Teil 1 sinngemaess erwaehnt (siehe Anweisung unten).
+  // Zwei getrennte Aufgaben-Quellen fuer die zwei Teile der Ausarbeitung
+  // (v0.9x): erledigte Aufgaben MIT Notizen fliessen als Erzaehlstoff in
+  // den Fliesstext von Teil 1 ein (siehe Anweisung unten) - NICHT als
+  // eigene Liste. Offene Aufgaben bleiben bewusst eine kurze, notizfreie
+  // Liste (nur Aufgabe + Zustaendigkeit) fuer Teil 2, nach dem Feedback
+  // "unuebersichtlich" bei einer vollstaendigen Aufgabendarstellung.
+  const erledigteAufgaben = aufgaben.eintraege.filter((a) => a.erledigt);
   const offeneAufgaben = aufgaben.eintraege.filter((a) => !a.erledigt);
+
+  const erledigteAufgabenText = erledigteAufgaben.length
+    ? erledigteAufgaben
+        .map((a) => {
+          const notizenText = a.notizen.length
+            ? a.notizen
+                .map((n) => `    · ${formatDatum(n.erstelltAm)} ${n.autorName}: ${n.text}`)
+                .join("\n")
+            : "    (keine Notizen zu dieser Aufgabe)";
+          return `- "${a.titel}"\n${notizenText}`;
+        })
+        .join("\n") + aufgaben.hinweis
+    : "(keine erledigten Aufgaben bisher)";
 
   const offeneAufgabenText = offeneAufgaben.length
     ? offeneAufgaben
@@ -161,7 +175,7 @@ function buildPrompt(params: ZusammenfassungParams): string {
           (a) =>
             `- "${a.titel}" (${a.status}) – zuständig: ${a.inhaber || "noch niemandem zugeordnet"}`
         )
-        .join("\n") + aufgaben.hinweis
+        .join("\n")
     : "(keine offenen Aufgaben)";
 
   return `Du unterstützt ein kleines Projektteam. Erstelle eine sehr AUSFÜHRLICHE schriftliche Ausarbeitung des bisherigen Projektverlaufs – ausdrücklich KEINE knappe Zusammenfassung, sondern ein detailliertes Dokument (ruhig 900–1500 Wörter), das jemand lesen kann, um wirklich zu verstehen, was in diesem Projekt passiert ist, wo es gerade steht und was ansteht.
@@ -182,12 +196,15 @@ ${ideenText}
 === Kompetenz-Einträge im Team ===
 ${kompetenzenText}
 
+=== Bereits erledigte Aufgaben mit ihren Notizen ===
+${erledigteAufgabenText}
+
 === Offene Aufgaben mit ihrem Aufgabeninhaber ===
 ${offeneAufgabenText}
 
 Schreibe die Ausarbeitung auf Deutsch, in genau diesen zwei Teilen:
 
-1. Ein ausführlicher, zusammenhängender FLIESSTEXT (ganze Absätze, keine Aufzählung, keine Zwischenüberschriften) über den bisherigen Projektverlauf: Ausgangslage, wichtige Entwicklungen aus Chat, Ideen und Bewertungen (mit konkreten Daten und Namen), und die Kompetenzen im Team. Gehe hier NICHT auf einzelne Aufgaben ein (weder erledigte noch offene) – keine komplette Aufgabendarstellung, das kommt ausschließlich in Teil 2.
+1. Ein ausführlicher, zusammenhängender FLIESSTEXT (ganze Absätze, keine Aufzählung, keine Zwischenüberschriften) über den bisherigen Projektverlauf: Ausgangslage, wichtige Entwicklungen aus Chat, Ideen und Bewertungen (mit konkreten Daten und Namen), die Kompetenzen im Team – und darin eingebettet die bereits ERLEDIGTEN Aufgaben: erzähle in ganzen Sätzen, was gemacht wurde und was dabei herauskam, statt sie aufzuzählen. Gehe hier NICHT auf die noch OFFENEN Aufgaben ein, die kommen ausschließlich in Teil 2.
 
 2. Direkt im Anschluss, unter der Überschrift "## Offene Aufgaben", ausschließlich eine kurze, klare Liste der noch offenen bzw. als Nächstes anstehenden Aufgaben – pro Zeile nur die Aufgabe und ihre Zuständigkeit, sonst nichts, z. B. "- „Titel" – zuständig: Name". Ist niemand zugeordnet, übernimm das wörtlich so ("noch niemandem zugeordnet"). Erledigte Aufgaben tauchen hier nicht auf.
 
