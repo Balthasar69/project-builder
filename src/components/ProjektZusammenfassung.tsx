@@ -52,7 +52,7 @@ function ZusammenfassungText({ text }: { text: string }) {
     <div className="space-y-4">
       {bloecke.map((block, i) =>
         block.typ === "heading" ? (
-          <h3 key={i} className="font-display text-base font-semibold text-ink">
+          <h3 key={i} className="font-display text-base font-semibold text-ink underline decoration-1 underline-offset-4">
             {block.text}
           </h3>
         ) : (
