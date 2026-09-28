@@ -81,6 +81,7 @@ export async function POST(
     projectName: project.name,
     projectContext: buildeProjektKontext(project),
     slug: params.slug,
+    dokumenteLink: project.dokumenteLink,
   });
 
   if (!ergebnis.ok) {

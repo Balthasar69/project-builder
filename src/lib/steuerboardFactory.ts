@@ -54,6 +54,16 @@ export async function erstelleSteuerboardKopie(params: {
    * Slug, entsteht die Kopie trotzdem, nur ohne diesen Rücklink.
    */
   slug: string;
+  /**
+   * Link zur Dokumenten-Ablage dieses Projekts (Google Drive, siehe
+   * `dokumenteLink` in `src/lib/types.ts` / `DokumenteLink.tsx`). Wird 1:1
+   * als Startwert fuer den "Dokumente"-Link der neuen Steuerboard-Kopie
+   * uebernommen (siehe `driveLink` in create-copy.js), damit er dort nicht
+   * ein zweites Mal eingetragen werden muss. Optional: fehlt er, bleibt der
+   * Link in der Kopie einfach leer und laesst sich dort spaeter unabhaengig
+   * setzen.
+   */
+  dokumenteLink?: string;
 }): Promise<FactoryErgebnis> {
   const factoryUrl = process.env.STEUERBOARD_FACTORY_URL;
   const factorySecret = process.env.STEUERBOARD_FACTORY_SECRET;
@@ -82,6 +92,7 @@ export async function erstelleSteuerboardKopie(params: {
         projectName: params.projectName,
         projectContext: params.projectContext,
         projectBuilderSlug: params.slug,
+        dokumenteLink: params.dokumenteLink,
       }),
     });
   } catch (err) {
