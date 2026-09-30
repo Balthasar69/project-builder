@@ -48,6 +48,12 @@ export async function GET(req: NextRequest) {
           neonProjectId: p.steuerboard.neonProjectId || null,
         }
       : null,
+    // Nur die Gruppen-ID, nicht die Webhook-URL selbst (die bleibt ein
+    // eigenes, separat auf der Factory-Instanz gepflegtes Secret, siehe
+    // PROJECT_BUILDER_BITRIX24_WEBHOOK_URL in list-copies.js) – die Factory
+    // nutzt diese ID, um bei bereits laufenden Steuerboard-Kopien die
+    // Bitrix24-Anbindung nachtraeglich einzurichten (Aktion "syncBitrix").
+    bitrix24: { groupId: p.bitrix24.groupId ?? null },
   }));
 
   return NextResponse.json({ ok: true, projekte: ergebnis });
