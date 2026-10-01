@@ -20,9 +20,11 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
+        {/* Redesign (10/2026): Poppins statt IBM Plex Sans, passend zur
+            Entscheiderakademie-Typografie – gilt global für alle Projekte. */}
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
         />
       </head>
       <body className="font-sans antialiased">{children}</body>

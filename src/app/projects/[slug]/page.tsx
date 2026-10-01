@@ -14,6 +14,8 @@ import TaskBoard from "@/components/TaskBoard";
 import ProjektstartFragebogen from "@/components/ProjektstartFragebogen";
 import IdeenManager from "@/components/IdeenManager";
 import Brand from "@/components/Brand";
+import EakBadge from "@/components/EakBadge";
+import Sidebar from "@/components/Sidebar";
 import LogoutButton from "@/components/LogoutButton";
 import ProjectDescription from "@/components/ProjectDescription";
 import DokumenteLink from "@/components/DokumenteLink";
@@ -53,6 +55,7 @@ export default async function ProjectCockpit({
         <div className="mb-8 flex flex-wrap items-center justify-between gap-x-3 gap-y-3">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <Brand />
+            <EakBadge />
             <span className="h-4 w-px bg-line" />
             <span className="whitespace-nowrap font-mono text-xs uppercase tracking-widest text-accent">
               Projektcockpit
@@ -165,9 +168,15 @@ export default async function ProjectCockpit({
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-16 lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl">
+      <Sidebar
+        projektName={project.name}
+        steuerboardUrl={project.steuerboard?.url}
+        dokumenteLink={project.dokumenteLink}
+      />
       <div className="mb-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <Brand size="gross" />
+          <EakBadge />
           <span className="h-6 w-px bg-line" />
           <span className="whitespace-nowrap font-mono text-sm uppercase tracking-widest text-accent">
             Projektcockpit

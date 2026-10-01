@@ -39,11 +39,17 @@ const SPALTEN: {
   },
   {
     label: "Dashboard",
-    textKlasse: "text-brand-red",
-    hoverKlasse: "hover:text-brand-red",
+    // Redesign (10/2026): Logo-Orange statt Logo-Rot. Als Text (Titel +
+    // Hover) bewusst der dunklere, kontraststarke "red-text"-Ton
+    // (ehemals für Rot gedacht, jetzt #b35812) statt des helleren
+    // Logo-Orange direkt – das wäre auf Weiß zu schwach lesbar (siehe
+    // Mockup-Kontrastprüfung). Punkt/Rahmen dürfen das hellere Orange
+    // zeigen, da sie nicht als Fließtext gelesen werden.
+    textKlasse: "text-brand-red-text",
+    hoverKlasse: "hover:text-brand-red-text",
     dotKlasse: "bg-brand-red",
     borderKlasse: "border-brand-red",
-    bgKlasse: "bg-bad-soft/70",
+    bgKlasse: "bg-brand-red/10",
     icon: (
       <>
         <path d="M5 3v18" />
