@@ -18,7 +18,6 @@ import EakBadge from "@/components/EakBadge";
 import Sidebar from "@/components/Sidebar";
 import LogoutButton from "@/components/LogoutButton";
 import ProjectDescription from "@/components/ProjectDescription";
-import DokumenteLink from "@/components/DokumenteLink";
 import ProjektLogo from "@/components/ProjektLogo";
 import ProjectProgress from "@/components/ProjectProgress";
 import BlockHinweis from "@/components/BlockHinweis";
@@ -29,7 +28,6 @@ import KompetenzenManager from "@/components/KompetenzenManager";
 import ProjectChat from "@/components/ProjectChat";
 import GruendercoachChat from "@/components/GruendercoachChat";
 import Aufklappbar from "@/components/Aufklappbar";
-import SteuerungUebergang from "@/components/SteuerungUebergang";
 import BalthesGuide from "@/components/BalthesGuide";
 import ProjektZusammenfassung from "@/components/ProjektZusammenfassung";
 
@@ -171,9 +169,12 @@ export default async function ProjectCockpit({
       <div className="mb-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <Sidebar
+            slug={project.slug}
             projektName={project.name}
             steuerboardUrl={project.steuerboard?.url}
             dokumenteLink={project.dokumenteLink}
+            darfBearbeiten={istKernteam(session, project)}
+            aktuellePhase={project.aktuellePhase}
           />
           <Brand size="gross" />
           <EakBadge />
@@ -254,18 +255,6 @@ export default async function ProjectCockpit({
           Kompetenz, Kapazität und an Zielen hast, danach schreiten wir
           in den nächsten Prozessabschnitt.
         </p>
-        <div className="mb-6 flex flex-wrap items-center gap-3">
-          <SteuerungUebergang
-            url={project.steuerboard?.url}
-            hervorgehoben={(aktuellePhase?.order ?? 0) > 6}
-          />
-          <DokumenteLink
-            slug={project.slug}
-            dokumenteLink={project.dokumenteLink ?? ""}
-            darfBearbeiten={istKernteam(session, project)}
-            hervorgehoben={(aktuellePhase?.order ?? 0) > 6}
-          />
-        </div>
         <Aufklappbar buttonText="Phasenübersicht ansehen">
           <div className="flex flex-col gap-4">
             {PHASE_GRUPPEN.map((gruppe) => (
@@ -429,39 +418,45 @@ export default async function ProjectCockpit({
         <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
           <h2 className="font-display text-xl font-semibold">Ideen</h2>
         </div>
-        <BlockHinweis
-          slug={project.slug}
-          blockKey="ideen"
-          individuellerText={project.hinweise?.ideen ?? ""}
-          standardText={STANDARD_HINWEISE.ideen}
-          darfBearbeiten={darfHinweiseBearbeiten}
-        />
-        <IdeenManager
-          slug={project.slug}
-          ideen={project.ideen ?? []}
-          istKernteam={istKernteam(session, project)}
-        />
+        {/* Wie die anderen längeren Bereiche (Kernteam, Team, Phasenverlauf
+            …) jetzt ebenfalls einklappbar – öffnet sich automatisch, wenn
+            über den Menüpunkt "Ideen" in der Seitenleiste hierher
+            gesprungen wird (oeffneBeiHash="#ideen"). */}
+        <Aufklappbar buttonText="Ideen ansehen" oeffneBeiHash="#ideen">
+          <BlockHinweis
+            slug={project.slug}
+            blockKey="ideen"
+            individuellerText={project.hinweise?.ideen ?? ""}
+            standardText={STANDARD_HINWEISE.ideen}
+            darfBearbeiten={darfHinweiseBearbeiten}
+          />
+          <IdeenManager
+            slug={project.slug}
+            ideen={project.ideen ?? []}
+            istKernteam={istKernteam(session, project)}
+          />
 
-        <a
-          href="#gruendercoach"
-          className="mt-5 inline-flex w-fit items-center gap-3 rounded-md bg-accent px-5 py-3 text-sm font-semibold text-surface shadow-sm transition hover:bg-accent-ink"
-        >
-          <span className="relative block h-8 w-8 shrink-0 overflow-hidden rounded-full bg-surface">
-            <img
-              src="/logo.png?v=57"
-              alt=""
-              aria-hidden="true"
-              className="absolute"
-              style={{ width: "145px", height: "46px", left: "-7px", top: "-7px" }}
-            />
-          </span>
-          <span className="text-left leading-tight">
-            Ideen mit dem Gründercoach besprechen
-            <span className="block text-xs font-normal opacity-85">
-              Dein KI-Assistent
+          <a
+            href="#gruendercoach"
+            className="mt-5 inline-flex w-fit items-center gap-3 rounded-md bg-accent px-5 py-3 text-sm font-semibold text-surface shadow-sm transition hover:bg-accent-ink"
+          >
+            <span className="relative block h-8 w-8 shrink-0 overflow-hidden rounded-full bg-surface">
+              <img
+                src="/logo.png?v=57"
+                alt=""
+                aria-hidden="true"
+                className="absolute"
+                style={{ width: "145px", height: "46px", left: "-7px", top: "-7px" }}
+              />
             </span>
-          </span>
-        </a>
+            <span className="text-left leading-tight">
+              Ideen mit dem Gründercoach besprechen
+              <span className="block text-xs font-normal opacity-85">
+                Dein KI-Assistent
+              </span>
+            </span>
+          </a>
+        </Aufklappbar>
       </section>
 
       {/* Gründercoach-Bot (Ökosystem-Phase 1 "Idee & Team"): projektweit

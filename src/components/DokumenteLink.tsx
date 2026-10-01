@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
  * SteuerungUebergang.tsx) und übernimmt darum dieselbe `hervorgehoben`-
  * Logik für die Button-Größe, damit beide immer gleich groß sind.
  */
-function GoogleDriveIcon({ className }: { className?: string }) {
+export function GoogleDriveIcon({ className }: { className?: string }) {
   // Vereinfachtes, wiedererkennbares Google-Drive-Dreieck (gelb/grün/blau),
   // keine 1:1-Reproduktion des offiziellen Markenzeichens, sondern ein
   // eigenes, an Google Drive angelehntes Symbol zur Wiedererkennung.
