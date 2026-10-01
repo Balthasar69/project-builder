@@ -54,14 +54,17 @@ export default function Sidebar({
 
   return (
     <>
-      {/* Burger-Button: fest in der oberen linken Ecke, unabhängig vom
-          übrigen Kopfbereich, damit die Seitenleiste von überall auf der
-          langen Cockpit-Seite erreichbar ist. */}
+      {/* Burger-Button: steht jetzt inline in der Kopfzeile, auf Höhe des
+          insightworx-Logos (gleiche Zeile, gleiche Einrückung wie der
+          übrige Seiteninhalt) statt fest in der Viewport-Ecke. Die
+          Seitenleiste selbst (aside) und das Abdunkeln (overlay) bleiben
+          fixed, damit sie weiterhin über der ganzen Seite liegen, egal wie
+          weit herunter gescrollt wurde. */}
       <button
         type="button"
         aria-label={open ? "Menü schließen" : "Menü öffnen"}
         onClick={() => setOpen((v) => !v)}
-        className="fixed left-4 top-4 z-50 flex h-10 w-10 flex-col items-center justify-center gap-1.5 rounded-lg border border-line bg-surface shadow-sm transition hover:border-accent"
+        className="flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-1.5 rounded-lg border border-line bg-surface shadow-sm transition hover:border-accent"
       >
         <span
           className={`block h-0.5 w-4 rounded bg-ink transition ${open ? "translate-y-[6.5px] rotate-45" : ""}`}

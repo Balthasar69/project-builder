@@ -168,13 +168,13 @@ export default async function ProjectCockpit({
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-16 lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl">
-      <Sidebar
-        projektName={project.name}
-        steuerboardUrl={project.steuerboard?.url}
-        dokumenteLink={project.dokumenteLink}
-      />
       <div className="mb-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <Sidebar
+            projektName={project.name}
+            steuerboardUrl={project.steuerboard?.url}
+            dokumenteLink={project.dokumenteLink}
+          />
           <Brand size="gross" />
           <EakBadge />
           <span className="h-6 w-px bg-line" />
@@ -195,6 +195,34 @@ export default async function ProjectCockpit({
           </span>
           <LogoutButton />
         </div>
+      </div>
+
+      {/* Titel: steht jetzt bewusst ganz oben, noch vor der Willkommens-
+          Einleitung samt "Balthes"-Hinweis (BalthesGuide) - Projektname
+          und eigenes Projekt-Logo (ProjektLogo.tsx) direkt nebeneinander,
+          bevor irgendein anderer Inhalt kommt. */}
+      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-wrap items-start gap-4">
+          <div className="min-w-0">
+            <h1 className="mb-1 font-display text-4xl font-semibold text-ink">
+              {project.name}
+            </h1>
+            <p className="text-ink-muted">{project.rolleImSystem}</p>
+          </div>
+          <ProjektLogo
+            slug={project.slug}
+            name={project.name}
+            projektLogo={project.projektLogo ?? ""}
+            darfBearbeiten={istKernteam(session, project)}
+          />
+        </div>
+        <a
+          href="#zusammenfassung"
+          className="flex h-28 w-28 shrink-0 flex-col items-center justify-center gap-0.5 rounded-md bg-bad px-1 text-center text-[11px] font-semibold leading-tight text-surface shadow-sm transition hover:bg-bad/90"
+        >
+          <span>Aktueller</span>
+          <span>Businessplan</span>
+        </a>
       </div>
 
       {/* Kurzeinleitung (v0.71): fest vorgegebener insightworx/Entscheider-
@@ -269,42 +297,6 @@ export default async function ProjectCockpit({
             ))}
           </div>
         </Aufklappbar>
-      </div>
-
-      {/* Titel (seit v0.73 ohne Reifegrad-Ring daneben - der Reifegrad
-          steht jetzt gesammelt ganz unten auf der Seite, siehe dort).
-          Seit v0.76 daneben Platz fuer ein eigenes Projekt-Logo
-          (ProjektLogo.tsx), falls eines hochgeladen wurde - seit v0.9x
-          bewusst nicht mehr an den rechten Rand gedrueckt (justify-between
-          + flex-1), sondern direkt neben dem Titel, damit Titel und Logo
-          erkennbar zusammengehoeren. Rechts daneben (durch justify-between
-          auf der aeusseren Zeile an den Rand gedrueckt) der quadratische,
-          dunkelrote Button "Aktuelle Zusammenfassung" (zweizeilig): fuehrt
-          direkt zur ausfuehrlichen KI-Ausarbeitung weiter unten auf der
-          Seite (Projekt-Zusammenfassung, siehe #zusammenfassung) und
-          oeffnet sie dabei automatisch. */}
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div className="flex flex-wrap items-start gap-4">
-          <div className="min-w-0">
-            <h1 className="mb-1 font-display text-4xl font-semibold text-ink">
-              {project.name}
-            </h1>
-            <p className="text-ink-muted">{project.rolleImSystem}</p>
-          </div>
-          <ProjektLogo
-            slug={project.slug}
-            name={project.name}
-            projektLogo={project.projektLogo ?? ""}
-            darfBearbeiten={istKernteam(session, project)}
-          />
-        </div>
-        <a
-          href="#zusammenfassung"
-          className="flex h-28 w-28 shrink-0 flex-col items-center justify-center gap-0.5 rounded-md bg-bad px-1 text-center text-[11px] font-semibold leading-tight text-surface shadow-sm transition hover:bg-bad/90"
-        >
-          <span>Aktueller</span>
-          <span>Businessplan</span>
-        </a>
       </div>
 
       {/* Projektbeschreibung steht bewusst direkt unter dem Projektnamen –
