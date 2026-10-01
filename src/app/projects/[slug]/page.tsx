@@ -198,9 +198,12 @@ export default async function ProjectCockpit({
       </div>
 
       {/* Titel: steht jetzt bewusst ganz oben, noch vor der Willkommens-
-          Einleitung samt "Balthes"-Hinweis (BalthesGuide) - Projektname
-          und eigenes Projekt-Logo (ProjektLogo.tsx) direkt nebeneinander,
-          bevor irgendein anderer Inhalt kommt. */}
+          Einleitung - Projektname und eigenes Projekt-Logo (ProjektLogo.tsx)
+          direkt nebeneinander, bevor irgendein anderer Inhalt kommt.
+          "Balthes" (BalthesGuide) steht hier rechts in derselben Zeile,
+          direkt links neben dem Businessplan-Button – nicht mehr weiter
+          unten über der Willkommens-Überschrift, das ließ dort eine große
+          leere Zeile entstehen. */}
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-wrap items-start gap-4">
           <div className="min-w-0">
@@ -216,13 +219,16 @@ export default async function ProjectCockpit({
             darfBearbeiten={istKernteam(session, project)}
           />
         </div>
-        <a
-          href="#zusammenfassung"
-          className="flex h-28 w-28 shrink-0 flex-col items-center justify-center gap-0.5 rounded-md bg-bad px-1 text-center text-[11px] font-semibold leading-tight text-surface shadow-sm transition hover:bg-bad/90"
-        >
-          <span>Aktueller</span>
-          <span>Businessplan</span>
-        </a>
+        <div className="flex flex-wrap items-start gap-4">
+          <BalthesGuide slug={project.slug} name={session.name} />
+          <a
+            href="#zusammenfassung"
+            className="flex h-28 w-28 shrink-0 flex-col items-center justify-center gap-0.5 rounded-md bg-bad px-1 text-center text-[11px] font-semibold leading-tight text-surface shadow-sm transition hover:bg-bad/90"
+          >
+            <span>Aktueller</span>
+            <span>Businessplan</span>
+          </a>
+        </div>
       </div>
 
       {/* Kurzeinleitung (v0.71): fest vorgegebener insightworx/Entscheider-
@@ -232,7 +238,6 @@ export default async function ProjectCockpit({
           Steuerboard), nicht projektspezifisch editierbar. Text wörtlich
           vorgegeben – bitte nicht automatisch umschreiben. */}
       <div className="mb-8 border-b border-line pb-6">
-        <BalthesGuide slug={project.slug} name={session.name} />
         <h2 className="mb-3 font-display text-xl font-semibold text-ink">
           Willkommen {vorname} bei insightworx, deinem Projektmanagement.
         </h2>
