@@ -29,6 +29,20 @@ export default function KernteamManager({
   const [entfernenLaeuft, setEntfernenLaeuft] = useState<string | null>(null);
   const [entfernenFehler, setEntfernenFehler] = useState<string | null>(null);
 
+  // "Erneut einladen": neues Einmal-Passwort für ein bestehendes Konto
+  // (gleiche Funktion wie im Team-Panel, derselbe Server-Endpunkt).
+  const [einladenLaeuft, setEinladenLaeuft] = useState<string | null>(null);
+  const [einladenFehler, setEinladenFehler] = useState<string | null>(null);
+  const [einladenErgebnis, setEinladenErgebnis] = useState<{
+    email: string;
+    name: string;
+    kontoVorhanden: boolean;
+    passwort?: string;
+    link: string;
+    mailHinweis?: string;
+  } | null>(null);
+  const [kopiert, setKopiert] = useState(false);
+
   // Bearbeiten eines bestehenden Eintrags (Name/Rolle/E-Mail), statt ihn zu
   // entfernen und neu anzulegen – adressiert über die Position in der
   // Liste, damit es auch bei Einträgen ohne E-Mail-Adresse funktioniert.
@@ -98,6 +112,42 @@ export default function KernteamManager({
       setEntfernenFehler(err instanceof Error ? err.message : "Unbekannter Fehler");
     } finally {
       setEntfernenLaeuft(null);
+    }
+  }
+
+  async function erneutEinladen(m: KernteamMitglied) {
+    if (!m.email) return;
+    if (
+      !window.confirm(
+        `${m.name} erneut einladen? Dabei wird ein NEUES Passwort für das bestehende Konto gesetzt – das alte funktioniert dann nicht mehr.`
+      )
+    )
+      return;
+    const email = m.email;
+    setEinladenLaeuft(email);
+    setEinladenFehler(null);
+    setEinladenErgebnis(null);
+    setKopiert(false);
+    try {
+      const res = await fetch(`/api/projects/${slug}/mitglieder/erneut-einladen`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Erneut einladen fehlgeschlagen");
+      setEinladenErgebnis({
+        email,
+        name: m.name,
+        kontoVorhanden: data.kontoVorhanden,
+        passwort: data.passwort,
+        link: data.loginLink ?? data.registerLink,
+        mailHinweis: data.mailHinweis,
+      });
+    } catch (err) {
+      setEinladenFehler(err instanceof Error ? err.message : "Unbekannter Fehler");
+    } finally {
+      setEinladenLaeuft(null);
     }
   }
 
@@ -272,6 +322,17 @@ export default function KernteamManager({
               </div>
               {istAdmin && (
                 <div className="flex shrink-0 items-center gap-3">
+                  {m.email && (
+                    <button
+                      type="button"
+                      onClick={() => erneutEinladen(m)}
+                      disabled={einladenLaeuft === m.email}
+                      title="Neues Passwort für das bestehende Konto setzen"
+                      className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-ink-faint transition hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {einladenLaeuft === m.email ? "Einen Moment…" : "Erneut einladen"}
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => bearbeitenStarten(m, index)}
@@ -307,6 +368,61 @@ export default function KernteamManager({
       </div>
       {entfernenFehler && (
         <p className="mb-3 text-sm text-bad">{entfernenFehler}</p>
+      )}
+      {istAdmin && einladenFehler && (
+        <p className="mb-3 text-sm text-bad">{einladenFehler}</p>
+      )}
+      {istAdmin && einladenErgebnis && (
+        <div className="mb-3 rounded-md border border-accent bg-surface px-4 py-3 text-sm">
+          {einladenErgebnis.kontoVorhanden ? (
+            <>
+              <p className="mb-2">
+                Neues Passwort für <strong>{einladenErgebnis.name}</strong> (
+                {einladenErgebnis.email}) – bitte der Person persönlich
+                weitergeben (wird nur jetzt angezeigt):
+              </p>
+              <div className="mb-2 flex items-center gap-3">
+                <code className="rounded bg-surface-2 px-2 py-1 font-mono text-base">
+                  {einladenErgebnis.passwort}
+                </code>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard
+                      ?.writeText(einladenErgebnis.passwort ?? "")
+                      .then(() => setKopiert(true))
+                      .catch(() => {});
+                  }}
+                  className="font-mono text-xs uppercase tracking-wide text-accent hover:text-accent-ink"
+                >
+                  {kopiert ? "Kopiert" : "Kopieren"}
+                </button>
+              </div>
+              <p className="text-xs text-ink-faint">
+                Login: {einladenErgebnis.link}
+              </p>
+              {einladenErgebnis.mailHinweis && (
+                <p className="mt-1 text-xs text-warn">
+                  Hinweis-E-Mail nicht verschickt: {einladenErgebnis.mailHinweis}
+                </p>
+              )}
+            </>
+          ) : (
+            <p>
+              <strong>{einladenErgebnis.name}</strong> (
+              {einladenErgebnis.email}) hat noch gar kein Konto. Bitte
+              registrieren lassen (mit genau dieser E-Mail):{" "}
+              {einladenErgebnis.link}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={() => setEinladenErgebnis(null)}
+            className="mt-2 font-mono text-xs uppercase tracking-wide text-ink-faint hover:text-ink"
+          >
+            Schließen
+          </button>
+        </div>
       )}
 
       {istAdmin && (

@@ -16,7 +16,7 @@ function neuesEinmalPasswort(laenge = 12): string {
 
 /**
  * "Erneut einladen" (nur Admins): Gibt einem bereits eingetragenen
- * Team-Mitglied wieder Zugang zu seinem BESTEHENDEN Konto. Es gibt in der
+ * Team- oder Kernteam-Mitglied wieder Zugang zu seinem BESTEHENDEN Konto. Es gibt in der
  * App (noch) kein "Passwort vergessen" – deshalb setzt der Admin hier ein
  * neues Einmal-Passwort, das er der Person selbst weitergibt. Die
  * Projekt-Mitgliedschaft hängt an der E-Mail-Adresse und bleibt unverändert.
@@ -51,7 +51,11 @@ export async function POST(
       { status: 400 }
     );
   }
-  if (!project.mitglieder.includes(email)) {
+  // Zugang hängt an der E-Mail: Team-Mitglied ODER Kernteam-Mitglied.
+  const istMitglied =
+    project.mitglieder.includes(email) ||
+    project.kernteam.some((k) => k.email?.trim().toLowerCase() === email);
+  if (!istMitglied) {
     return NextResponse.json(
       { error: "Diese Person ist kein Mitglied dieses Projekts." },
       { status: 404 }
