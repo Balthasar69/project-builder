@@ -910,6 +910,17 @@ export async function getUserByEmail(email: string): Promise<User | null> {
   return rows[0] ? toUser(rows[0]) : null;
 }
 
+/**
+ * Setzt für ein bestehendes Konto ein neues Passwort (Admin-Funktion
+ * "Erneut einladen" im Team-Panel). Ändert nur den Passwort-Hash – Konto,
+ * Name, Admin-Status und Projekt-Mitgliedschaften bleiben unberührt.
+ */
+export async function setUserPassword(email: string, passwordHash: string): Promise<void> {
+  const sql = getSql();
+  await ensureUsersTableMigriert(sql);
+  await sql`UPDATE users SET password_hash = ${passwordHash} WHERE email = ${email.trim().toLowerCase()}`;
+}
+
 /** Erste registrierte Person wird automatisch Admin (sieht/verwaltet alle Projekte). */
 export async function createUser(params: {
   email: string;
