@@ -5,45 +5,63 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        // CD-Branding (KULTO insightworx – O&K): durchgängig klare,
-        // serifenlose Schrift statt der vorherigen Zierschrift "Fraunces"
-        // für Überschriften – passend zum schlichten Logo-Schriftbild.
-        display: ['"IBM Plex Sans"', "ui-sans-serif", "system-ui", "sans-serif"],
-        sans: ['"IBM Plex Sans"', "ui-sans-serif", "system-ui", "sans-serif"],
-        mono: ['"IBM Plex Mono"', "ui-monospace", "SFMono-Regular", "monospace"],
+        // Redesign (10/2026): Typografie der Entscheiderakademie-Website
+        // übernommen (Poppins) – gilt jetzt global für alle Projekte,
+        // ersetzt die vorherige IBM-Plex-Schrift.
+        display: ['"Poppins"', "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ['"Poppins"', "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       colors: {
-        paper: "#f6f3ec",
-        surface: "#fffdf8",
-        "surface-2": "#efe9dc",
-        ink: "#23281f",
-        "ink-muted": "#656b5b",
-        "ink-faint": "#9a9d8d",
-        line: "#ddd6c4",
-        // CD-Branding: Akzentfarbe aus dem Logo übernommen (Blau, wie im
-        // äußeren Ring und im Schriftzug "O&K").
+        // Redesign (10/2026): Farbwerte von entscheiderakademie.de
+        // übernommen (vom echten Screenshot abgemessen) – reinweißer
+        // Hintergrund statt Creme, Blau/Orange/Grün statt Blau/Rot/Grün.
+        // Gilt global für alle Projekte in diesem Project Builder (nicht
+        // nur Entscheiderakademie/Unternehmerakademie). Das insightworx-Logo
+        // selbst (Brand.tsx) bleibt unverändert – nur die Farbwelt drumherum
+        // wechselt.
+        paper: "#ffffff",
+        surface: "#ffffff",
+        "surface-2": "#f5f5f7",
+        ink: "#4a4951",
+        "ink-muted": "#76747c",
+        "ink-faint": "#a4a2a8",
+        line: "#e4e3e7",
+        // Akzentfarbe: Logo-Blau der Entscheiderakademie.
         accent: {
-          DEFAULT: "#0e6eb3",
-          ink: "#0a4f80",
-          soft: "#dceef8",
+          DEFAULT: "#4a9de1",
+          ink: "#2e6ca8",
+          soft: "#e8f3fc",
         },
-        // GO/STOPP-Bewertungen (Kapitel 11) passen inhaltlich ohnehin schon
-        // zu Grün/Rot – deshalb hier direkt die Logo-Farben verwendet.
+        // GO/STOPP-Bewertungen (Kapitel 11): unverändert, rein inhaltliche
+        // Statusfarben, nicht Teil des Marken-Brandings.
         good: { DEFAULT: "#5b8f2a", soft: "#e8f3dc" },
         warn: { DEFAULT: "#a8791f", soft: "#f4e8cd" },
         bad: { DEFAULT: "#bd0604", soft: "#f7dcdb" },
         pending: { DEFAULT: "#8b8f7e", soft: "#ecebe1" },
-        // Die drei Logo-Farben (exakt aus dem Icon entnommen: äußerer Ring
-        // Blau, mittlerer Ring Rot, Punkt in der Mitte Grün) – ab v0.46
-        // bewusst nicht mehr nur als Statusfarben (good/bad), sondern direkt
-        // im Projektcockpit-Hub verwendet: Orga=Blau, Dashboard=Rot,
-        // Dynamik=Grün, spiegelbildlich zum Logo von außen nach innen.
+        // Die drei Logo-Farben der Entscheiderakademie (Blau/Orange/Grün,
+        // vom echten Screenshot abgemessen) – im Projektcockpit-Hub
+        // verwendet: Orga=Blau, Dashboard=Orange, Dynamik=Grün. "red" hieß
+        // früher so (insightworx-Logo war Blau/Rot/Grün); Schlüsselname der
+        // Einfachheit halber beibehalten, Wert jetzt Orange.
         brand: {
-          blue: "#006fc0",
-          red: "#be0000",
-          green: "#8cc63e",
-          "green-soft": "#edf6e2",
+          blue: "#4a9de1",
+          red: "#ed7c30",
+          "red-text": "#b35812",
+          green: "#c0de72",
+          "green-soft": "#f1f6e2",
         },
+        // Entscheiderakademie-Partner-Badge (EakBadge.tsx): eigene, feste
+        // Töne, unabhängig vom übrigen Farbschema oben.
+        eak: {
+          blue: "#4a9de1",
+          orange: "#ed7c30",
+          "orange-text": "#b35812",
+          green: "#c0de72",
+        },
+        // Sidebar-Navigation (Sidebar.tsx): dunkles Marineblau wie im
+        // Entscheiderakademie-Mockup, bewusst fest (nicht theme-abhängig).
+        navbg: "#1b4f78",
       },
     },
   },

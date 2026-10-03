@@ -14,9 +14,10 @@ import TaskBoard from "@/components/TaskBoard";
 import ProjektstartFragebogen from "@/components/ProjektstartFragebogen";
 import IdeenManager from "@/components/IdeenManager";
 import Brand from "@/components/Brand";
+import EakBadge from "@/components/EakBadge";
+import Sidebar from "@/components/Sidebar";
 import LogoutButton from "@/components/LogoutButton";
 import ProjectDescription from "@/components/ProjectDescription";
-import DokumenteLink from "@/components/DokumenteLink";
 import ProjektLogo from "@/components/ProjektLogo";
 import ProjectProgress from "@/components/ProjectProgress";
 import BlockHinweis from "@/components/BlockHinweis";
@@ -27,7 +28,6 @@ import KompetenzenManager from "@/components/KompetenzenManager";
 import ProjectChat from "@/components/ProjectChat";
 import GruendercoachChat from "@/components/GruendercoachChat";
 import Aufklappbar from "@/components/Aufklappbar";
-import SteuerungUebergang from "@/components/SteuerungUebergang";
 import BalthesGuide from "@/components/BalthesGuide";
 import ProjektZusammenfassung from "@/components/ProjektZusammenfassung";
 
@@ -53,6 +53,7 @@ export default async function ProjectCockpit({
         <div className="mb-8 flex flex-wrap items-center justify-between gap-x-3 gap-y-3">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <Brand />
+            <EakBadge />
             <span className="h-4 w-px bg-line" />
             <span className="whitespace-nowrap font-mono text-xs uppercase tracking-widest text-accent">
               Projektcockpit
@@ -167,7 +168,16 @@ export default async function ProjectCockpit({
     <main className="mx-auto max-w-3xl px-6 py-16 lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl">
       <div className="mb-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <Sidebar
+            slug={project.slug}
+            projektName={project.name}
+            steuerboardUrl={project.steuerboard?.url}
+            dokumenteLink={project.dokumenteLink}
+            darfBearbeiten={istKernteam(session, project)}
+            aktuellePhase={project.aktuellePhase}
+          />
           <Brand size="gross" />
+          <EakBadge />
           <span className="h-6 w-px bg-line" />
           <span className="whitespace-nowrap font-mono text-sm uppercase tracking-widest text-accent">
             Projektcockpit
@@ -188,6 +198,40 @@ export default async function ProjectCockpit({
         </div>
       </div>
 
+      {/* Titel: steht jetzt bewusst ganz oben, noch vor der Willkommens-
+          Einleitung - Projektname und eigenes Projekt-Logo (ProjektLogo.tsx)
+          direkt nebeneinander, bevor irgendein anderer Inhalt kommt.
+          "Balthes" (BalthesGuide) steht hier rechts in derselben Zeile,
+          direkt links neben dem Businessplan-Button – nicht mehr weiter
+          unten über der Willkommens-Überschrift, das ließ dort eine große
+          leere Zeile entstehen. */}
+      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-wrap items-start gap-4">
+          <div className="min-w-0">
+            <h1 className="mb-1 font-display text-4xl font-semibold text-ink">
+              {project.name}
+            </h1>
+            <p className="text-ink-muted">{project.rolleImSystem}</p>
+          </div>
+          <ProjektLogo
+            slug={project.slug}
+            name={project.name}
+            projektLogo={project.projektLogo ?? ""}
+            darfBearbeiten={istKernteam(session, project)}
+          />
+        </div>
+        <div className="flex flex-wrap items-start gap-4">
+          <BalthesGuide slug={project.slug} name={session.name} />
+          <a
+            href="#zusammenfassung"
+            className="flex h-28 w-28 shrink-0 flex-col items-center justify-center gap-0.5 rounded-md bg-bad px-1 text-center text-[11px] font-semibold leading-tight text-surface shadow-sm transition hover:bg-bad/90"
+          >
+            <span>Aktueller</span>
+            <span>Businessplan</span>
+          </a>
+        </div>
+      </div>
+
       {/* Kurzeinleitung (v0.71): fest vorgegebener insightworx/Entscheider-
           akademie-Text plus aufklappbare Phasenübersicht – bewusst
           statischer Text (kein BlockHinweis), gilt gleich für alle
@@ -195,7 +239,6 @@ export default async function ProjectCockpit({
           Steuerboard), nicht projektspezifisch editierbar. Text wörtlich
           vorgegeben – bitte nicht automatisch umschreiben. */}
       <div className="mb-8 border-b border-line pb-6">
-        <BalthesGuide slug={project.slug} name={session.name} />
         <h2 className="mb-3 font-display text-xl font-semibold text-ink">
           Willkommen {vorname} bei insightworx, deinem Projektmanagement.
         </h2>
@@ -212,18 +255,6 @@ export default async function ProjectCockpit({
           Kompetenz, Kapazität und an Zielen hast, danach schreiten wir
           in den nächsten Prozessabschnitt.
         </p>
-        <div className="mb-6 flex flex-wrap items-center gap-3">
-          <SteuerungUebergang
-            url={project.steuerboard?.url}
-            hervorgehoben={(aktuellePhase?.order ?? 0) > 6}
-          />
-          <DokumenteLink
-            slug={project.slug}
-            dokumenteLink={project.dokumenteLink ?? ""}
-            darfBearbeiten={istKernteam(session, project)}
-            hervorgehoben={(aktuellePhase?.order ?? 0) > 6}
-          />
-        </div>
         <Aufklappbar buttonText="Phasenübersicht ansehen">
           <div className="flex flex-col gap-4">
             {PHASE_GRUPPEN.map((gruppe) => (
@@ -260,42 +291,6 @@ export default async function ProjectCockpit({
             ))}
           </div>
         </Aufklappbar>
-      </div>
-
-      {/* Titel (seit v0.73 ohne Reifegrad-Ring daneben - der Reifegrad
-          steht jetzt gesammelt ganz unten auf der Seite, siehe dort).
-          Seit v0.76 daneben Platz fuer ein eigenes Projekt-Logo
-          (ProjektLogo.tsx), falls eines hochgeladen wurde - seit v0.9x
-          bewusst nicht mehr an den rechten Rand gedrueckt (justify-between
-          + flex-1), sondern direkt neben dem Titel, damit Titel und Logo
-          erkennbar zusammengehoeren. Rechts daneben (durch justify-between
-          auf der aeusseren Zeile an den Rand gedrueckt) der quadratische,
-          dunkelrote Button "Aktuelle Zusammenfassung" (zweizeilig): fuehrt
-          direkt zur ausfuehrlichen KI-Ausarbeitung weiter unten auf der
-          Seite (Projekt-Zusammenfassung, siehe #zusammenfassung) und
-          oeffnet sie dabei automatisch. */}
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div className="flex flex-wrap items-start gap-4">
-          <div className="min-w-0">
-            <h1 className="mb-1 font-display text-4xl font-semibold text-ink">
-              {project.name}
-            </h1>
-            <p className="text-ink-muted">{project.rolleImSystem}</p>
-          </div>
-          <ProjektLogo
-            slug={project.slug}
-            name={project.name}
-            projektLogo={project.projektLogo ?? ""}
-            darfBearbeiten={istKernteam(session, project)}
-          />
-        </div>
-        <a
-          href="#zusammenfassung"
-          className="flex h-28 w-28 shrink-0 flex-col items-center justify-center gap-0.5 rounded-md bg-bad px-1 text-center text-[11px] font-semibold leading-tight text-surface shadow-sm transition hover:bg-bad/90"
-        >
-          <span>Aktueller</span>
-          <span>Businessplan</span>
-        </a>
       </div>
 
       {/* Projektbeschreibung steht bewusst direkt unter dem Projektnamen –
@@ -423,39 +418,45 @@ export default async function ProjectCockpit({
         <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
           <h2 className="font-display text-xl font-semibold">Ideen</h2>
         </div>
-        <BlockHinweis
-          slug={project.slug}
-          blockKey="ideen"
-          individuellerText={project.hinweise?.ideen ?? ""}
-          standardText={STANDARD_HINWEISE.ideen}
-          darfBearbeiten={darfHinweiseBearbeiten}
-        />
-        <IdeenManager
-          slug={project.slug}
-          ideen={project.ideen ?? []}
-          istKernteam={istKernteam(session, project)}
-        />
+        {/* Wie die anderen längeren Bereiche (Kernteam, Team, Phasenverlauf
+            …) jetzt ebenfalls einklappbar – öffnet sich automatisch, wenn
+            über den Menüpunkt "Ideen" in der Seitenleiste hierher
+            gesprungen wird (oeffneBeiHash="#ideen"). */}
+        <Aufklappbar buttonText="Ideen ansehen" oeffneBeiHash="#ideen">
+          <BlockHinweis
+            slug={project.slug}
+            blockKey="ideen"
+            individuellerText={project.hinweise?.ideen ?? ""}
+            standardText={STANDARD_HINWEISE.ideen}
+            darfBearbeiten={darfHinweiseBearbeiten}
+          />
+          <IdeenManager
+            slug={project.slug}
+            ideen={project.ideen ?? []}
+            istKernteam={istKernteam(session, project)}
+          />
 
-        <a
-          href="#gruendercoach"
-          className="mt-5 inline-flex w-fit items-center gap-3 rounded-md bg-accent px-5 py-3 text-sm font-semibold text-surface shadow-sm transition hover:bg-accent-ink"
-        >
-          <span className="relative block h-8 w-8 shrink-0 overflow-hidden rounded-full bg-surface">
-            <img
-              src="/logo.png?v=57"
-              alt=""
-              aria-hidden="true"
-              className="absolute"
-              style={{ width: "145px", height: "46px", left: "-7px", top: "-7px" }}
-            />
-          </span>
-          <span className="text-left leading-tight">
-            Ideen mit dem Gründercoach besprechen
-            <span className="block text-xs font-normal opacity-85">
-              Dein KI-Assistent
+          <a
+            href="#gruendercoach"
+            className="mt-5 inline-flex w-fit items-center gap-3 rounded-md bg-accent px-5 py-3 text-sm font-semibold text-surface shadow-sm transition hover:bg-accent-ink"
+          >
+            <span className="relative block h-8 w-8 shrink-0 overflow-hidden rounded-full bg-surface">
+              <img
+                src="/logo.png?v=57"
+                alt=""
+                aria-hidden="true"
+                className="absolute"
+                style={{ width: "145px", height: "46px", left: "-7px", top: "-7px" }}
+              />
             </span>
-          </span>
-        </a>
+            <span className="text-left leading-tight">
+              Ideen mit dem Gründercoach besprechen
+              <span className="block text-xs font-normal opacity-85">
+                Dein KI-Assistent
+              </span>
+            </span>
+          </a>
+        </Aufklappbar>
       </section>
 
       {/* Gründercoach-Bot (Ökosystem-Phase 1 "Idee & Team"): projektweit

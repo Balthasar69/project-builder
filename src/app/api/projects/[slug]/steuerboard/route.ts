@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getProject, setSteuerboard, clearSteuerboard, updateSteuerboardUrl } from "@/lib/data";
+import { getProject, setSteuerboard, clearSteuerboard, updateSteuerboardUrl, ensureBitrixGroupId } from "@/lib/data";
 import { getSession, istKernteam, istBalthasar } from "@/lib/auth";
 import { erstelleSteuerboardKopie, loescheSteuerboardKopie } from "@/lib/steuerboardFactory";
 import { buildeProjektKontext } from "@/lib/projektKontext";
@@ -77,11 +77,30 @@ export async function POST(
     );
   }
 
+  // Dieselbe Bitrix24-Arbeitsgruppe, die dieses Projekt schon fuer seine
+  // Phase-1-Aufgaben/Ideen nutzt (oder, falls noch nicht verbunden, jetzt
+  // dafuer anlegt – exakt dieselbe Logik wie beim Uebernehmen einer Idee
+  // oder eines Aufgaben-Vorschlags), an die neue Steuerboard-Kopie
+  // weiterreichen, damit ab Phase 2 im selben Bitrix24-Kanban weitergearbeitet
+  // wird statt in einer zweiten, unabhaengigen Gruppe. Best effort: schlaegt
+  // die Bitrix-Verbindung fehl (z. B. Bitrix24 gerade nicht erreichbar),
+  // entsteht die Steuerboard-Kopie trotzdem, nur ohne Bitrix-Anbindung von
+  // Anfang an (kann spaeter nachgetragen werden).
+  let projektFuerFactory = project;
+  try {
+    const { project: verbunden } = await ensureBitrixGroupId(project);
+    projektFuerFactory = verbunden;
+  } catch {
+    // bewusst ignoriert, siehe Kommentar oben
+  }
+
   const ergebnis = await erstelleSteuerboardKopie({
     projectName: project.name,
     projectContext: buildeProjektKontext(project),
     slug: params.slug,
     dokumenteLink: project.dokumenteLink,
+    bitrixWebhookUrl: process.env.BITRIX24_WEBHOOK_URL,
+    bitrixGroupId: projektFuerFactory.bitrix24.groupId,
   });
 
   if (!ergebnis.ok) {

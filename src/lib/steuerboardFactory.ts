@@ -64,6 +64,23 @@ export async function erstelleSteuerboardKopie(params: {
    * setzen.
    */
   dokumenteLink?: string;
+  /**
+   * Webhook-URL der bereits bestehenden Bitrix24-Anbindung dieser
+   * Project-Builder-Instanz (`process.env.BITRIX24_WEBHOOK_URL`, siehe
+   * `lib/bitrix24.ts`). Wird 1:1 an die neue Steuerboard-Kopie
+   * durchgereicht (`bitrixWebhookUrl` in create-copy.js), damit die Kopie
+   * von Anfang an in dieselbe Bitrix24-Arbeitsgruppe schreibt statt eine
+   * eigene, unabhängige Anbindung zu brauchen. Optional: fehlt sie, entsteht
+   * die Kopie trotzdem, nur ohne Bitrix24-Aufgaben-Spiegelung.
+   */
+  bitrixWebhookUrl?: string;
+  /**
+   * ID der Bitrix24-Arbeitsgruppe dieses Projekts (`project.bitrix24.groupId`,
+   * siehe `ensureBitrixGroupId` in `lib/data.ts`) – dieselbe Gruppe, in die
+   * bereits die Phase-1-Aufgaben/Ideen dieses Projekts gespiegelt werden.
+   * Nur zusammen mit `bitrixWebhookUrl` sinnvoll.
+   */
+  bitrixGroupId?: number;
 }): Promise<FactoryErgebnis> {
   const factoryUrl = process.env.STEUERBOARD_FACTORY_URL;
   const factorySecret = process.env.STEUERBOARD_FACTORY_SECRET;
@@ -93,6 +110,8 @@ export async function erstelleSteuerboardKopie(params: {
         projectContext: params.projectContext,
         projectBuilderSlug: params.slug,
         dokumenteLink: params.dokumenteLink,
+        bitrixWebhookUrl: params.bitrixWebhookUrl,
+        bitrixGroupId: params.bitrixGroupId,
       }),
     });
   } catch (err) {
