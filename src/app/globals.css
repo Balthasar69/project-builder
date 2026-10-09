@@ -19,3 +19,51 @@ body {
 .tabular {
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------- Businessplan-Vorzeigefassung (Druck/PDF) ----------
+   Seite /projects/[slug]/businessplan: am Bildschirm als A4-Blatt, beim
+   Drucken ("Als PDF sichern") ohne Buttons, mit Seitenumbruechen und
+   Seitenzahlen unten rechts (Chrome/Edge; Safari ignoriert die Zahlen,
+   der Rest funktioniert). Seitenraender oben/unten kommen vom @page, die
+   seitlichen vom Innenabstand der Abschnitte. */
+@page {
+  size: A4;
+  margin: 14mm 0 16mm 0;
+}
+@page {
+  @bottom-right {
+    content: counter(page);
+    font-size: 9pt;
+    color: #a4a2a8;
+    margin-right: 18mm;
+  }
+}
+@page :first {
+  @bottom-right {
+    content: none;
+  }
+}
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .bp-seite,
+  .bp-dokument {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .bp-deckblatt {
+    min-height: 262mm !important;
+  }
+  .bp-seitenumbruch {
+    break-before: page;
+  }
+  .bp-ueberschrift {
+    break-after: avoid;
+  }
+  .bp-kapitel p,
+  .bp-kapitel li,
+  .bp-tabelle tr {
+    break-inside: avoid;
+  }
+}

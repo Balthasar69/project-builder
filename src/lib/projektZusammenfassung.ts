@@ -2,8 +2,8 @@
 // fuehrt den GESAMTEN bisherigen Verlauf eines Projekts - Bewertungen, Chat,
 // Ideen, Kompetenz-Beitraege und Bitrix24-Aufgaben samt ihren Notizen - zu
 // einem von der KI geschriebenen Businessplan mit klassischer Gliederung
-// zusammen (Executive Summary, Geschaeftsidee, Markt & Wettbewerb, Team,
-// Marketing & Vertrieb, bisheriger Verlauf, Chancen & Risiken, Finanzplanung
+// zusammen (Executive Summary, Geschaeftsidee, Projektteam, Markt & Wettbewerb,
+// Marketing & Vertrieb, Umsetzung & Meilensteine, Chancen & Risiken, Finanzplanung
 // als bewusster Platzhalter - dafuer werden aktuell keine Zahlen erfasst -,
 // zuletzt die offenen Aufgaben). Siehe ProjektZusammenfassung.tsx fuer die
 // Anzeige; Variablen-/Routen-/Feldnamen heissen bewusst weiter "Zusammen-
@@ -208,17 +208,19 @@ ${erledigteAufgabenText}
 === Offene Aufgaben mit ihrem Aufgabeninhaber ===
 ${offeneAufgabenText}
 
-Gliedere den Businessplan auf Deutsch in GENAU diese Abschnitte, jeweils mit eigener Zwischenüberschrift im Format "## Überschrift" auf eigener Zeile, in dieser Reihenfolge:
+Gliedere den Businessplan auf Deutsch in GENAU diese Abschnitte, jeweils mit eigener Zwischenüberschrift im Format "## Überschrift" auf eigener Zeile (OHNE vorangestellte Nummer, die Nummerierung ergänzt die Anzeige selbst), in dieser Reihenfolge – das ist die klassische Gliederung eines Businessplans für Banken, Förderstellen und Partner:
 
 1. "## Executive Summary" – ein kurzer, dichter Überblick (1 Absatz): worum es geht, wo das Projekt gerade steht, wohin es soll.
 2. "## Geschäftsidee & Angebot" – was genau angeboten wird und welchen Nutzen es für wen stiftet, basierend auf Beschreibung, Ideen und Chat.
-3. "## Markt & Wettbewerb" – was sich aus den Quellen zu Zielgruppe, Marktumfeld und Wettbewerb ablesen lässt. Ist dazu kaum etwas hinterlegt, schreibe das ehrlich (z. B. "Eine systematische Markt- und Wettbewerbsanalyse liegt bisher nicht vor.") statt etwas zu erfinden.
-4. "## Team & Kompetenzen" – wer ist beteiligt, mit welchen Stärken und welchem Beitrag (aus den Kompetenz-Einträgen).
+3. "## Projektteam & Organisation" – wer ist beteiligt, mit welchen Stärken, Rollen und welchem Beitrag (aus den Kompetenz-Einträgen und dem Verlauf). Eine Namens-/Rollentabelle ergänzt die Anzeige selbst, du musst sie nicht nachbauen.
+4. "## Markt & Wettbewerb" – was sich aus den Quellen zu Zielgruppe, Marktumfeld und Wettbewerb ablesen lässt. Ist dazu kaum etwas hinterlegt, schreibe das ehrlich (z. B. "Eine systematische Markt- und Wettbewerbsanalyse liegt bisher nicht vor.") statt etwas zu erfinden.
 5. "## Marketing & Vertrieb" – was aus Ideen/Chat zu Vertriebsweg, Ansprache oder Preismodell hervorgeht; fehlt das, ehrlich vermerken statt zu erfinden.
-6. "## Bisheriger Verlauf & Meilensteine" – FLIESSTEXT (ganze Sätze, keine Aufzählung) über die wichtigsten Entwicklungen aus Chat, Ideen und Bewertungen (mit konkreten Daten und Namen) sowie die bereits ERLEDIGTEN Aufgaben: erzähle, was gemacht wurde und was dabei herauskam, statt es aufzuzählen.
+6. "## Umsetzung & Meilensteine" – FLIESSTEXT (ganze Sätze, keine Aufzählung) über die wichtigsten Entwicklungen aus Chat, Ideen und Bewertungen sowie die bereits ERLEDIGTEN Aufgaben: erzähle, was gemacht wurde und was dabei herauskam, statt es aufzuzählen.
 7. "## Chancen & Risiken" – aus den Quellen erkennbare Chancen und Risiken/Bremsen, sachlich und konkret statt allgemein.
 8. "## Finanzplanung" – dieser Abschnitt bleibt bewusst ein PLATZHALTER: schreibe deutlich, dass dazu (Kapitalbedarf, Umsatz- und Kostenplanung, Rentabilitäts- und Liquiditätsvorschau) noch keine Zahlen in der App erfasst sind und vom Team nachgetragen werden müssen. ERFINDE UNTER KEINEN UMSTÄNDEN Beträge, Prozentzahlen oder Zeiträume.
-9. "## Offene Aufgaben" – ausschließlich eine kurze, klare Liste der noch offenen bzw. als Nächstes anstehenden Aufgaben, pro Zeile nur die Aufgabe und ihre Zuständigkeit, sonst nichts, z. B. "- „Titel" – zuständig: Name". Ist niemand zugeordnet, übernimm das wörtlich so ("noch niemandem zugeordnet"). Erledigte Aufgaben tauchen hier nicht auf.
+9. "## Nächste Schritte" – ausschließlich eine kurze, klare Liste der noch offenen bzw. als Nächstes anstehenden Aufgaben, pro Zeile nur die Aufgabe und ihre Zuständigkeit, sonst nichts, z. B. "- „Titel" – zuständig: Name". Ist niemand zugeordnet, übernimm das wörtlich so ("noch niemandem zugeordnet"). Erledigte Aufgaben tauchen hier nicht auf.
+
+Schreibe sachlich und vorzeigbar in der dritten Person, wie in einem Dokument, das ein Außenstehender liest (keine Chat-Sprache, keine Zeitstempel, keine Anrede).
 
 Innerhalb jedes Abschnitts (außer Abschnitt 9) nur FLIESSTEXT in 1–3 kurzen Absätzen, KEINE Aufzählungen. Nutze konkrete Namen, Daten und sinngemäße Zitate aus den obigen Quellen statt allgemeiner Floskeln. Liegt zu einem Abschnitt nichts vor, schreibe das kurz und ehrlich statt etwas zu erfinden. Beginne direkt mit "## Executive Summary" (keine Einleitung davor, kein Satz wie "Hier ist der Businessplan"). Verwende AUSSCHLIESSLICH "## " für Überschriften, keine anderen Markdown-Elemente wie Tabellen, "#", "###" oder nummerierte Überschriften – die Anzeige unterstützt nur "## " als Zwischenüberschrift und Text in Absätzen.`;
 }

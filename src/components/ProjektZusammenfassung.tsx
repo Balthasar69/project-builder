@@ -170,13 +170,21 @@ export default function ProjektZusammenfassung({
               Erstellt {formatiereZeit(zusammenfassung.erstelltAm)} von{" "}
               {zusammenfassung.erstelltVonName}
             </p>
-            <button
-              type="button"
-              onClick={herunterladen}
-              className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-ink-faint hover:text-accent"
-            >
-              Als Datei herunterladen
-            </button>
+            <div className="flex flex-wrap items-center gap-4">
+              <a
+                href={`/projects/${slug}/businessplan`}
+                className="whitespace-nowrap rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-surface transition hover:bg-accent-ink"
+              >
+                Vorzeigefassung öffnen (PDF)
+              </a>
+              <button
+                type="button"
+                onClick={herunterladen}
+                className="whitespace-nowrap font-mono text-xs uppercase tracking-wide text-ink-faint hover:text-accent"
+              >
+                Als Datei herunterladen
+              </button>
+            </div>
           </div>
           <ZusammenfassungText text={zusammenfassung.text} />
         </div>
