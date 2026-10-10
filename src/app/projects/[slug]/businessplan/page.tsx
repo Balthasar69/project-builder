@@ -77,7 +77,10 @@ export default async function BusinessplanVorzeigefassung({
     chat: project.chat?.length ?? 0,
     ideen: project.ideen?.length ?? 0,
     kompetenzen: project.kompetenzbeitraege?.length ?? 0,
+    coach: project.coachChat?.length ?? 0,
   };
+  const fragebogenBeantwortet = Boolean(project.projektstartFragebogen?.beantwortetAm);
+  const hatSteuerboard = Boolean(project.steuerboard?.url);
 
   return (
     <div className="bp-seite bg-surface-2 px-4 py-6 print:bg-white print:p-0">
@@ -264,6 +267,20 @@ export default async function BusinessplanVorzeigefassung({
             <li>{anzahl.chat} Nachrichten im Projekt-Chat</li>
             <li>{anzahl.ideen} gesammelte Ideen</li>
             <li>{anzahl.kompetenzen} Kompetenz-Einträge des Teams</li>
+            <li>das Kernteam mit seinen Rollen und die Einzelantworten der Bewertungen</li>
+            <li>
+              {fragebogenBeantwortet
+                ? "der Projektstart-Fragebogen (Zielsituation, Umsatzziel, Liquidität, Meilensteine)"
+                : "der Projektstart-Fragebogen (noch nicht beantwortet)"}
+            </li>
+            <li>{anzahl.coach} Nachrichten im Gespräch mit dem Gründercoach</li>
+            {hatSteuerboard && (
+              <li>
+                das zugehörige Steuerboard: Boards, Aufgabenkarten mit
+                Beschreibungen und Kommentaren, Coach-Gespräch und
+                4DX-Wochenreviews
+              </li>
+            )}
             <li>die Aufgaben samt Notizen aus der Aufgabenverwaltung (Bitrix24)</li>
           </ul>
           <p className="mt-4 text-xs leading-relaxed text-ink-faint">

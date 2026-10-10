@@ -12,7 +12,8 @@ import {
   ZusammenfassungAufgabe,
   ZusammenfassungError,
 } from "@/lib/projektZusammenfassung";
-import { PHASES, Project } from "@/lib/types";
+import { checkKriterienFuerPhase, PHASES, Project } from "@/lib/types";
+import { ladeSteuerboardExport } from "@/lib/steuerboardExport";
 import { SessionPayload } from "@/lib/session";
 
 // Der Aufruf bei Groq/Claude braucht wegen der Laenge der Ausarbeitung
@@ -129,6 +130,11 @@ export async function POST(_req: NextRequest, { params }: { params: { slug: stri
     aufgaben = [];
   }
 
+  // Steuerboard (Boards, Karten, Kommentare, Coach, 4DX) – nie fatal.
+  const steuerboard = await ladeSteuerboardExport(project);
+
+  const fb = project.projektstartFragebogen;
+
   let text: string;
   try {
     text = await erstelleProjektZusammenfassung({
@@ -143,6 +149,14 @@ export async function POST(_req: NextRequest, { params }: { params: { slug: stri
         notiz: c.notiz,
         bewerterName: c.bewerterName,
         durchgefuehrtAm: c.durchgefuehrtAm,
+        antworten: Object.entries(c.answers ?? {})
+          .filter(([, wert]) => typeof wert === "number")
+          .map(([code, wert]) => ({
+            frage:
+              (c.phase ? checkKriterienFuerPhase(c.phase) : []).find((k) => k.code === code)?.frage ??
+              code,
+            wert: wert as number,
+          })),
       })),
       chat: (project.chat ?? []).map((c) => ({
         autorName: c.autorName,
@@ -162,6 +176,24 @@ export async function POST(_req: NextRequest, { params }: { params: { slug: stri
         aktualisiertAm: k.aktualisiertAm,
       })),
       aufgaben,
+      kernteam: (project.kernteam ?? []).map((m) => ({ name: m.name, rolle: m.rolle })),
+      fragebogen: fb
+        ? {
+            projektArt: fb.projektArt,
+            zielsituation: fb.zielsituation,
+            umsatzziel: fb.umsatzziel,
+            liquiditaet: fb.liquiditaet,
+            meilensteine: fb.meilensteine,
+            beantwortetVon: fb.beantwortetAm ? fb.projektleiterName : undefined,
+            beantwortetAm: fb.beantwortetAm,
+          }
+        : undefined,
+      coachChat: (project.coachChat ?? []).map((c) => ({
+        autorName: c.rolle === "bot" ? "Gründercoach" : c.autorName || "Mitglied",
+        text: c.text,
+        erstelltAm: c.erstelltAm,
+      })),
+      steuerboard,
     });
   } catch (err) {
     const message =

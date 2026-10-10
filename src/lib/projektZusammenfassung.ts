@@ -4,8 +4,11 @@
 // einem von der KI geschriebenen Businessplan mit klassischer Gliederung
 // zusammen (Executive Summary, Geschaeftsidee, Projektteam, Markt & Wettbewerb,
 // Marketing & Vertrieb, Umsetzung & Meilensteine, Chancen & Risiken, Finanzplanung
-// als bewusster Platzhalter - dafuer werden aktuell keine Zahlen erfasst -,
-// zuletzt die offenen Aufgaben). Siehe ProjektZusammenfassung.tsx fuer die
+// auf Basis der Angaben aus dem Projektstart-Fragebogen - Zahlen werden nie
+// erfunden -, zuletzt die offenen Aufgaben). Seit v1.0 fliessen ausserdem
+// ein: Projektstart-Fragebogen, Gruendercoach-Chat, die einzelnen Antworten
+// der Bewertungen sowie die Boards/Karten/Kommentare/Coach-Chat/4DX-Reviews
+// des zugehoerigen Steuerboards (siehe steuerboardExport.ts). Siehe ProjektZusammenfassung.tsx fuer die
 // Anzeige; Variablen-/Routen-/Feldnamen heissen bewusst weiter "Zusammen-
 // fassung" (u.a. weil das Steuerboard-Oekosystem in einem anderen Repo
 // darauf verlinkt, siehe PROJEKT_ZUSAMMENFASSUNG_URL) - nur die fuer
@@ -17,6 +20,8 @@
 // kostenpflichtig) ist die Ersatzloesung. Wegen der gewuenschten Laenge
 // braucht dieser Aufruf ein deutlich groesseres Token-Budget als die kurze
 // Aufgaben-Hilfestellung.
+
+import type { SteuerboardExport } from "@/lib/steuerboardExport";
 
 export class ZusammenfassungError extends Error {}
 
@@ -35,6 +40,23 @@ export interface ZusammenfassungBewertung {
   notiz?: string;
   bewerterName?: string;
   durchgefuehrtAm: string;
+  /** Einzelantworten je Frage (1-5), mit lesbarer Fragebezeichnung. */
+  antworten?: { frage: string; wert: number }[];
+}
+
+export interface ZusammenfassungKernteamMitglied {
+  name: string;
+  rolle: string;
+}
+
+export interface ZusammenfassungFragebogen {
+  projektArt?: string;
+  zielsituation?: string;
+  umsatzziel?: string;
+  liquiditaet?: string;
+  meilensteine?: string;
+  beantwortetVon?: string;
+  beantwortetAm?: string;
 }
 
 export interface ZusammenfassungChatNachricht {
@@ -86,6 +108,12 @@ export interface ZusammenfassungParams {
   ideen: ZusammenfassungIdee[];
   kompetenzen: ZusammenfassungKompetenz[];
   aufgaben: ZusammenfassungAufgabe[];
+  kernteam?: ZusammenfassungKernteamMitglied[];
+  fragebogen?: ZusammenfassungFragebogen;
+  /** Gruendercoach-Bot-Chat im Project Builder. */
+  coachChat?: ZusammenfassungChatNachricht[];
+  /** Vom Steuerboard geholte Daten (null/fehlt: kein Steuerboard oder nicht erreichbar). */
+  steuerboard?: SteuerboardExport | null;
 }
 
 function formatDatum(iso: string): string {
@@ -113,6 +141,112 @@ function kappen<T>(liste: T[]): { eintraege: T[]; hinweis: string } {
   };
 }
 
+function kuerzen(text: string | undefined | null, max: number): string {
+  const t = (text ?? "").replace(/\s+/g, " ").trim();
+  return t.length > max ? `${t.slice(0, max)}…` : t;
+}
+
+function wertText(v: unknown): string {
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  if (Array.isArray(v)) return v.map(wertText).filter(Boolean).join("; ");
+  if (typeof v === "object") {
+    return Object.entries(v as Record<string, unknown>)
+      .map(([k, w]) => `${k}: ${wertText(w)}`)
+      .join(", ");
+  }
+  return "";
+}
+
+function steuerboardText(sb: SteuerboardExport | null | undefined): string {
+  if (!sb) return "(kein Steuerboard verbunden oder gerade nicht erreichbar)";
+  const teile: string[] = [];
+
+  const kopf: string[] = [];
+  if (sb.projectName) kopf.push(`Boardname: ${sb.projectName}`);
+  if (sb.stage) kopf.push(`Reifegrad-Stufe: ${sb.stage}`);
+  if (sb.projectContext) kopf.push(`Projektkontext: ${kuerzen(sb.projectContext, 600)}`);
+  if (sb.columns.length) kopf.push(`Spalten (Boards): ${sb.columns.join(" → ")}`);
+  if (sb.people.length) kopf.push(`Personen im Board: ${sb.people.join(", ")}`);
+  if (kopf.length) teile.push(kopf.join("\n"));
+
+  if (sb.wig) {
+    const w = sb.wig;
+    const leads = (w.leadMassnahmen ?? []).map((l) => l.text).filter(Boolean).join("; ");
+    teile.push(
+      `4DX-Hauptziel (WIG): ${kuerzen(w.formulierung, 400) || "(nicht formuliert)"}` +
+        (typeof w.aktuellerStand === "number" ? ` · aktueller Stand: ${w.aktuellerStand}` : "") +
+        (leads ? ` · Lead-Maßnahmen: ${kuerzen(leads, 500)}` : "")
+    );
+  }
+
+  // Karten je Spalte, in Spaltenreihenfolge.
+  const karten = kappen(sb.tasks);
+  if (karten.eintraege.length) {
+    const reihenfolge = [...sb.columns];
+    for (const k of karten.eintraege) if (!reihenfolge.includes(k.status)) reihenfolge.push(k.status);
+    const zeilen: string[] = [];
+    for (const spalte of reihenfolge) {
+      const inSpalte = karten.eintraege.filter((k) => k.status === spalte);
+      if (!inSpalte.length) continue;
+      zeilen.push(`Spalte "${spalte}":`);
+      for (const k of inSpalte) {
+        const meta = [
+          k.assignee ? `zuständig: ${k.assignee}` : "",
+          k.team ? `Team: ${k.team}` : "",
+          k.dueDate ? `fällig: ${k.dueDate}` : "",
+        ]
+          .filter(Boolean)
+          .join(", ");
+        let zeile = `- "${k.title}"${meta ? ` (${meta})` : ""}`;
+        const beschr = kuerzen(k.description, 300);
+        if (beschr) zeile += ` – ${beschr}`;
+        const kommentare = (k.comments ?? []).filter((c) => c.text).slice(-6);
+        for (const c of kommentare) {
+          zeile += `\n    · ${c.author || "?"}: ${kuerzen(c.text, 200)}`;
+        }
+        zeilen.push(zeile);
+      }
+    }
+    teile.push(`Aufgabenkarten im Steuerboard:\n${zeilen.join("\n")}${karten.hinweis}`);
+  } else {
+    teile.push("(keine Aufgabenkarten im Steuerboard)");
+  }
+
+  const coach = kappen(sb.coach);
+  if (coach.eintraege.length) {
+    teile.push(
+      "Gründercoach-Chat im Steuerboard:\n" +
+        coach.eintraege
+          .map((m) => `- ${m.rolle === "bot" ? "Coach" : m.author || "Mitglied"}: ${kuerzen(m.text, 400)}`)
+          .join("\n") +
+        coach.hinweis
+    );
+  }
+
+  if (sb.wigReviews.length) {
+    teile.push(
+      "4DX-Wochenreviews (neueste zuerst):\n" +
+        sb.wigReviews
+          .map((r) => {
+            const d = r.data ?? {};
+            const felder = ["author", "wigStand", "statusLabel", "commitments", "erledigtText", "zusammenfassung"]
+              .map((f) => {
+                const t = kuerzen(wertText((d as Record<string, unknown>)[f]), 300);
+                return t ? `${f}: ${t}` : "";
+              })
+              .filter(Boolean)
+              .join(" · ");
+            return `- ${formatDatum(r.createdAt)} · ${felder || "(ohne Inhalt)"}`;
+          })
+          .join("\n")
+    );
+  }
+
+  return teile.join("\n\n");
+}
+
 function buildPrompt(params: ZusammenfassungParams): string {
   const bewertungen = kappen(params.bewertungen);
   const chat = kappen(params.chat);
@@ -124,7 +258,11 @@ function buildPrompt(params: ZusammenfassungParams): string {
     ? bewertungen.eintraege
         .map(
           (b) =>
-            `- ${formatDatum(b.durchgefuehrtAm)} · ${b.phaseName ?? "?"} · Ergebnis: ${b.empfehlung} (Score ${b.score}) · von ${b.bewerterName ?? "unbekannt"}${b.notiz ? ` · Notiz: "${b.notiz}"` : ""}`
+            `- ${formatDatum(b.durchgefuehrtAm)} · ${b.phaseName ?? "?"} · Ergebnis: ${b.empfehlung} (Score ${b.score}) · von ${b.bewerterName ?? "unbekannt"}${b.notiz ? ` · Notiz: "${b.notiz}"` : ""}${
+              b.antworten && b.antworten.length
+                ? `\n    Einzelantworten (1 = schwach, 5 = stark): ${b.antworten.map((a) => `${a.frage} = ${a.wert}`).join("; ")}`
+                : ""
+            }`
         )
         .join("\n") + bewertungen.hinweis
     : "(keine Bewertungen bisher)";
@@ -152,6 +290,35 @@ function buildPrompt(params: ZusammenfassungParams): string {
         )
         .join("\n") + kompetenzen.hinweis
     : "(keine Kompetenz-Einträge bisher)";
+
+  const kernteamText = params.kernteam && params.kernteam.length
+    ? params.kernteam.map((m) => `- ${m.name} – Rolle: ${m.rolle || "(keine Rolle hinterlegt)"}`).join("\n")
+    : "(kein Kernteam hinterlegt)";
+
+  const fb = params.fragebogen;
+  const fragebogenText = fb
+    ? [
+        fb.projektArt ? `Projektart: ${fb.projektArt === "geschaeft" ? "Geschäftsprojekt" : fb.projektArt === "privat" ? "privates Projekt" : fb.projektArt}` : "",
+        fb.zielsituation ? `Zielsituation (so soll es am Ende aussehen): ${fb.zielsituation}` : "",
+        fb.umsatzziel ? `Umsatzziel: ${fb.umsatzziel}` : "",
+        fb.liquiditaet ? `Liquiditätslage: ${fb.liquiditaet}` : "",
+        fb.meilensteine ? `Meilensteine (ein Meilenstein pro Zeile):\n${fb.meilensteine}` : "",
+        fb.beantwortetVon || fb.beantwortetAm
+          ? `(beantwortet von ${fb.beantwortetVon ?? "unbekannt"}${fb.beantwortetAm ? ` am ${formatDatum(fb.beantwortetAm)}` : ""})`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n") || "(Fragebogen ohne Angaben)"
+    : "(Projektstart-Fragebogen wurde noch nicht beantwortet)";
+
+  const coachChatKapp = kappen(params.coachChat ?? []);
+  const coachChatText = coachChatKapp.eintraege.length
+    ? coachChatKapp.eintraege
+        .map((c) => `- ${formatDatum(c.erstelltAm)} · ${c.autorName || "Gründercoach"}: ${kuerzen(c.text, 500)}`)
+        .join("\n") + coachChatKapp.hinweis
+    : "(kein Gespräch mit dem Gründercoach bisher)";
+
+  const steuerboardBlock = steuerboardText(params.steuerboard);
 
   // Zwei getrennte Aufgaben-Quellen fuer die zwei Teile der Ausarbeitung
   // (v0.9x): erledigte Aufgaben MIT Notizen fliessen als Erzaehlstoff in
@@ -184,7 +351,7 @@ function buildPrompt(params: ZusammenfassungParams): string {
         .join("\n")
     : "(keine offenen Aufgaben)";
 
-  return `Du unterstützt ein kleines Projektteam dabei, aus dem bisherigen Projektverlauf einen echten BUSINESSPLAN mit klassischer Gliederung zu erstellen – kein loser Verlaufsbericht, sondern ein Dokument, das jemand (z. B. eine Bank, ein Partner oder das Team selbst) lesen kann, um Geschäftsidee, Markt, Team und nächste Schritte zu verstehen. Ruhig ausführlich (1200–1800 Wörter insgesamt).
+  return `Du unterstützt ein kleines Projektteam dabei, aus dem bisherigen Projektverlauf einen echten BUSINESSPLAN mit klassischer Gliederung zu erstellen – kein loser Verlaufsbericht, sondern ein Dokument, das jemand (z. B. eine Bank, ein Partner oder das Team selbst) lesen kann, um Geschäftsidee, Markt, Team und nächste Schritte zu verstehen. Ruhig ausführlich (1500–2200 Wörter insgesamt). WICHTIG: Berücksichtige ALLE oben aufgeführten Quellen – auch den Projektstart-Fragebogen, das Gründercoach-Gespräch, die Einzelantworten der Bewertungen und das Steuerboard (Karten, Kommentare, Coach, 4DX); die Eingaben aller Mitglieder sollen im Dokument erkennbar werden.
 
 Projekt: "${params.projektName}"
 Beschreibung: ${params.projektBeschreibung?.trim() || "(keine hinterlegt)"}
@@ -193,8 +360,17 @@ Aktuelle Phase: "${params.phaseName}" – Ziel dieser Phase: ${params.phaseZiel}
 === Bewertungen (Checks) im Verlauf, älteste zuerst ===
 ${bewertungenText}
 
+=== Kernteam mit Rollen ===
+${kernteamText}
+
+=== Projektstart-Fragebogen (Angaben des Projektleiters) ===
+${fragebogenText}
+
 === Chat-Verlauf, älteste Nachricht zuerst ===
 ${chatText}
+
+=== Gespräch mit dem Gründercoach (Project Builder) ===
+${coachChatText}
 
 === Ideen ===
 ${ideenText}
@@ -208,17 +384,20 @@ ${erledigteAufgabenText}
 === Offene Aufgaben mit ihrem Aufgabeninhaber ===
 ${offeneAufgabenText}
 
+=== Steuerboard dieses Projekts (Boards, Karten, Kommentare, Coach, 4DX) ===
+${steuerboardBlock}
+
 Gliedere den Businessplan auf Deutsch in GENAU diese Abschnitte, jeweils mit eigener Zwischenüberschrift im Format "## Überschrift" auf eigener Zeile (OHNE vorangestellte Nummer, die Nummerierung ergänzt die Anzeige selbst), in dieser Reihenfolge – das ist die klassische Gliederung eines Businessplans für Banken, Förderstellen und Partner:
 
 1. "## Executive Summary" – ein kurzer, dichter Überblick (1 Absatz): worum es geht, wo das Projekt gerade steht, wohin es soll.
-2. "## Geschäftsidee & Angebot" – was genau angeboten wird und welchen Nutzen es für wen stiftet, basierend auf Beschreibung, Ideen und Chat.
-3. "## Projektteam & Organisation" – wer ist beteiligt, mit welchen Stärken, Rollen und welchem Beitrag (aus den Kompetenz-Einträgen und dem Verlauf). Eine Namens-/Rollentabelle ergänzt die Anzeige selbst, du musst sie nicht nachbauen.
+2. "## Geschäftsidee & Angebot" – was genau angeboten wird und welchen Nutzen es für wen stiftet, basierend auf Beschreibung, Zielsituation aus dem Fragebogen, Ideen, Chat und Gründercoach-Gespräch.
+3. "## Projektteam & Organisation" – wer ist beteiligt, mit welchen Stärken, Rollen (Kernteam mit Rollen, Kompetenz-Einträge) und welchem Beitrag (aus Verlauf, Chat und den Kommentaren/Karten im Steuerboard). Eine Namens-/Rollentabelle ergänzt die Anzeige selbst, du musst sie nicht nachbauen.
 4. "## Markt & Wettbewerb" – was sich aus den Quellen zu Zielgruppe, Marktumfeld und Wettbewerb ablesen lässt. Ist dazu kaum etwas hinterlegt, schreibe das ehrlich (z. B. "Eine systematische Markt- und Wettbewerbsanalyse liegt bisher nicht vor.") statt etwas zu erfinden.
 5. "## Marketing & Vertrieb" – was aus Ideen/Chat zu Vertriebsweg, Ansprache oder Preismodell hervorgeht; fehlt das, ehrlich vermerken statt zu erfinden.
-6. "## Umsetzung & Meilensteine" – FLIESSTEXT (ganze Sätze, keine Aufzählung) über die wichtigsten Entwicklungen aus Chat, Ideen und Bewertungen sowie die bereits ERLEDIGTEN Aufgaben: erzähle, was gemacht wurde und was dabei herauskam, statt es aufzuzählen.
+6. "## Umsetzung & Meilensteine" – FLIESSTEXT (ganze Sätze, keine Aufzählung) über die wichtigsten Entwicklungen aus Chat, Ideen und Bewertungen sowie die bereits ERLEDIGTEN Aufgaben und die Karten in den späteren Spalten des Steuerboards (z. B. erledigt/in Arbeit): erzähle, was gemacht wurde und was dabei herauskam, statt es aufzuzählen. Beziehe die im Fragebogen genannten Meilensteine ein (welche sind laut Aufgaben/Karten erreicht, welche stehen noch aus) und, falls vorhanden, das 4DX-Hauptziel samt Wochenreviews.
 7. "## Chancen & Risiken" – aus den Quellen erkennbare Chancen und Risiken/Bremsen, sachlich und konkret statt allgemein.
-8. "## Finanzplanung" – dieser Abschnitt bleibt bewusst ein PLATZHALTER: schreibe deutlich, dass dazu (Kapitalbedarf, Umsatz- und Kostenplanung, Rentabilitäts- und Liquiditätsvorschau) noch keine Zahlen in der App erfasst sind und vom Team nachgetragen werden müssen. ERFINDE UNTER KEINEN UMSTÄNDEN Beträge, Prozentzahlen oder Zeiträume.
-9. "## Nächste Schritte" – ausschließlich eine kurze, klare Liste der noch offenen bzw. als Nächstes anstehenden Aufgaben, pro Zeile nur die Aufgabe und ihre Zuständigkeit, sonst nichts, z. B. "- „Titel" – zuständig: Name". Ist niemand zugeordnet, übernimm das wörtlich so ("noch niemandem zugeordnet"). Erledigte Aufgaben tauchen hier nicht auf.
+8. "## Finanzplanung" – gib NUR wieder, was im Projektstart-Fragebogen (Umsatzziel, Liquiditätslage) oder in Chat, Karten und Kommentaren ausdrücklich zu Geld, Preisen, Kosten oder Investition steht, möglichst wörtlich mit den dort genannten Zahlen. Vermerke ehrlich, welche Teile (Kapitalbedarf, Kostenplanung, Rentabilitäts- und Liquiditätsvorschau) noch nicht erfasst sind und vom Team nachgetragen werden müssen. ERFINDE UNTER KEINEN UMSTÄNDEN Beträge, Prozentzahlen oder Zeiträume, die nicht in den Quellen stehen. Liegt gar nichts vor, ist der Abschnitt ein kurzer Platzhalter mit genau diesem Hinweis.
+9. "## Nächste Schritte" – ausschließlich eine kurze, klare Liste der noch offenen bzw. als Nächstes anstehenden Aufgaben, pro Zeile nur die Aufgabe und ihre Zuständigkeit, sonst nichts, z. B. "- „Titel" – zuständig: Name". Ist niemand zugeordnet, übernimm das wörtlich so ("noch niemandem zugeordnet"). Führe sowohl die offenen Aufgaben als auch die offenen Karten des Steuerboards (Spalten, die noch nicht „erledigt" bedeuten) auf, ohne Doppelnennung gleicher Themen. Erledigte Aufgaben tauchen hier nicht auf.
 
 Schreibe sachlich und vorzeigbar in der dritten Person, wie in einem Dokument, das ein Außenstehender liest (keine Chat-Sprache, keine Zeitstempel, keine Anrede).
 
