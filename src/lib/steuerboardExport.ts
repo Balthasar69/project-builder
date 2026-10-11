@@ -25,6 +25,7 @@ export interface SteuerboardExport {
   projectName?: string | null;
   stage?: number | null;
   projectContext?: string | null;
+  driveLink?: string | null;
   columns: string[];
   people: string[];
   wig?: {
@@ -58,6 +59,7 @@ export async function ladeSteuerboardExport(project: Project): Promise<Steuerboa
       projectName: body.projectName ?? null,
       stage: body.stage ?? null,
       projectContext: body.projectContext ?? null,
+      driveLink: body.driveLink ?? null,
       columns: Array.isArray(body.columns) ? body.columns : [],
       people: Array.isArray(body.people) ? body.people : [],
       wig: body.wig ?? null,

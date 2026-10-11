@@ -14,6 +14,7 @@ import {
 } from "@/lib/projektZusammenfassung";
 import { checkKriterienFuerPhase, PHASES, Project } from "@/lib/types";
 import { ladeSteuerboardExport } from "@/lib/steuerboardExport";
+import { ladeDriveDokumente } from "@/lib/driveDokumente";
 import { SessionPayload } from "@/lib/session";
 
 // Der Aufruf bei Groq/Claude braucht wegen der Laenge der Ausarbeitung
@@ -131,7 +132,10 @@ export async function POST(_req: NextRequest, { params }: { params: { slug: stri
   }
 
   // Steuerboard (Boards, Karten, Kommentare, Coach, 4DX) – nie fatal.
+  // Dokumente aus dem verlinkten Google-Drive-Ordner (nie fatal) - parallel
+  // zum Steuerboard, damit sich die Wartezeiten nicht addieren.
   const steuerboard = await ladeSteuerboardExport(project);
+  const drive = await ladeDriveDokumente(project.dokumenteLink || steuerboard?.driveLink || undefined);
 
   const fb = project.projektstartFragebogen;
 
@@ -194,6 +198,7 @@ export async function POST(_req: NextRequest, { params }: { params: { slug: stri
         erstelltAm: c.erstelltAm,
       })),
       steuerboard,
+      dokumente: drive.dokumente,
     });
   } catch (err) {
     const message =
@@ -211,14 +216,18 @@ export async function POST(_req: NextRequest, { params }: { params: { slug: stri
   // Speichern ist ein "Nice-to-have": schlaegt es fehl, bekommt die Person
   // die frisch erstellte Ausarbeitung trotzdem sofort angezeigt – nur mit
   // einem Hinweis, dass sie beim naechsten Laden ggf. wieder verschwindet.
+  let speicherHinweis: string | undefined;
   try {
     await setProjektZusammenfassung(params.slug, zusammenfassung);
   } catch {
-    return NextResponse.json({
-      zusammenfassung,
-      speicherHinweis: "Die Zusammenfassung konnte nicht dauerhaft gespeichert werden.",
-    });
+    speicherHinweis = "Die Zusammenfassung konnte nicht dauerhaft gespeichert werden.";
   }
 
-  return NextResponse.json({ zusammenfassung });
+  // Hinweise (z. B. Drive-Ordner nicht lesbar) werden der Person unter dem
+  // Knopf angezeigt, damit nicht stillschweigend Quellen fehlen.
+  const hinweise = [speicherHinweis, drive.hinweis].filter(Boolean).join(" ");
+  return NextResponse.json({
+    zusammenfassung,
+    ...(hinweise ? { speicherHinweis: hinweise } : {}),
+  });
 }

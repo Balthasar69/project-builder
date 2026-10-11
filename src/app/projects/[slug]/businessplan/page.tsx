@@ -274,6 +274,12 @@ export default async function BusinessplanVorzeigefassung({
                 : "der Projektstart-Fragebogen (noch nicht beantwortet)"}
             </li>
             <li>{anzahl.coach} Nachrichten im Gespräch mit dem Gründercoach</li>
+            {project.dokumenteLink && (
+              <li>
+                die hochgeladenen Dokumente im Projektordner (Google Drive),
+                soweit automatisch lesbar
+              </li>
+            )}
             {hatSteuerboard && (
               <li>
                 das zugehörige Steuerboard: Boards, Aufgabenkarten mit

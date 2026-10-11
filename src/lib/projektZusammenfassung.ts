@@ -22,6 +22,7 @@
 // Aufgaben-Hilfestellung.
 
 import type { SteuerboardExport } from "@/lib/steuerboardExport";
+import type { DriveDokument } from "@/lib/driveDokumente";
 
 export class ZusammenfassungError extends Error {}
 
@@ -114,6 +115,8 @@ export interface ZusammenfassungParams {
   coachChat?: ZusammenfassungChatNachricht[];
   /** Vom Steuerboard geholte Daten (null/fehlt: kein Steuerboard oder nicht erreichbar). */
   steuerboard?: SteuerboardExport | null;
+  /** Dokumente aus dem verlinkten Google-Drive-Ordner (siehe driveDokumente.ts). */
+  dokumente?: DriveDokument[];
 }
 
 function formatDatum(iso: string): string {
@@ -320,6 +323,16 @@ function buildPrompt(params: ZusammenfassungParams): string {
 
   const steuerboardBlock = steuerboardText(params.steuerboard);
 
+  const dokumenteText = params.dokumente && params.dokumente.length
+    ? params.dokumente
+        .map((d) =>
+          d.inhalt
+            ? `--- ${d.pfad} (${d.typ}${d.geaendertAm ? `, geändert ${formatDatum(d.geaendertAm)}` : ""}) ---\n${d.inhalt}`
+            : `--- ${d.pfad} (${d.typ}) --- (Inhalt nicht auslesbar, nur als vorhanden vermerkt)`
+        )
+        .join("\n\n")
+    : "(keine Dokumente im Projektordner gefunden oder Ordner nicht lesbar)";
+
   // Zwei getrennte Aufgaben-Quellen fuer die zwei Teile der Ausarbeitung
   // (v0.9x): erledigte Aufgaben MIT Notizen fliessen als Erzaehlstoff in
   // den Fliesstext von Teil 1 ein (siehe Anweisung unten) - NICHT als
@@ -351,7 +364,7 @@ function buildPrompt(params: ZusammenfassungParams): string {
         .join("\n")
     : "(keine offenen Aufgaben)";
 
-  return `Du unterstützt ein kleines Projektteam dabei, aus dem bisherigen Projektverlauf einen echten BUSINESSPLAN mit klassischer Gliederung zu erstellen – kein loser Verlaufsbericht, sondern ein Dokument, das jemand (z. B. eine Bank, ein Partner oder das Team selbst) lesen kann, um Geschäftsidee, Markt, Team und nächste Schritte zu verstehen. Ruhig ausführlich (1500–2200 Wörter insgesamt). WICHTIG: Berücksichtige ALLE oben aufgeführten Quellen – auch den Projektstart-Fragebogen, das Gründercoach-Gespräch, die Einzelantworten der Bewertungen und das Steuerboard (Karten, Kommentare, Coach, 4DX); die Eingaben aller Mitglieder sollen im Dokument erkennbar werden.
+  return `Du unterstützt ein kleines Projektteam dabei, aus dem bisherigen Projektverlauf einen echten BUSINESSPLAN mit klassischer Gliederung zu erstellen – kein loser Verlaufsbericht, sondern ein Dokument, das jemand (z. B. eine Bank, ein Partner oder das Team selbst) lesen kann, um Geschäftsidee, Markt, Team und nächste Schritte zu verstehen. Ruhig ausführlich (1500–2200 Wörter insgesamt). WICHTIG: Berücksichtige ALLE oben aufgeführten Quellen – auch die hochgeladenen Dokumente (Inhalte, Zahlen und Fakten daraus gehören in die passenden Kapitel, z. B. Markt, Finanzplanung, Angebot; nenne das Dokument sinngemäß als Quelle, z. B. „laut Konzeptpapier“), den Projektstart-Fragebogen, das Gründercoach-Gespräch, die Einzelantworten der Bewertungen und das Steuerboard (Karten, Kommentare, Coach, 4DX); die Eingaben aller Mitglieder sollen im Dokument erkennbar werden.
 
 Projekt: "${params.projektName}"
 Beschreibung: ${params.projektBeschreibung?.trim() || "(keine hinterlegt)"}
@@ -386,6 +399,9 @@ ${offeneAufgabenText}
 
 === Steuerboard dieses Projekts (Boards, Karten, Kommentare, Coach, 4DX) ===
 ${steuerboardBlock}
+
+=== Hochgeladene Dokumente im Projektordner (Google Drive) ===
+${dokumenteText}
 
 Gliedere den Businessplan auf Deutsch in GENAU diese Abschnitte, jeweils mit eigener Zwischenüberschrift im Format "## Überschrift" auf eigener Zeile (OHNE vorangestellte Nummer, die Nummerierung ergänzt die Anzeige selbst), in dieser Reihenfolge – das ist die klassische Gliederung eines Businessplans für Banken, Förderstellen und Partner:
 
