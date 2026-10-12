@@ -26,7 +26,23 @@ import type { DriveDokument } from "@/lib/driveDokumente";
 
 export class ZusammenfassungError extends Error {}
 
-const GROQ_MODELLE = ["openai/gpt-oss-20b", "openai/gpt-oss-120b"];
+// tpm = Token-Limit pro Minute der kostenlosen Groq-Stufe. Er gilt fuer
+// Eingabe PLUS gewuenschte Ausgabe zusammen (sonst "Request too large").
+const GROQ_MODELLE = [
+  { id: "openai/gpt-oss-20b", tpm: 8000, reasoning: true },
+  { id: "openai/gpt-oss-120b", tpm: 8000, reasoning: true },
+  { id: "llama-3.3-70b-versatile", tpm: 12000, reasoning: false },
+];
+/** Mindestens so viel Platz fuer die Antwort einplanen (Tokens). */
+const MIN_AUSGABE_TOKENS = 3800;
+/** Sicherheitsabstand zum Token-Limit. */
+const TPM_PUFFER = 300;
+
+// Skalierung der Quellen: 1 = alles, kleiner = die Quellen werden fuer
+// knappe Token-Limits (Groq) gekuerzt. Wird nur synchron waehrend
+// buildPrompt() gesetzt.
+let SKALA = 1;
+let WOERTER = "1500–2200";
 const ANTHROPIC_MODELL = "claude-haiku-4-5-20251001";
 
 // Grosszuegige Obergrenzen je Datenquelle: verhindern in seltenen Faellen
@@ -136,17 +152,19 @@ function formatDatum(iso: string): string {
 /** Kappt eine Liste auf `MAX_EINTRAEGE`, aelteste zuerst behalten (fuer den
  *  chronologischen Verlauf relevanter als die allerneuesten), mit Hinweis. */
 function kappen<T>(liste: T[]): { eintraege: T[]; hinweis: string } {
-  if (liste.length <= MAX_EINTRAEGE) return { eintraege: liste, hinweis: "" };
-  const abgeschnitten = liste.length - MAX_EINTRAEGE;
+  const max = Math.max(6, Math.round(MAX_EINTRAEGE * SKALA));
+  if (liste.length <= max) return { eintraege: liste, hinweis: "" };
+  const abgeschnitten = liste.length - max;
   return {
-    eintraege: liste.slice(0, MAX_EINTRAEGE),
+    eintraege: liste.slice(0, max),
     hinweis: `\n(… und ${abgeschnitten} weitere, aus Platzgründen hier nicht einzeln aufgeführt)`,
   };
 }
 
 function kuerzen(text: string | undefined | null, max: number): string {
   const t = (text ?? "").replace(/\s+/g, " ").trim();
-  return t.length > max ? `${t.slice(0, max)}…` : t;
+  const grenze = Math.max(40, Math.round(max * SKALA));
+  return t.length > grenze ? `${t.slice(0, grenze)}…` : t;
 }
 
 function wertText(v: unknown): string {
@@ -283,7 +301,7 @@ function buildPrompt(params: ZusammenfassungParams): string {
 
   const chatText = chat.eintraege.length
     ? chat.eintraege
-        .map((c) => `- ${formatDatum(c.erstelltAm)} · ${c.autorName}: ${c.text}`)
+        .map((c) => `- ${formatDatum(c.erstelltAm)} · ${c.autorName}: ${kuerzen(c.text, 800)}`)
         .join("\n") + chat.hinweis
     : "(kein Chat-Verlauf bisher)";
 
@@ -291,7 +309,7 @@ function buildPrompt(params: ZusammenfassungParams): string {
     ? ideen.eintraege
         .map(
           (i) =>
-            `- ${formatDatum(i.erstelltAm)} · ${i.erstelltVonName}: ${i.text}${i.uebernommen ? " (inzwischen als Aufgabe übernommen)" : ""}`
+            `- ${formatDatum(i.erstelltAm)} · ${i.erstelltVonName}: ${kuerzen(i.text, 500)}${i.uebernommen ? " (inzwischen als Aufgabe übernommen)" : ""}`
         )
         .join("\n") + ideen.hinweis
     : "(keine Ideen bisher eingetragen)";
@@ -334,13 +352,16 @@ function buildPrompt(params: ZusammenfassungParams): string {
 
   const steuerboardBlock = steuerboardText(params.steuerboard);
 
+  let dokumenteRest = Math.max(1500, Math.round(30000 * SKALA));
   const dokumenteText = params.dokumente && params.dokumente.length
     ? params.dokumente
-        .map((d) =>
-          d.inhalt
-            ? `--- ${d.pfad} (${d.typ}${d.geaendertAm ? `, geändert ${formatDatum(d.geaendertAm)}` : ""}) ---\n${d.inhalt}`
-            : `--- ${d.pfad} (${d.typ}) --- (Inhalt nicht auslesbar, nur als vorhanden vermerkt)`
-        )
+        .map((d) => {
+          if (!d.inhalt) return `--- ${d.pfad} (${d.typ}) --- (Inhalt nicht auslesbar, nur als vorhanden vermerkt)`;
+          const grenze = Math.max(0, Math.min(Math.round(6000 * SKALA), dokumenteRest));
+          const inhalt = grenze > 0 ? kuerzen(d.inhalt, grenze / SKALA) : "(aus Platzgründen nicht einbezogen)";
+          dokumenteRest -= grenze;
+          return `--- ${d.pfad} (${d.typ}${d.geaendertAm ? `, geändert ${formatDatum(d.geaendertAm)}` : ""}) ---\n${inhalt}`;
+        })
         .join("\n\n")
     : "(keine Dokumente im Projektordner gefunden oder Ordner nicht lesbar)";
 
@@ -358,7 +379,7 @@ function buildPrompt(params: ZusammenfassungParams): string {
         .map((a) => {
           const notizenText = a.notizen.length
             ? a.notizen
-                .map((n) => `    · ${formatDatum(n.erstelltAm)} ${n.autorName}: ${n.text}`)
+                .map((n) => `    · ${formatDatum(n.erstelltAm)} ${n.autorName}: ${kuerzen(n.text, 500)}`)
                 .join("\n")
             : "    (keine Notizen zu dieser Aufgabe)";
           return `- "${a.titel}"\n${notizenText}`;
@@ -375,7 +396,7 @@ function buildPrompt(params: ZusammenfassungParams): string {
         .join("\n")
     : "(keine offenen Aufgaben)";
 
-  return `Du unterstützt ein kleines Projektteam dabei, aus dem bisherigen Projektverlauf einen echten BUSINESSPLAN mit klassischer Gliederung zu erstellen – kein loser Verlaufsbericht, sondern ein Dokument, das jemand (z. B. eine Bank, ein Partner oder das Team selbst) lesen kann, um Geschäftsidee, Markt, Team und nächste Schritte zu verstehen. Ruhig ausführlich (1500–2200 Wörter insgesamt). WICHTIG: Berücksichtige ALLE oben aufgeführten Quellen – auch die hochgeladenen Dokumente (Inhalte, Zahlen und Fakten daraus gehören in die passenden Kapitel, z. B. Markt, Finanzplanung, Angebot; nenne das Dokument sinngemäß als Quelle, z. B. „laut Konzeptpapier“), den Projektstart-Fragebogen, das Gründercoach-Gespräch, die Einzelantworten der Bewertungen und das Steuerboard (Karten, Kommentare, Coach, 4DX); die Eingaben aller Mitglieder sollen im Dokument erkennbar werden.
+  return `Du unterstützt ein kleines Projektteam dabei, aus dem bisherigen Projektverlauf einen echten BUSINESSPLAN mit klassischer Gliederung zu erstellen – kein loser Verlaufsbericht, sondern ein Dokument, das jemand (z. B. eine Bank, ein Partner oder das Team selbst) lesen kann, um Geschäftsidee, Markt, Team und nächste Schritte zu verstehen. Ruhig ausführlich (${WOERTER} Wörter insgesamt). WICHTIG: Berücksichtige ALLE oben aufgeführten Quellen – auch die hochgeladenen Dokumente (Inhalte, Zahlen und Fakten daraus gehören in die passenden Kapitel, z. B. Markt, Finanzplanung, Angebot; nenne das Dokument sinngemäß als Quelle, z. B. „laut Konzeptpapier“), den Projektstart-Fragebogen, das Gründercoach-Gespräch, die Einzelantworten der Bewertungen und das Steuerboard (Karten, Kommentare, Coach, 4DX); die Eingaben aller Mitglieder sollen im Dokument erkennbar werden.
 
 Projekt: "${params.projektName}"
 Beschreibung: ${params.projektBeschreibung?.trim() || "(keine hinterlegt)"}
@@ -431,7 +452,51 @@ Schreibe sachlich und vorzeigbar in der dritten Person, wie in einem Dokument, d
 Innerhalb jedes Abschnitts (außer Abschnitt 9) nur FLIESSTEXT in 1–3 kurzen Absätzen, KEINE Aufzählungen. Nutze konkrete Namen, Daten und sinngemäße Zitate aus den obigen Quellen statt allgemeiner Floskeln. Liegt zu einem Abschnitt nichts vor, schreibe das kurz und ehrlich statt etwas zu erfinden. Beginne direkt mit "## Executive Summary" (keine Einleitung davor, kein Satz wie "Hier ist der Businessplan"). Verwende AUSSCHLIESSLICH "## " für Überschriften, keine anderen Markdown-Elemente wie Tabellen, "#", "###" oder nummerierte Überschriften – die Anzeige unterstützt nur "## " als Zwischenüberschrift und Text in Absätzen.`;
 }
 
-async function frageGroq(apiKey: string, modell: string, prompt: string): Promise<string> {
+function baueSkaliert(params: ZusammenfassungParams, skala: number, woerter: string): string {
+  SKALA = skala;
+  WOERTER = woerter;
+  try {
+    return buildPrompt(params);
+  } finally {
+    SKALA = 1;
+    WOERTER = "1500–2200";
+  }
+}
+
+function schaetzeTokens(text: string): number {
+  // Deutsch: grob 3 Zeichen pro Token; bewusst vorsichtig gerechnet.
+  return Math.ceil(text.length / 2.8);
+}
+
+/** Baut den Prompt so, dass Eingabe + Antwort in das Minuten-Limit des Modells passen. */
+function baueFuerLimit(
+  params: ZusammenfassungParams,
+  tpm: number
+): { prompt: string; maxAusgabe: number; skala: number } {
+  let skala = 1;
+  let woerter = "1500–2200";
+  let prompt = baueSkaliert(params, skala, woerter);
+  const maxEingabe = tpm - MIN_AUSGABE_TOKENS - TPM_PUFFER;
+  for (let i = 0; i < 5; i++) {
+    const est = schaetzeTokens(prompt);
+    if (est <= maxEingabe) break;
+    skala = Math.max(0.08, skala * (maxEingabe / est) * 0.9);
+    prompt = baueSkaliert(params, skala, woerter);
+  }
+  const maxAusgabe = Math.min(8000, Math.max(1500, tpm - schaetzeTokens(prompt) - TPM_PUFFER));
+  const maxW = Math.min(2200, Math.max(500, Math.floor((maxAusgabe - 800) * 0.45)));
+  woerter = `${Math.round((maxW * 0.65) / 50) * 50}–${Math.round(maxW / 50) * 50}`;
+  if (maxW < 2200) prompt = baueSkaliert(params, skala, woerter);
+  return { prompt, maxAusgabe, skala };
+}
+
+async function frageGroq(
+  apiKey: string,
+  modell: string,
+  prompt: string,
+  maxAusgabe: number,
+  reasoning: boolean
+): Promise<string> {
   let res: Response;
   try {
     res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -446,8 +511,8 @@ async function frageGroq(apiKey: string, modell: string, prompt: string): Promis
         // Hilfestellung (dort 900): eine 900-1500 Woerter lange Ausarbeitung
         // braucht mehr Platz, plus Puffer fuers interne "Nachdenken" der
         // Reasoning-Modelle.
-        max_completion_tokens: 8000,
-        reasoning_effort: "low",
+        max_completion_tokens: maxAusgabe,
+        ...(reasoning ? { reasoning_effort: "low" } : {}),
         messages: [{ role: "user", content: prompt }],
       }),
     });
@@ -492,7 +557,7 @@ async function frageClaude(apiKey: string, modell: string, prompt: string): Prom
         model: modell,
         // Ausfuehrliche Ausarbeitung statt kurzer Hilfestellung (dort 400) –
         // 4096 reicht fuer die gewuenschten 900-1500 Woerter mit Puffer.
-        max_tokens: 4096,
+        max_tokens: 6000,
         messages: [{ role: "user", content: prompt }],
       }),
     });
@@ -534,24 +599,32 @@ export async function erstelleProjektZusammenfassung(
     );
   }
 
-  const prompt = buildPrompt(params);
   const fehlermeldungen: string[] = [];
 
   if (groqKey) {
     for (const modell of GROQ_MODELLE) {
-      try {
-        return await frageGroq(groqKey, modell, prompt);
-      } catch (err) {
-        fehlermeldungen.push(
-          `Groq (${modell}): ${err instanceof Error ? err.message : "Fehler"}`
-        );
+      let tpm = modell.tpm;
+      for (let versuch = 0; versuch < 2; versuch++) {
+        const { prompt, maxAusgabe } = baueFuerLimit(params, tpm);
+        try {
+          return await frageGroq(groqKey, modell.id, prompt, maxAusgabe, modell.reasoning);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Fehler";
+          const zuGross = /too large|tokens per minute|TPM/i.test(msg);
+          if (zuGross && versuch === 0) {
+            tpm = Math.round(tpm * 0.7); // einmal mit knapperem Budget erneut
+            continue;
+          }
+          fehlermeldungen.push(`Groq (${modell.id}): ${msg}`);
+          break;
+        }
       }
     }
   }
 
   if (anthropicKey) {
     try {
-      return await frageClaude(anthropicKey, ANTHROPIC_MODELL, prompt);
+      return await frageClaude(anthropicKey, ANTHROPIC_MODELL, baueSkaliert(params, 1, "1500–2200"));
     } catch (err) {
       fehlermeldungen.push(`Claude: ${err instanceof Error ? err.message : "Fehler"}`);
     }
