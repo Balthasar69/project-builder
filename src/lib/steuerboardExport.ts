@@ -36,6 +36,8 @@ export interface SteuerboardExport {
   } | null;
   tasks: SteuerboardKarte[];
   coach: { rolle: string; author?: string | null; text: string; ts: string }[];
+  /** Team-Chat der Mitglieder im Steuerboard. */
+  teamChat: { author: string; text: string; ts: string }[];
   wigReviews: { data: Record<string, unknown>; createdAt: string }[];
 }
 
@@ -65,6 +67,7 @@ export async function ladeSteuerboardExport(project: Project): Promise<Steuerboa
       wig: body.wig ?? null,
       tasks: Array.isArray(body.tasks) ? body.tasks : [],
       coach: Array.isArray(body.coach) ? body.coach : [],
+      teamChat: Array.isArray(body.teamChat) ? body.teamChat : [],
       wigReviews: Array.isArray(body.wigReviews) ? body.wigReviews : [],
     };
   } catch {

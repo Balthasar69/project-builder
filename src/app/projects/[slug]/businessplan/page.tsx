@@ -283,7 +283,7 @@ export default async function BusinessplanVorzeigefassung({
             {hatSteuerboard && (
               <li>
                 das zugehörige Steuerboard: Boards, Aufgabenkarten mit
-                Beschreibungen und Kommentaren, Coach-Gespräch und
+                Beschreibungen und Kommentaren, Team-Chat, Coach-Gespräch und
                 4DX-Wochenreviews
               </li>
             )}

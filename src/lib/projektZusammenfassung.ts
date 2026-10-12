@@ -217,6 +217,17 @@ function steuerboardText(sb: SteuerboardExport | null | undefined): string {
     teile.push("(keine Aufgabenkarten im Steuerboard)");
   }
 
+  const team = kappen(sb.teamChat ?? []);
+  if (team.eintraege.length) {
+    teile.push(
+      "Team-Chat der Mitglieder im Steuerboard:\n" +
+        team.eintraege
+          .map((m) => `- ${formatDatum(m.ts)} · ${m.author}: ${kuerzen(m.text, 400)}`)
+          .join("\n") +
+        team.hinweis
+    );
+  }
+
   const coach = kappen(sb.coach);
   if (coach.eintraege.length) {
     teile.push(
