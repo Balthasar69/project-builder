@@ -3,6 +3,8 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { CHAT_BEARBEITEN_MINUTEN, ChatNachricht } from "@/lib/types";
 import Diktierknopf from "./Diktierknopf";
+import { BildKnopf, BildVorschau, BilderAnzeige } from "./BildAnhang";
+import { bilderAusPaste, bilderHinzufuegen } from "@/lib/bildKlient";
 
 /**
  * Interner Team-Chat je Projekt (neu seit v0.46) – nur für Kernteam & Team
@@ -28,6 +30,7 @@ export default function ProjectChat({
 }) {
   const [nachrichten, setNachrichten] = useState<ChatNachricht[]>(initial);
   const [text, setText] = useState("");
+  const [bilder, setBilder] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const listeRef = useRef<HTMLDivElement>(null);
@@ -62,23 +65,33 @@ export default function ProjectChat({
   async function senden(e: FormEvent) {
     e.preventDefault();
     const getrimmt = text.trim();
-    if (!getrimmt) return;
+    if (!getrimmt && bilder.length === 0) return;
     setSending(true);
     setError(null);
     try {
       const res = await fetch(`/api/projects/${slug}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: getrimmt }),
+        body: JSON.stringify({ text: getrimmt, bilder }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Senden fehlgeschlagen");
       setNachrichten(data.chat ?? []);
       setText("");
+      setBilder([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unbekannter Fehler");
     } finally {
       setSending(false);
+    }
+  }
+
+  async function bilderAufnehmen(dateien: File[]) {
+    setError(null);
+    try {
+      setBilder(await bilderHinzufuegen(dateien, bilder));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bild konnte nicht angehängt werden.");
     }
   }
 
@@ -185,6 +198,7 @@ export default function ProjectChat({
                   }`}
                 >
                   {n.text}
+                  <BilderAnzeige slug={slug} ids={n.bildIds} />
                 </div>
               )}
               <span className="mt-0.5 flex items-center gap-2 font-mono text-[0.6rem] uppercase tracking-wide text-ink-faint">
@@ -211,12 +225,20 @@ export default function ProjectChat({
         })}
       </div>
 
+      <BildVorschau bilder={bilder} onEntfernen={(i) => setBilder(bilder.filter((_, k) => k !== i))} />
       <form onSubmit={senden} className="flex items-center gap-2">
         <div className="relative flex-1">
           <input
             type="text"
             value={text}
             onChange={(e) => setText(e.target.value)}
+            onPaste={(e) => {
+              const dateien = bilderAusPaste(e);
+              if (dateien.length > 0) {
+                e.preventDefault();
+                void bilderAufnehmen(dateien);
+              }
+            }}
             placeholder="Nachricht schreiben …"
             className="w-full rounded-full border border-line bg-surface px-4 py-2 pr-9 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
           />
@@ -227,9 +249,10 @@ export default function ProjectChat({
             className="absolute right-1 top-1/2 -translate-y-1/2"
           />
         </div>
+        <BildKnopf onDateien={(d) => void bilderAufnehmen(d)} disabled={sending} />
         <button
           type="submit"
-          disabled={sending || !text.trim()}
+          disabled={sending || (!text.trim() && bilder.length === 0)}
           aria-label="Senden"
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-surface transition hover:bg-accent-ink disabled:cursor-not-allowed disabled:opacity-40"
         >

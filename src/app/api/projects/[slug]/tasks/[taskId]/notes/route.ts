@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { addTaskNote, getProject, listTaskNotes } from "@/lib/data";
+import { addTaskNote, getProject, listTaskNotes, speichereBilder } from "@/lib/data";
+import { pruefeBilder } from "@/lib/bilder";
 import { getSession, hatProjektZugriff } from "@/lib/auth";
 import { transcribeAudio } from "@/lib/transcribe";
 import { addTaskComment, Bitrix24Error } from "@/lib/bitrix24";
@@ -32,15 +33,19 @@ function bitrixKommentarText(note: {
   text?: string;
   audioDataUrl?: string;
   transcript?: string;
+  bildIds?: string[];
 }): string {
   const zeit = formatiereZeit(note.erstelltAm);
+  const bildHinweis = note.bildIds?.length
+    ? `\n\n🖼️ ${note.bildIds.length} Bild(er) angehängt – im Project Builder ansehen.`
+    : "";
   if (note.audioDataUrl) {
     const inhalt = note.transcript
       ? note.transcript
       : "(Vertextung nicht verfügbar – Aufnahme im Project Builder anhören.)";
-    return `🎤 Sprachnotiz von ${note.authorName} (${zeit}) – aus dem Project Builder:\n\n${inhalt}`;
+    return `🎤 Sprachnotiz von ${note.authorName} (${zeit}) – aus dem Project Builder:\n\n${inhalt}${bildHinweis}`;
   }
-  return `📝 Notiz von ${note.authorName} (${zeit}) – aus dem Project Builder:\n\n${note.text ?? ""}`;
+  return `📝 Notiz von ${note.authorName} (${zeit}) – aus dem Project Builder:\n\n${note.text ?? ""}${bildHinweis}`;
 }
 
 async function pruefeZugriff(slug: string) {
@@ -89,13 +94,17 @@ export async function POST(
   if ("error" in check) return check.error;
   const { session, project } = check;
 
-  const body = (await req.json()) as { text?: string; audioDataUrl?: string };
+  const body = (await req.json()) as { text?: string; audioDataUrl?: string; bilder?: unknown };
   const text = body.text?.trim() || undefined;
   const audioDataUrl = body.audioDataUrl || undefined;
+  const geprueft = pruefeBilder(body.bilder);
+  if ("fehler" in geprueft) {
+    return NextResponse.json({ error: geprueft.fehler }, { status: 400 });
+  }
 
-  if (!text && !audioDataUrl) {
+  if (!text && !audioDataUrl && geprueft.bilder.length === 0) {
     return NextResponse.json(
-      { error: "Bitte Text eingeben oder eine Sprachnotiz aufnehmen." },
+      { error: "Bitte Text eingeben, ein Bild anhängen oder eine Sprachnotiz aufnehmen." },
       { status: 400 }
     );
   }
@@ -127,6 +136,7 @@ export async function POST(
 
   let note;
   try {
+    const bildIds = await speichereBilder(params.slug, session.email, geprueft.bilder);
     note = await addTaskNote({
       slug: params.slug,
       taskId: params.taskId,
@@ -135,6 +145,7 @@ export async function POST(
       text,
       audioDataUrl,
       transcript,
+      bildIds,
     });
   } catch (err) {
     return NextResponse.json(
@@ -158,7 +169,10 @@ export async function POST(
 
   // Auch die Kernteam-Benachrichtigung darf das Speichern nie blockieren.
   try {
-    const inhalt = note.transcript ?? note.text ?? "(Sprachnotiz ohne Text)";
+    const inhalt =
+      note.transcript ??
+      note.text ??
+      (note.bildIds?.length ? "(Bild angehängt)" : "(Sprachnotiz ohne Text)");
     await benachrichtigeKernteam({
       kernteam: project.kernteam,
       ausloeserEmail: session.email,

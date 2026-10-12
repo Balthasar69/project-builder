@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { TaskNote } from "@/lib/types";
 import Diktierknopf from "./Diktierknopf";
+import { BildKnopf, BildVorschau, BilderAnzeige } from "./BildAnhang";
+import { bilderAusPaste, bilderHinzufuegen } from "@/lib/bildKlient";
 
 // Max. Aufnahmedauer als Sicherheitsnetz gegen zu große Dateien (die Route
 // lehnt ohnehin alles über ca. 2,2 MB Audio serverseitig ab).
@@ -27,6 +29,7 @@ export default function TaskNotes({
   const [notes, setNotes] = useState<TaskNote[] | null>(null);
   const [ladefehler, setLadefehler] = useState<string | null>(null);
   const [text, setText] = useState("");
+  const [bilder, setBilder] = useState<string[]>([]);
   const [senden, setSenden] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hinweis, setHinweis] = useState<string | null>(null);
@@ -120,8 +123,17 @@ export default function TaskNotes({
     setAudioVorschau(null);
   }
 
+  async function bilderAufnehmen(dateien: File[]) {
+    setError(null);
+    try {
+      setBilder(await bilderHinzufuegen(dateien, bilder));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bild konnte nicht angehängt werden.");
+    }
+  }
+
   async function speichern() {
-    if (!text.trim() && !audioVorschau) return;
+    if (!text.trim() && !audioVorschau && bilder.length === 0) return;
     setSenden(true);
     setError(null);
     setHinweis(null);
@@ -132,11 +144,13 @@ export default function TaskNotes({
         body: JSON.stringify({
           text: text.trim() || undefined,
           audioDataUrl: audioVorschau || undefined,
+          bilder,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Speichern fehlgeschlagen");
       setText("");
+      setBilder([]);
       setAudioVorschau(null);
       // Vertextung/Bitrix24-Sync sind "Nice-to-haves": schlagen sie fehl,
       // wird die Notiz trotzdem gespeichert – nur mit einem Hinweis statt
@@ -186,6 +200,7 @@ export default function TaskNotes({
                 </span>
               </div>
               {n.text && <p className="text-sm text-ink-muted">{n.text}</p>}
+              <BilderAnzeige slug={slug} ids={n.bildIds} />
               {n.audioDataUrl && (
                 <audio controls src={n.audioDataUrl} className="mt-1.5 w-full" />
               )}
@@ -209,8 +224,15 @@ export default function TaskNotes({
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
+            onPaste={(e) => {
+              const dateien = bilderAusPaste(e);
+              if (dateien.length > 0) {
+                e.preventDefault();
+                void bilderAufnehmen(dateien);
+              }
+            }}
             rows={2}
-            placeholder="Notiz schreiben…"
+            placeholder="Notiz schreiben… (Screenshot einfügen mit Cmd+V)"
             className="w-full rounded-md border border-line bg-surface px-2.5 py-1.5 pr-9 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
           />
           <Diktierknopf
@@ -220,6 +242,8 @@ export default function TaskNotes({
             className="absolute right-1 top-1"
           />
         </div>
+
+        <BildVorschau bilder={bilder} onEntfernen={(i) => setBilder(bilder.filter((_, k) => k !== i))} />
 
         {audioVorschau && (
           <div className="flex items-center gap-2">
@@ -235,6 +259,8 @@ export default function TaskNotes({
         )}
 
         <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+          <BildKnopf onDateien={(d) => void bilderAufnehmen(d)} disabled={senden} className="!h-8 !w-8 !rounded-md" />
           {!aufnahmeLaeuft ? (
             <button
               type="button"
@@ -253,10 +279,11 @@ export default function TaskNotes({
               ■ Stopp ({aufnahmeSekunden}s)
             </button>
           )}
+          </div>
           <button
             type="button"
             onClick={speichern}
-            disabled={senden || (!text.trim() && !audioVorschau)}
+            disabled={senden || (!text.trim() && !audioVorschau && bilder.length === 0)}
             className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-surface transition hover:bg-accent-ink disabled:cursor-not-allowed disabled:opacity-40"
           >
             {senden

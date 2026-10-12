@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { addChatNachricht, editChatNachricht, getProject } from "@/lib/data";
+import { addChatNachricht, editChatNachricht, getProject, speichereBilder } from "@/lib/data";
+import { pruefeBilder } from "@/lib/bilder";
 import { getSession, hatProjektZugriff } from "@/lib/auth";
 import { CHAT_BEARBEITEN_MINUTEN } from "@/lib/types";
 
@@ -54,10 +55,14 @@ export async function POST(
     );
   }
 
-  const body = (await req.json().catch(() => ({}))) as { text?: string };
-  const text = body.text?.trim();
-  if (!text) {
-    return NextResponse.json({ error: "Text ist erforderlich." }, { status: 400 });
+  const body = (await req.json().catch(() => ({}))) as { text?: string; bilder?: unknown };
+  const text = body.text?.trim() ?? "";
+  const geprueft = pruefeBilder(body.bilder);
+  if ("fehler" in geprueft) {
+    return NextResponse.json({ error: geprueft.fehler }, { status: 400 });
+  }
+  if (!text && geprueft.bilder.length === 0) {
+    return NextResponse.json({ error: "Text oder Bild ist erforderlich." }, { status: 400 });
   }
   if (text.length > 2000) {
     return NextResponse.json(
@@ -67,10 +72,12 @@ export async function POST(
   }
 
   try {
+    const bildIds = await speichereBilder(params.slug, session.email, geprueft.bilder);
     const updated = await addChatNachricht(params.slug, {
       autorEmail: session.email,
       autorName: session.name,
       text,
+      bildIds,
     });
     return NextResponse.json({ chat: updated.chat ?? [] });
   } catch (err) {

@@ -70,6 +70,66 @@ async function ensureUsersTableMigriert(sql: any) {
   usersTableMigriert = true;
 }
 
+// Bilder/Screenshots in Aufgaben-Notizen und im Team-Chat: bewusst in einer
+// eigenen Tabelle (nicht im Projekt-JSON), damit das Projekt-Dokument klein
+// bleibt. Die Nachricht/Notiz merkt sich nur die Bild-IDs. Lazy, idempotente
+// Migration wie bei ensureUsersTableMigriert (kein Skript nötig).
+let bilderTabelleBereit = false;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function ensureBilderTabelle(sql: any) {
+  if (bilderTabelleBereit) return;
+  await sql`
+    CREATE TABLE IF NOT EXISTS projekt_bilder (
+      id TEXT PRIMARY KEY,
+      slug TEXT NOT NULL,
+      autor_email TEXT NOT NULL DEFAULT '',
+      mime TEXT NOT NULL,
+      data_url TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS projekt_bilder_slug_idx ON projekt_bilder (slug)`;
+  await sql`ALTER TABLE task_notes ADD COLUMN IF NOT EXISTS bild_ids TEXT`;
+  bilderTabelleBereit = true;
+}
+
+/** Speichert (bereits geprüfte) Bild-data-URLs und liefert die neuen IDs. */
+export async function speichereBilder(
+  slug: string,
+  autorEmail: string,
+  dataUrls: string[]
+): Promise<string[]> {
+  if (dataUrls.length === 0) return [];
+  const sql = getSql();
+  await ensureBilderTabelle(sql);
+  const ids: string[] = [];
+  for (const dataUrl of dataUrls) {
+    const id = randomUUID();
+    const mime = dataUrl.slice(5, dataUrl.indexOf(";"));
+    await sql`
+      INSERT INTO projekt_bilder (id, slug, autor_email, mime, data_url)
+      VALUES (${id}, ${slug}, ${autorEmail.trim().toLowerCase()}, ${mime}, ${dataUrl})
+    `;
+    ids.push(id);
+  }
+  return ids;
+}
+
+/** Liest ein Bild (nur innerhalb des angegebenen Projekts). */
+export async function holeBild(
+  slug: string,
+  id: string
+): Promise<{ mime: string; base64: string } | null> {
+  const sql = getSql();
+  await ensureBilderTabelle(sql);
+  const rows = (await sql`
+    SELECT mime, data_url FROM projekt_bilder WHERE id = ${id} AND slug = ${slug}
+  `) as { mime: string; data_url: string }[];
+  if (rows.length === 0) return null;
+  const komma = rows[0].data_url.indexOf(",");
+  return { mime: rows[0].mime, base64: rows[0].data_url.slice(komma + 1) };
+}
+
 function getSql() {
   const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
   if (!url) {
@@ -234,6 +294,8 @@ export async function deleteProject(slug: string): Promise<void> {
   }
 
   const sql = getSql();
+  await ensureBilderTabelle(sql);
+  await sql`DELETE FROM projekt_bilder WHERE slug = ${slug}`;
   await sql`DELETE FROM task_notes WHERE slug = ${slug}`;
   await sql`DELETE FROM projects WHERE slug = ${slug}`;
 }
@@ -965,7 +1027,18 @@ interface TaskNoteRow {
   text: string | null;
   audio_data_url: string | null;
   transcript: string | null;
+  bild_ids?: string | null;
   created_at: string;
+}
+
+function parseBildIds(roh: string | null | undefined): string[] | undefined {
+  if (!roh) return undefined;
+  try {
+    const arr = JSON.parse(roh);
+    return Array.isArray(arr) && arr.length > 0 ? arr.map(String) : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function toTaskNote(row: TaskNoteRow): TaskNote {
@@ -977,6 +1050,7 @@ function toTaskNote(row: TaskNoteRow): TaskNote {
     text: row.text ?? undefined,
     audioDataUrl: row.audio_data_url ?? undefined,
     transcript: row.transcript ?? undefined,
+    bildIds: parseBildIds(row.bild_ids),
     erstelltAm: row.created_at,
   };
 }
@@ -1004,10 +1078,12 @@ export async function addTaskNote(params: {
   text?: string;
   audioDataUrl?: string;
   transcript?: string;
+  bildIds?: string[];
 }): Promise<TaskNote> {
   const sql = getSql();
+  await ensureBilderTabelle(sql);
   const rows = (await sql`
-    INSERT INTO task_notes (slug, task_id, author_name, author_email, text, audio_data_url, transcript)
+    INSERT INTO task_notes (slug, task_id, author_name, author_email, text, audio_data_url, transcript, bild_ids)
     VALUES (
       ${params.slug},
       ${params.taskId},
@@ -1015,7 +1091,8 @@ export async function addTaskNote(params: {
       ${params.authorEmail},
       ${params.text ?? null},
       ${params.audioDataUrl ?? null},
-      ${params.transcript ?? null}
+      ${params.transcript ?? null},
+      ${params.bildIds && params.bildIds.length ? JSON.stringify(params.bildIds) : null}
     )
     RETURNING *
   `) as TaskNoteRow[];
@@ -1433,7 +1510,7 @@ export async function setKompetenzBeitrag(
  */
 export async function addChatNachricht(
   slug: string,
-  params: { autorEmail: string; autorName: string; text: string }
+  params: { autorEmail: string; autorName: string; text: string; bildIds?: string[] }
 ): Promise<Project> {
   const project = await getProject(slug);
   if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
@@ -1444,6 +1521,7 @@ export async function addChatNachricht(
     autorName: params.autorName,
     text: params.text.trim(),
     erstelltAm: new Date().toISOString(),
+    ...(params.bildIds && params.bildIds.length ? { bildIds: params.bildIds } : {}),
   };
   project.chat = [...(project.chat ?? []), neueNachricht];
   project.aktualisiertAm = new Date().toISOString();

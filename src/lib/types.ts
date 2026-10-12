@@ -505,6 +505,8 @@ export interface TaskNote {
    * `OPENAI_API_KEY` gesetzt ist und die Vertextung erfolgreich war.
    */
   transcript?: string;
+  /** IDs angehängter Bilder/Screenshots (Tabelle "projekt_bilder"). */
+  bildIds?: string[];
   erstelltAm: string;
 }
 
@@ -621,6 +623,8 @@ export interface ChatNachricht {
   erstelltAm: string; // ISO-Datum
   /** Gesetzt, sobald die Nachricht nachträglich geändert wurde. */
   bearbeitetAm?: string; // ISO-Datum
+  /** IDs angehängter Bilder/Screenshots (Tabelle "projekt_bilder"). */
+  bildIds?: string[];
 }
 
 /**
