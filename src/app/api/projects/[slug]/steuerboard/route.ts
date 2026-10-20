@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProject, setSteuerboard, clearSteuerboard, updateSteuerboardUrl, ensureBitrixGroupId } from "@/lib/data";
-import { getSession, istKernteam, istBalthasar } from "@/lib/auth";
+import { getSession, istKernteamStrikt, istBalthasar } from "@/lib/auth";
 import { erstelleSteuerboardKopie, loescheSteuerboardKopie } from "@/lib/steuerboardFactory";
 import { buildeProjektKontext } from "@/lib/projektKontext";
 import { benachrichtigeKernteam } from "@/lib/notify";
@@ -56,7 +56,7 @@ export async function POST(
     return NextResponse.json({ error: "Projekt nicht gefunden" }, { status: 404 });
   }
 
-  if (!istKernteam(session, project)) {
+  if (!istKernteamStrikt(session, project)) {
     return NextResponse.json(
       {
         error:

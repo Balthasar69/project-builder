@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getProject, getUserByEmail } from "@/lib/data";
-import { getSession, hatProjektZugriff, istKernteam, istBalthasar } from "@/lib/auth";
+import { getSession, hatProjektZugriff, istKernteam, istKernteamStrikt, istBalthasar } from "@/lib/auth";
 import { PHASES, STANDARD_HINWEISE } from "@/lib/types";
 import PhaseTracker from "@/components/PhaseTracker";
 import PhaseAdvance from "@/components/PhaseAdvance";
@@ -585,7 +585,7 @@ export default async function ProjectCockpit({
               <SteuerboardLink
                 slug={project.slug}
                 steuerboard={project.steuerboard}
-                darfAusloesen={istKernteam(session, project)}
+                darfAusloesen={istKernteamStrikt(session, project)}
                 darfLoeschen={istBalthasar(session.email)}
               />
             </div>

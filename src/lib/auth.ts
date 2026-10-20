@@ -67,7 +67,7 @@ export function hatProjektZugriff(session: SessionPayload, project: Project): bo
   return (
     session.isAdmin ||
     project.mitglieder.includes(session.email) ||
-    istKernteam(session, project)
+    istKernteamStrikt(session, project)
   );
 }
 
@@ -79,9 +79,29 @@ export function hatProjektZugriff(session: SessionPayload, project: Project): bo
  * `mitglieder` Zugriff haben (nicht `kernteam`), bekommen so automatisch
  * weniger Rechte, ohne dass dafür ein eigenes Rollensystem nötig ist.
  */
-export function istKernteam(session: SessionPayload, project: Project): boolean {
+export function istKernteamStrikt(session: SessionPayload, project: Project): boolean {
   return (
     session.isAdmin ||
     project.kernteam.some((m) => m.email?.toLowerCase() === session.email)
+  );
+}
+
+/**
+ * Projekte, in denen ALLE Mitglieder (nicht nur das Kernteam) dieselben
+ * Änderungsrechte haben wie das Kernteam. Erkannt am Projektnamen, damit die
+ * Regel unabhängig vom genauen Slug funktioniert. Aktuell nur: "ELENAs Karriere".
+ */
+const PROJEKTE_ALLE_MITGLIEDER_DUERFEN_BEARBEITEN = ["elenas karriere"];
+
+function alleMitgliederDuerfenBearbeiten(project: Project): boolean {
+  const name = (project.name ?? "").trim().toLowerCase();
+  return PROJEKTE_ALLE_MITGLIEDER_DUERFEN_BEARBEITEN.includes(name);
+}
+
+export function istKernteam(session: SessionPayload, project: Project): boolean {
+  return (
+    istKernteamStrikt(session, project) ||
+    (alleMitgliederDuerfenBearbeiten(project) &&
+      project.mitglieder.includes(session.email))
   );
 }
