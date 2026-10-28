@@ -18,6 +18,8 @@ export interface DriveDokument {
   typ: string; // lesbare Typbezeichnung
   geaendertAm?: string;
   inhalt?: string; // gekuerzter Text, fehlt wenn nicht auslesbar
+  /** Seit dem letzten Businessplan neu oder geaendert (wird in der Route gesetzt). */
+  neu?: boolean;
 }
 
 export interface DriveErgebnis {
@@ -28,7 +30,8 @@ export interface DriveErgebnis {
 }
 
 const API = "https://www.googleapis.com/drive/v3";
-const MAX_DATEIEN = 40;
+const MAX_DATEIEN = 40; // so viele Dateien werden gelesen (die neuesten)
+const MAX_AUFLISTEN = 200; // so viele Dateinamen werden zuerst eingesammelt, damit neue Dateien in Unterordnern nicht untergehen
 const MAX_ZEICHEN_PRO_DATEI = 6000;
 const MAX_ZEICHEN_GESAMT = 30000;
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -186,10 +189,10 @@ async function listeOrdner(
       } else {
         sammler.push({ datei: f, pfad: `${pfad}${f.name}` });
       }
-      if (sammler.length >= MAX_DATEIEN) return {};
+      if (sammler.length >= MAX_AUFLISTEN) return {};
     }
     pageToken = r.body.nextPageToken ?? "";
-  } while (pageToken && sammler.length < MAX_DATEIEN);
+  } while (pageToken && sammler.length < MAX_AUFLISTEN);
   return {};
 }
 
@@ -228,6 +231,15 @@ export async function ladeDriveDokumente(dokumenteLink: string | undefined): Pro
       };
     }
 
+    // Neueste zuerst - ueber alle Unterordner hinweg. So landen frisch
+    // hochgeladene oder geaenderte Dokumente immer im Businessplan, auch wenn
+    // der Ordner mehr Dateien enthaelt, als gelesen werden koennen.
+    sammler.sort((a, b) =>
+      (b.datei.modifiedTime ?? "").localeCompare(a.datei.modifiedTime ?? "")
+    );
+    const ausgelassen = Math.max(0, sammler.length - MAX_DATEIEN);
+    sammler.splice(MAX_DATEIEN);
+
     // Dateien parallel (in kleinen Gruppen) auslesen
     const ergebnis: DriveDokument[] = [];
     let gesamt = 0;
@@ -251,13 +263,18 @@ export async function ladeDriveDokumente(dokumenteLink: string | undefined): Pro
       });
     }
     const nichtLesbar = ergebnis.filter((d) => !d.inhalt).length;
+    const hinweise = [
+      nichtLesbar > 0
+        ? `${nichtLesbar} Datei(en) im Drive-Ordner (z. B. PDF oder Excel) sind nur mit Namen berücksichtigt, ihr Inhalt lässt sich nicht automatisch lesen.`
+        : "",
+      ausgelassen > 0
+        ? `${ausgelassen} ältere Datei(en) im Drive-Ordner wurden nicht gelesen (es werden die ${MAX_DATEIEN} neuesten berücksichtigt).`
+        : "",
+    ].filter(Boolean);
     return {
       dokumente: ergebnis,
       ordnerGefunden: true,
-      hinweis:
-        nichtLesbar > 0
-          ? `${nichtLesbar} Datei(en) im Drive-Ordner (z. B. PDF oder Excel) sind nur mit Namen berücksichtigt, ihr Inhalt lässt sich nicht automatisch lesen.`
-          : undefined,
+      hinweis: hinweise.length ? hinweise.join(" ") : undefined,
     };
   } catch {
     return {

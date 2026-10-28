@@ -356,11 +356,12 @@ function buildPrompt(params: ZusammenfassungParams): string {
   const dokumenteText = params.dokumente && params.dokumente.length
     ? params.dokumente
         .map((d) => {
-          if (!d.inhalt) return `--- ${d.pfad} (${d.typ}) --- (Inhalt nicht auslesbar, nur als vorhanden vermerkt)`;
+          const neuMarke = d.neu ? " ★ NEU/GEÄNDERT seit dem letzten Businessplan" : "";
+          if (!d.inhalt) return `--- ${d.pfad} (${d.typ}${neuMarke}) --- (Inhalt nicht auslesbar, nur als vorhanden vermerkt)`;
           const grenze = Math.max(0, Math.min(Math.round(6000 * SKALA), dokumenteRest));
           const inhalt = grenze > 0 ? kuerzen(d.inhalt, grenze / SKALA) : "(aus Platzgründen nicht einbezogen)";
           dokumenteRest -= grenze;
-          return `--- ${d.pfad} (${d.typ}${d.geaendertAm ? `, geändert ${formatDatum(d.geaendertAm)}` : ""}) ---\n${inhalt}`;
+          return `--- ${d.pfad} (${d.typ}${d.geaendertAm ? `, geändert ${formatDatum(d.geaendertAm)}` : ""}${neuMarke}) ---\n${inhalt}`;
         })
         .join("\n\n")
     : "(keine Dokumente im Projektordner gefunden oder Ordner nicht lesbar)";
@@ -396,7 +397,7 @@ function buildPrompt(params: ZusammenfassungParams): string {
         .join("\n")
     : "(keine offenen Aufgaben)";
 
-  return `Du unterstützt ein kleines Projektteam dabei, aus dem bisherigen Projektverlauf einen echten BUSINESSPLAN mit klassischer Gliederung zu erstellen – kein loser Verlaufsbericht, sondern ein Dokument, das jemand (z. B. eine Bank, ein Partner oder das Team selbst) lesen kann, um Geschäftsidee, Markt, Team und nächste Schritte zu verstehen. Ruhig ausführlich (${WOERTER} Wörter insgesamt). WICHTIG: Berücksichtige ALLE oben aufgeführten Quellen – auch die hochgeladenen Dokumente (Inhalte, Zahlen und Fakten daraus gehören in die passenden Kapitel, z. B. Markt, Finanzplanung, Angebot; nenne das Dokument sinngemäß als Quelle, z. B. „laut Konzeptpapier“), den Projektstart-Fragebogen, das Gründercoach-Gespräch, die Einzelantworten der Bewertungen und das Steuerboard (Karten, Kommentare, Coach, 4DX); die Eingaben aller Mitglieder sollen im Dokument erkennbar werden.
+  return `Du unterstützt ein kleines Projektteam dabei, aus dem bisherigen Projektverlauf einen echten BUSINESSPLAN mit klassischer Gliederung zu erstellen – kein loser Verlaufsbericht, sondern ein Dokument, das jemand (z. B. eine Bank, ein Partner oder das Team selbst) lesen kann, um Geschäftsidee, Markt, Team und nächste Schritte zu verstehen. Ruhig ausführlich (${WOERTER} Wörter insgesamt). WICHTIG: Berücksichtige ALLE oben aufgeführten Quellen – auch die hochgeladenen Dokumente – besonders die als „★ NEU/GEÄNDERT“ markierten, sie enthalten den jüngsten Stand und haben bei Widersprüchen Vorrang (Inhalte, Zahlen und Fakten daraus gehören in die passenden Kapitel, z. B. Markt, Finanzplanung, Angebot; nenne das Dokument sinngemäß als Quelle, z. B. „laut Konzeptpapier“), den Projektstart-Fragebogen, das Gründercoach-Gespräch, die Einzelantworten der Bewertungen und das Steuerboard (Karten, Kommentare, Coach, 4DX); die Eingaben aller Mitglieder sollen im Dokument erkennbar werden.
 
 Projekt: "${params.projektName}"
 Beschreibung: ${params.projektBeschreibung?.trim() || "(keine hinterlegt)"}

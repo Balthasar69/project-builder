@@ -81,10 +81,42 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
 }
 
 /** Erstellt (bzw. erneuert) die ausfuehrliche Projekt-Zusammenfassung per KI. */
-export async function POST(_req: NextRequest, { params }: { params: { slug: string } }) {
-  const check = await pruefeZugriff(params.slug);
-  if ("error" in check) return check.error;
-  const { session, project } = check;
+export async function POST(req: NextRequest, { params }: { params: { slug: string } }) {
+  // Zwei Wege: normale Session mit Projektzugriff ODER Server-zu-Server aus
+  // dem Steuerboard (Secret-Header, siehe oben) - dort gibt es keine Project-
+  // Builder-Anmeldung; der Name der Person kommt aus dem Steuerboard-Login.
+  let session: SessionPayload;
+  let project: Project;
+  const secretHeader = req.headers.get("x-businessplan-secret");
+  if (BUSINESSPLAN_LESE_SECRET && secretHeader === BUSINESSPLAN_LESE_SECRET) {
+    const gefunden = await getProject(params.slug);
+    if (!gefunden) {
+      return NextResponse.json({ error: "Projekt nicht gefunden" }, { status: 404 });
+    }
+    const body = (await req.json().catch(() => ({}))) as { von?: unknown };
+    const von = typeof body.von === "string" ? body.von.trim().slice(0, 80) : "";
+    // Schutz vor versehentlichem Mehrfach-Klick (jeder Lauf kostet KI-Kontingent).
+    const letzte = gefunden.zusammenfassung?.erstelltAm
+      ? new Date(gefunden.zusammenfassung.erstelltAm).getTime()
+      : 0;
+    if (Date.now() - letzte < 45_000) {
+      return NextResponse.json(
+        { error: "Der Businessplan wurde gerade erst erstellt. Bitte einen Moment warten." },
+        { status: 429 }
+      );
+    }
+    project = gefunden;
+    session = {
+      name: von ? `${von} (Steuerboard)` : "Steuerboard",
+      email: "steuerboard@intern",
+      isAdmin: false,
+    };
+  } else {
+    const check = await pruefeZugriff(params.slug);
+    if ("error" in check) return check.error;
+    session = check.session;
+    project = check.project;
+  }
 
   const phase = PHASES.find((p) => p.code === project.aktuellePhase);
 
@@ -136,6 +168,14 @@ export async function POST(_req: NextRequest, { params }: { params: { slug: stri
   // zum Steuerboard, damit sich die Wartezeiten nicht addieren.
   const steuerboard = await ladeSteuerboardExport(project);
   const drive = await ladeDriveDokumente(project.dokumenteLink || steuerboard?.driveLink || undefined);
+  // Dokumente, die seit dem letzten Businessplan neu oder geaendert sind,
+  // werden im Prompt hervorgehoben (siehe projektZusammenfassung.ts).
+  const letzterStand = project.zusammenfassung?.erstelltAm
+    ? new Date(project.zusammenfassung.erstelltAm).getTime()
+    : 0;
+  for (const d of drive.dokumente) {
+    d.neu = letzterStand > 0 && d.geaendertAm ? new Date(d.geaendertAm).getTime() > letzterStand : false;
+  }
 
   const fb = project.projektstartFragebogen;
 
