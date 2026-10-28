@@ -196,15 +196,28 @@ async function listeOrdner(
   return {};
 }
 
-export async function ladeDriveDokumente(dokumenteLink: string | undefined): Promise<DriveErgebnis> {
+export async function ladeDriveDokumente(
+  links: (string | undefined | null) | (string | undefined | null)[]
+): Promise<DriveErgebnis> {
+  // Mehrere Kandidaten (z. B. Link im Project Builder UND im Steuerboard):
+  // der erste, der ein Google-Drive-Ordner ist, wird gelesen. So kann im
+  // Project Builder weiter ein OneDrive-Ordner stehen, waehrend ein
+  // Google-Drive-Ordner im Steuerboard fuer den Businessplan genutzt wird.
+  const kandidaten = (Array.isArray(links) ? links : [links]).filter(
+    (l): l is string => typeof l === "string" && l.trim().length > 0
+  );
+  const dokumenteLink = kandidaten.find((l) => ordnerIdAusLink(l)) ?? kandidaten[0];
   const ordnerId = ordnerIdAusLink(dokumenteLink);
   if (!ordnerId) {
+    const istMicrosoft = kandidaten.some((l) => /sharepoint\.com|1drv\.ms|onedrive\.live\.com/i.test(l));
     return {
       dokumente: [],
       ordnerGefunden: false,
-      hinweis: dokumenteLink
-        ? "Der Dokumenten-Link ist kein Google-Drive-Ordner-Link – die Dokumente konnten nicht berücksichtigt werden."
-        : undefined,
+      hinweis: kandidaten.length
+        ? istMicrosoft
+          ? "Der Dokumenten-Link zeigt auf OneDrive/SharePoint – das kann der Businessplan nicht lesen. Bitte im Steuerboard unter „📁 Dokumente“ (Stift-Symbol) zusätzlich einen Google-Drive-Ordner eintragen, der auf „Jeder mit dem Link – Betrachter“ steht."
+          : "Der Dokumenten-Link ist kein Google-Drive-Ordner-Link – die Dokumente konnten nicht berücksichtigt werden."
+        : "Es ist noch kein Dokumenten-Ordner hinterlegt – der Businessplan entstand ohne Dokumente.",
     };
   }
   const key = process.env.GOOGLE_DRIVE_API_KEY;

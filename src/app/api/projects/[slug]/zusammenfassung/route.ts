@@ -167,7 +167,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
   // Dokumente aus dem verlinkten Google-Drive-Ordner (nie fatal) - parallel
   // zum Steuerboard, damit sich die Wartezeiten nicht addieren.
   const steuerboard = await ladeSteuerboardExport(project);
-  const drive = await ladeDriveDokumente(project.dokumenteLink || steuerboard?.driveLink || undefined);
+  const drive = await ladeDriveDokumente([project.dokumenteLink, steuerboard?.driveLink]);
   // Dokumente, die seit dem letzten Businessplan neu oder geaendert sind,
   // werden im Prompt hervorgehoben (siehe projektZusammenfassung.ts).
   const letzterStand = project.zusammenfassung?.erstelltAm
