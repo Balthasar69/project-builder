@@ -166,6 +166,51 @@ async function liesInhalt(datei: DriveDatei, key: string): Promise<{ typ: string
   return { typ: "Datei (Inhalt nicht auslesbar)" };
 }
 
+// Gemeinsamer Hauptordner in Google Drive ("3300 Projekt Builder Drive"), der pro
+// Projekt einen Unterordner enthaelt (wird vom Skript Dokumente-nach-GoogleDrive
+// befuellt). Ist fuer ein Projekt kein Google-Drive-Link hinterlegt, wird dort
+// automatisch der Ordner mit passendem Projektnamen gesucht - so braucht es
+// bei neuen Projekten keinen Link im Menue. Muss auf "Jeder mit dem Link" stehen.
+const STANDARD_HAUPTORDNER = "1UsTdgn8FLX7WyepIY7KvJ_U93as7eyz6";
+
+function normalisiereName(n: string): string {
+  return n
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/^[\s\d]+/, "") // fuehrende Nummern wie "3203 "
+    .replace(/[^a-z0-9]/g, "");
+}
+
+async function findeProjektOrdner(
+  key: string,
+  projektName: string
+): Promise<{ id: string; name: string } | null> {
+  const haupt = process.env.GOOGLE_DRIVE_HAUPTORDNER || STANDARD_HAUPTORDNER;
+  const ziel = normalisiereName(projektName);
+  if (ziel.length < 3) return null;
+  try {
+    const q = encodeURIComponent(`'${haupt}' in parents and trashed = false and mimeType = '${MIME_FOLDER}'`);
+    const fields = encodeURIComponent("files(id,name)");
+    const r = await holeJson<{ files?: { id: string; name: string }[] }>(
+      `${API}/files?q=${q}&fields=${fields}&pageSize=200&supportsAllDrives=true&includeItemsFromAllDrives=true&key=${encodeURIComponent(key)}`
+    );
+    if (!r.ok || !r.body?.files) return null;
+    let bester: { id: string; name: string; punkte: number } | null = null;
+    for (const f of r.body.files) {
+      const n = normalisiereName(f.name);
+      if (n.length < 3) continue;
+      let punkte = 0;
+      if (n === ziel) punkte = 1000;
+      else if (n.includes(ziel) || ziel.includes(n)) punkte = Math.min(n.length, ziel.length);
+      if (punkte > 0 && (!bester || punkte > bester.punkte)) bester = { id: f.id, name: f.name, punkte };
+    }
+    return bester ? { id: bester.id, name: bester.name } : null;
+  } catch {
+    return null;
+  }
+}
+
 async function listeOrdner(
   ordnerId: string,
   key: string,
@@ -197,7 +242,8 @@ async function listeOrdner(
 }
 
 export async function ladeDriveDokumente(
-  links: (string | undefined | null) | (string | undefined | null)[]
+  links: (string | undefined | null) | (string | undefined | null)[],
+  projektName?: string
 ): Promise<DriveErgebnis> {
   // Mehrere Kandidaten (z. B. Link im Project Builder UND im Steuerboard):
   // der erste, der ein Google-Drive-Ordner ist, wird gelesen. So kann im
@@ -207,7 +253,16 @@ export async function ladeDriveDokumente(
     (l): l is string => typeof l === "string" && l.trim().length > 0
   );
   const dokumenteLink = kandidaten.find((l) => ordnerIdAusLink(l)) ?? kandidaten[0];
-  const ordnerId = ordnerIdAusLink(dokumenteLink);
+  let ordnerId = ordnerIdAusLink(dokumenteLink);
+  let automatischGefunden: string | undefined;
+  const keyFrueh = process.env.GOOGLE_DRIVE_API_KEY;
+  if (!ordnerId && projektName && keyFrueh) {
+    const gefunden = await findeProjektOrdner(keyFrueh, projektName);
+    if (gefunden) {
+      ordnerId = gefunden.id;
+      automatischGefunden = gefunden.name;
+    }
+  }
   if (!ordnerId) {
     const istMicrosoft = kandidaten.some((l) => /sharepoint\.com|1drv\.ms|onedrive\.live\.com/i.test(l));
     return {
@@ -215,7 +270,7 @@ export async function ladeDriveDokumente(
       ordnerGefunden: false,
       hinweis: kandidaten.length
         ? istMicrosoft
-          ? "Der Dokumenten-Link zeigt auf OneDrive/SharePoint – das kann der Businessplan nicht lesen. Bitte im Steuerboard unter „📁 Dokumente“ (Stift-Symbol) zusätzlich einen Google-Drive-Ordner eintragen, der auf „Jeder mit dem Link – Betrachter“ steht."
+          ? "Der Dokumenten-Link zeigt auf OneDrive/SharePoint – das kann der Businessplan nicht lesen. Im gemeinsamen Drive-Ordner „3300 Projekt Builder Drive“ wurde auch kein Ordner mit dem Projektnamen gefunden. Bitte das Skript Dokumente-nach-GoogleDrive ausführen oder im Steuerboard unter „📁 Dokumente“ (Stift-Symbol) zusätzlich einen Google-Drive-Ordner eintragen, der auf „Jeder mit dem Link – Betrachter“ steht."
           : "Der Dokumenten-Link ist kein Google-Drive-Ordner-Link – die Dokumente konnten nicht berücksichtigt werden."
         : "Es ist noch kein Dokumenten-Ordner hinterlegt – der Businessplan entstand ohne Dokumente.",
     };
@@ -277,6 +332,9 @@ export async function ladeDriveDokumente(
     }
     const nichtLesbar = ergebnis.filter((d) => !d.inhalt).length;
     const hinweise = [
+      automatischGefunden
+        ? `Dokumente aus dem Drive-Ordner „${automatischGefunden}“ (automatisch zum Projekt gefunden, kein Link nötig).`
+        : "",
       nichtLesbar > 0
         ? `${nichtLesbar} Datei(en) im Drive-Ordner (z. B. PDF oder Excel) sind nur mit Namen berücksichtigt, ihr Inhalt lässt sich nicht automatisch lesen.`
         : "",
