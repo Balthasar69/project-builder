@@ -352,15 +352,41 @@ function buildPrompt(params: ZusammenfassungParams): string {
 
   const steuerboardBlock = steuerboardText(params.steuerboard);
 
-  let dokumenteRest = Math.max(1500, Math.round(30000 * SKALA));
-  const dokumenteText = params.dokumente && params.dokumente.length
-    ? params.dokumente
-        .map((d) => {
+  // Platz fair verteilen: Jedes Dokument bekommt höchstens, was es wirklich
+  // braucht (max. 6000 Zeichen); kurze Dokumente geben Platz an lange ab.
+  // So gehen ältere Dokumente (z. B. Konzepte im Ordner "Ideen") nicht leer
+  // aus, nur weil neuere Dateien zuerst dran waren.
+  const dokListe = params.dokumente ?? [];
+  const dokGesamt = Math.max(1500, Math.round(30000 * SKALA));
+  const dokMax = Math.round(6000 * SKALA);
+  const dokWunsch = dokListe.map((d) =>
+    d.inhalt ? Math.min(dokMax, d.inhalt.replace(/\s+/g, " ").trim().length) : 0
+  );
+  const dokZuteilung: number[] = dokListe.map(() => 0);
+  {
+    let rest = dokGesamt;
+    let offen = dokWunsch.map((w, i) => (w > 0 ? i : -1)).filter((i) => i >= 0);
+    while (offen.length && rest > 0) {
+      const anteil = Math.floor(rest / offen.length);
+      const klein = offen.filter((i) => dokWunsch[i] <= anteil);
+      if (!klein.length) {
+        offen.forEach((i) => (dokZuteilung[i] = anteil));
+        break;
+      }
+      klein.forEach((i) => {
+        dokZuteilung[i] = dokWunsch[i];
+        rest -= dokWunsch[i];
+      });
+      offen = offen.filter((i) => !klein.includes(i));
+    }
+  }
+  const dokumenteText = dokListe.length
+    ? dokListe
+        .map((d, idx) => {
           const neuMarke = d.neu ? " ★ NEU/GEÄNDERT seit dem letzten Businessplan" : "";
           if (!d.inhalt) return `--- ${d.pfad} (${d.typ}${neuMarke}) --- (Inhalt nicht auslesbar, nur als vorhanden vermerkt)`;
-          const grenze = Math.max(0, Math.min(Math.round(6000 * SKALA), dokumenteRest));
+          const grenze = dokZuteilung[idx];
           const inhalt = grenze > 0 ? kuerzen(d.inhalt, grenze / SKALA) : "(aus Platzgründen nicht einbezogen)";
-          dokumenteRest -= grenze;
           return `--- ${d.pfad} (${d.typ}${d.geaendertAm ? `, geändert ${formatDatum(d.geaendertAm)}` : ""}${neuMarke}) ---\n${inhalt}`;
         })
         .join("\n\n")
