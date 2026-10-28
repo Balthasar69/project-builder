@@ -628,6 +628,18 @@ export async function erstelleProjektZusammenfassung(
 
   const fehlermeldungen: string[] = [];
 
+  // Claude zuerst, wenn ein Schluessel hinterlegt ist: Er verkraftet den vollen
+  // Umfang (alle Dokumente, kein Minuten-Limit). Die kostenlose Groq-Stufe
+  // erlaubt nur ca. 8000 Tokens je Minute - dort bleibt fuer Dokumente fast
+  // nichts uebrig. Gelingt Claude nicht (z. B. Guthaben leer), springt Groq ein.
+  if (anthropicKey) {
+    try {
+      return await frageClaude(anthropicKey, ANTHROPIC_MODELL, baueSkaliert(params, 1, "1500–2200"));
+    } catch (err) {
+      fehlermeldungen.push(`Claude: ${err instanceof Error ? err.message : "Fehler"}`);
+    }
+  }
+
   if (groqKey) {
     for (const modell of GROQ_MODELLE) {
       let tpm = modell.tpm;
@@ -646,14 +658,6 @@ export async function erstelleProjektZusammenfassung(
           break;
         }
       }
-    }
-  }
-
-  if (anthropicKey) {
-    try {
-      return await frageClaude(anthropicKey, ANTHROPIC_MODELL, baueSkaliert(params, 1, "1500–2200"));
-    } catch (err) {
-      fehlermeldungen.push(`Claude: ${err instanceof Error ? err.message : "Fehler"}`);
     }
   }
 
