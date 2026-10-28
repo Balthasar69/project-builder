@@ -357,28 +357,37 @@ function buildPrompt(params: ZusammenfassungParams): string {
   // So gehen ältere Dokumente (z. B. Konzepte im Ordner "Ideen") nicht leer
   // aus, nur weil neuere Dateien zuerst dran waren.
   const dokListe = params.dokumente ?? [];
-  const dokGesamt = Math.max(1500, Math.round(30000 * SKALA));
+  const dokGesamt = Math.max(1500, Math.round(80000 * SKALA));
   const dokMax = Math.round(6000 * SKALA);
   const dokWunsch = dokListe.map((d) =>
     d.inhalt ? Math.min(dokMax, d.inhalt.replace(/\s+/g, " ").trim().length) : 0
   );
   const dokZuteilung: number[] = dokListe.map(() => 0);
   {
-    let rest = dokGesamt;
-    let offen = dokWunsch.map((w, i) => (w > 0 ? i : -1)).filter((i) => i >= 0);
-    while (offen.length && rest > 0) {
-      const anteil = Math.floor(rest / offen.length);
-      const klein = offen.filter((i) => dokWunsch[i] <= anteil);
-      if (!klein.length) {
-        offen.forEach((i) => (dokZuteilung[i] = anteil));
-        break;
+    // Zuerst die neuen/geaenderten Dokumente (bis zu 70 % des Platzes), dann der Rest.
+    const verteile = (indizes: number[], budget: number): number => {
+      let rest = budget;
+      let offen = indizes.filter((i) => dokWunsch[i] > 0);
+      while (offen.length && rest > 0) {
+        const anteil = Math.floor(rest / offen.length);
+        const klein = offen.filter((i) => dokWunsch[i] <= anteil);
+        if (!klein.length) {
+          offen.forEach((i) => (dokZuteilung[i] = anteil));
+          rest -= anteil * offen.length;
+          break;
+        }
+        klein.forEach((i) => {
+          dokZuteilung[i] = dokWunsch[i];
+          rest -= dokWunsch[i];
+        });
+        offen = offen.filter((i) => !klein.includes(i));
       }
-      klein.forEach((i) => {
-        dokZuteilung[i] = dokWunsch[i];
-        rest -= dokWunsch[i];
-      });
-      offen = offen.filter((i) => !klein.includes(i));
-    }
+      return budget - rest;
+    };
+    const neuIdx = dokListe.map((d, i) => (d.neu ? i : -1)).filter((i) => i >= 0);
+    const altIdx = dokListe.map((d, i) => (d.neu ? -1 : i)).filter((i) => i >= 0);
+    const verbraucht = verteile(neuIdx, Math.round(dokGesamt * 0.7));
+    verteile(altIdx, dokGesamt - verbraucht);
   }
   const dokumenteText = dokListe.length
     ? dokListe

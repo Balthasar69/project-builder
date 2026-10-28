@@ -30,10 +30,10 @@ export interface DriveErgebnis {
 }
 
 const API = "https://www.googleapis.com/drive/v3";
-const MAX_DATEIEN = 40; // so viele Dateien werden gelesen (die neuesten)
+const MAX_DATEIEN = 50; // so viele Dateien werden gelesen (die neuesten)
 const MAX_AUFLISTEN = 200; // so viele Dateinamen werden zuerst eingesammelt, damit neue Dateien in Unterordnern nicht untergehen
 const MAX_ZEICHEN_PRO_DATEI = 6000;
-const MAX_ZEICHEN_GESAMT = 30000;
+const MAX_ZEICHEN_GESAMT = 80000;
 const MAX_BYTES = 8 * 1024 * 1024;
 const MAX_TIEFE = 2; // Ordner + 1 Ebene Unterordner
 const ZEITLIMIT_MS = 12000;
@@ -230,6 +230,9 @@ async function listeOrdner(
     if (!r.ok || !r.body) return { fehlerStatus: r.status };
     for (const f of r.body.files ?? []) {
       if (f.mimeType === MIME_FOLDER) {
+        // Ordner "Archiv", "alt ..." oder mit Unterstrich am Anfang gelten als nicht mehr
+        // relevant und werden fuer den Businessplan uebersprungen.
+        if (/^(_|archiv|alt(\b|_))/i.test(f.name.trim())) continue;
         if (tiefe < MAX_TIEFE) await listeOrdner(f.id, key, `${pfad}${f.name}/`, tiefe + 1, sammler);
       } else {
         sammler.push({ datei: f, pfad: `${pfad}${f.name}` });
