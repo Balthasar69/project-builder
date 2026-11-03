@@ -57,6 +57,7 @@ const SPALTEN: {
       </>
     ),
     punkte: [
+      { label: "Chronik", href: "#chronik", neu: true },
       { label: "Fortschritt", href: "#fortschritt" },
       { label: "Phasen", href: "#phasenverlauf" },
       { label: "Bewertung", href: "#bewertung" },

@@ -13,6 +13,8 @@ import KernteamManager from "@/components/KernteamManager";
 import TaskBoard from "@/components/TaskBoard";
 import ProjektstartFragebogen from "@/components/ProjektstartFragebogen";
 import IdeenManager from "@/components/IdeenManager";
+import ChronikTimeline from "@/components/ChronikTimeline";
+import { baueChronik } from "@/lib/chronik";
 import Brand from "@/components/Brand";
 import EakBadge from "@/components/EakBadge";
 import Sidebar from "@/components/Sidebar";
@@ -491,6 +493,24 @@ export default async function ProjectCockpit({
         fragebogen={project.projektstartFragebogen}
         vorschlaege={project.aufgabenVorschlaege ?? []}
       />
+
+      <section
+        id="chronik"
+        className="mb-12 scroll-mt-6 rounded-lg border border-line bg-surface p-5 sm:p-6"
+      >
+        <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
+          <h2 className="font-display text-xl font-semibold">Chronik</h2>
+          <span className="font-mono text-xs text-ink-faint">Was ist wann passiert?</span>
+        </div>
+        <Aufklappbar buttonText="Chronik ansehen" oeffneBeiHash="#chronik">
+          <ChronikTimeline
+            slug={project.slug}
+            zeilen={baueChronik(project)}
+            sessionEmail={session.email}
+            istKernteam={istKernteam(session, project)}
+          />
+        </Aufklappbar>
+      </section>
 
       <div id="fortschritt" className="scroll-mt-6">
         <ProjectProgress

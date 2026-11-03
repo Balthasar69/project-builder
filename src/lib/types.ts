@@ -431,6 +431,8 @@ export interface Project {
   chat?: ChatNachricht[];
   /** Verlauf des Gründercoach-Bot-Chats, älteste Nachricht zuerst (siehe CoachNachricht/lib/gruendercoach.ts). */
   coachChat?: CoachNachricht[];
+  /** Projekt-Chronik: manuelle und automatische Einträge (siehe ChronikEintrag). */
+  chronik?: ChronikEintrag[];
   bitrix24: {
     dealId: number;
     categoryId: number;
@@ -583,6 +585,25 @@ export interface AufgabenVorschlag {
   bitrixGruppeZugeordnet?: boolean;
   verworfen?: boolean;
 }
+
+/**
+ * Ein Eintrag in der Projekt-Chronik (Zeitleiste "Was ist wann passiert?").
+ * Bewusst nur Datum + Kurzbeschreibung. `automatisch` markiert Einträge, die
+ * die App selbst schreibt (z. B. Projekt angelegt, Phasenwechsel).
+ */
+export interface ChronikEintrag {
+  id: string;
+  /** Datum des Ereignisses, Format JJJJ-MM-TT (frei wählbar, auch rückwirkend). */
+  datum: string;
+  text: string;
+  erstelltVonName: string;
+  erstelltVonEmail: string;
+  erstelltAm: string; // ISO-Datum
+  automatisch?: boolean;
+}
+
+/** Höchstlänge einer Chronik-Kurzbeschreibung. */
+export const CHRONIK_MAX_ZEICHEN = 200;
 
 /**
  * Selbst eingetragener Beitrag einer Person zu "Kompetenzen" (neuer

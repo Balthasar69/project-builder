@@ -26,6 +26,7 @@ const GRUPPEN: { label: string; punkte: { label: string; href: string }[] }[] = 
   {
     label: "Dashboard",
     punkte: [
+      { label: "Chronik", href: "#chronik" },
       { label: "Fortschritt", href: "#fortschritt" },
       { label: "Phasenverlauf", href: "#phasenverlauf" },
       { label: "Projekt-Check & Bewertung", href: "#bewertung" },

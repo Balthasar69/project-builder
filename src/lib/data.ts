@@ -5,6 +5,7 @@ import {
   BlockHinweisKey,
   ChatNachricht,
   CheckResult,
+  ChronikEintrag,
   CoachNachricht,
   Idee,
   KernteamMitglied,
@@ -15,6 +16,7 @@ import {
   ProjektZusammenfassung,
   SteuerboardInfo,
   TaskNote,
+  PHASES,
   User,
 } from "./types";
 import { randomUUID } from "crypto";
@@ -212,6 +214,7 @@ function normalizeProject(data: Project): Project {
     aufgabenVorschlaege: data.aufgabenVorschlaege ?? [],
     kompetenzbeitraege: data.kompetenzbeitraege ?? [],
     chat: data.chat ?? [],
+    chronik: data.chronik ?? [],
   };
 }
 
@@ -347,6 +350,17 @@ export async function createProject(params: {
     checkVerlauf: [],
     bitrix24: { dealId: 0, categoryId: 0, zuordnung: "noch nicht angelegt" },
     aktualisiertAm: new Date().toISOString(),
+    chronik: [
+      {
+        id: randomUUID(),
+        datum: new Date().toISOString().slice(0, 10),
+        text: `Projekt angelegt von ${params.ownerName}`,
+        erstelltVonName: params.ownerName,
+        erstelltVonEmail: params.ownerEmail.trim().toLowerCase(),
+        erstelltAm: new Date().toISOString(),
+        automatisch: true,
+      },
+    ],
   };
 
   await sql`
@@ -863,8 +877,24 @@ export async function setPhase(slug: string, phase: PhaseCode): Promise<Project>
   const project = await getProject(slug);
   if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
 
+  const vorherigePhase = project.aktuellePhase;
   project.aktuellePhase = phase;
   project.aktualisiertAm = new Date().toISOString();
+  if (vorherigePhase !== phase) {
+    const name = (code: PhaseCode) => PHASES.find((p) => p.code === code)?.name ?? code;
+    project.chronik = [
+      ...(project.chronik ?? []),
+      {
+        id: randomUUID(),
+        datum: new Date().toISOString().slice(0, 10),
+        text: `Phase gewechselt: ${name(vorherigePhase)} → ${name(phase)}`,
+        erstelltVonName: "automatisch",
+        erstelltVonEmail: "",
+        erstelltAm: new Date().toISOString(),
+        automatisch: true,
+      },
+    ];
+  }
 
   const sql = getSql();
   await sql`
@@ -1591,6 +1621,55 @@ export async function addCoachNachricht(
     erstelltAm: new Date().toISOString(),
   };
   project.coachChat = [...(project.coachChat ?? []), neueNachricht];
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+
+/**
+ * Trägt einen Eintrag in die Projekt-Chronik ein (nur Datum + Kurzbeschreibung).
+ * Rechteprüfung – alle mit Projektzugriff – sitzt in der API-Route.
+ */
+export async function addChronikEintrag(
+  slug: string,
+  params: { datum: string; text: string; erstelltVonName: string; erstelltVonEmail: string }
+): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  const eintrag: ChronikEintrag = {
+    id: randomUUID(),
+    datum: params.datum,
+    text: params.text.trim(),
+    erstelltVonName: params.erstelltVonName,
+    erstelltVonEmail: params.erstelltVonEmail.trim().toLowerCase(),
+    erstelltAm: new Date().toISOString(),
+  };
+  project.chronik = [...(project.chronik ?? []), eintrag];
+  project.aktualisiertAm = new Date().toISOString();
+
+  const sql = getSql();
+  await sql`
+    UPDATE projects
+    SET data = ${JSON.stringify(project)}::jsonb
+    WHERE slug = ${slug}
+  `;
+  return project;
+}
+
+/** Entfernt einen Chronik-Eintrag (wer das darf, prüft die API-Route). */
+export async function removeChronikEintrag(slug: string, id: string): Promise<Project> {
+  const project = await getProject(slug);
+  if (!project) throw new Error(`Projekt "${slug}" nicht gefunden`);
+
+  project.chronik = (project.chronik ?? []).filter((e) => e.id !== id);
   project.aktualisiertAm = new Date().toISOString();
 
   const sql = getSql();
