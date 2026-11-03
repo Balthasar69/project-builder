@@ -266,6 +266,7 @@ export default async function BusinessplanVorzeigefassung({
             <li>{anzahl.bewertungen} Projekt-Bewertungen (Checks)</li>
             <li>{anzahl.chat} Nachrichten im Projekt-Chat</li>
             <li>{anzahl.ideen} gesammelte Ideen</li>
+            <li>{(project.chronik ?? []).length} Einträge in der Projekt-Chronik</li>
             <li>{anzahl.kompetenzen} Kompetenz-Einträge des Teams</li>
             <li>das Kernteam mit seinen Rollen und die Einzelantworten der Bewertungen</li>
             <li>

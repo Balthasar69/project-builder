@@ -213,6 +213,15 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         erstelltAm: i.erstelltAm,
         uebernommen: Boolean(i.uebernommenAlsTaskId),
       })),
+      chronik: [...(project.chronik ?? [])]
+        .sort((a, b) =>
+          a.datum === b.datum ? a.erstelltAm.localeCompare(b.erstelltAm) : a.datum.localeCompare(b.datum)
+        )
+        .map((c) => ({
+          datum: c.datum,
+          text: c.text,
+          wer: c.automatisch ? undefined : c.erstelltVonName,
+        })),
       kompetenzen: (project.kompetenzbeitraege ?? []).map((k) => ({
         name: k.name,
         kannBeitragen: k.kannBeitragen,

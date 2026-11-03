@@ -123,6 +123,8 @@ export interface ZusammenfassungParams {
   bewertungen: ZusammenfassungBewertung[];
   chat: ZusammenfassungChatNachricht[];
   ideen: ZusammenfassungIdee[];
+  /** Projekt-Chronik: eingetragene Ereignisse mit Datum (JJJJ-MM-TT), aelteste zuerst. */
+  chronik?: { datum: string; text: string; wer?: string }[];
   kompetenzen: ZusammenfassungKompetenz[];
   aufgaben: ZusammenfassungAufgabe[];
   kernteam?: ZusammenfassungKernteamMitglied[];
@@ -283,6 +285,15 @@ function buildPrompt(params: ZusammenfassungParams): string {
   const bewertungen = kappen(params.bewertungen);
   const chat = kappen(params.chat);
   const ideen = kappen(params.ideen);
+  const chronik = kappen(params.chronik ?? []);
+  const chronikText = chronik.eintraege.length
+    ? chronik.eintraege
+        .map((c) => {
+          const [j, m, t] = c.datum.split("-");
+          return `- ${t}.${m}.${j}: ${kuerzen(c.text, 300)}${c.wer ? ` (eingetragen von ${c.wer})` : ""}`;
+        })
+        .join("\n") + chronik.hinweis
+    : "(keine Chronik-Einträge bisher)";
   const kompetenzen = kappen(params.kompetenzen);
   const aufgaben = kappen(params.aufgaben);
 
@@ -441,6 +452,9 @@ Aktuelle Phase: "${params.phaseName}" – Ziel dieser Phase: ${params.phaseZiel}
 === Bewertungen (Checks) im Verlauf, älteste zuerst ===
 ${bewertungenText}
 
+=== Chronik: wichtige Ereignisse mit Datum, älteste zuerst (vom Team eingetragen bzw. Phasenwechsel) ===
+${chronikText}
+
 === Kernteam mit Rollen ===
 ${kernteamText}
 
@@ -478,7 +492,7 @@ Gliedere den Businessplan auf Deutsch in GENAU diese Abschnitte, jeweils mit eig
 3. "## Projektteam & Organisation" – wer ist beteiligt, mit welchen Stärken, Rollen (Kernteam mit Rollen, Kompetenz-Einträge) und welchem Beitrag (aus Verlauf, Chat und den Kommentaren/Karten im Steuerboard). Eine Namens-/Rollentabelle ergänzt die Anzeige selbst, du musst sie nicht nachbauen.
 4. "## Markt & Wettbewerb" – was sich aus den Quellen zu Zielgruppe, Marktumfeld und Wettbewerb ablesen lässt. Ist dazu kaum etwas hinterlegt, schreibe das ehrlich (z. B. "Eine systematische Markt- und Wettbewerbsanalyse liegt bisher nicht vor.") statt etwas zu erfinden.
 5. "## Marketing & Vertrieb" – was aus Ideen/Chat zu Vertriebsweg, Ansprache oder Preismodell hervorgeht; fehlt das, ehrlich vermerken statt zu erfinden.
-6. "## Umsetzung & Meilensteine" – FLIESSTEXT (ganze Sätze, keine Aufzählung) über die wichtigsten Entwicklungen aus Chat, Ideen und Bewertungen sowie die bereits ERLEDIGTEN Aufgaben und die Karten in den späteren Spalten des Steuerboards (z. B. erledigt/in Arbeit): erzähle, was gemacht wurde und was dabei herauskam, statt es aufzuzählen. Beziehe die im Fragebogen genannten Meilensteine ein (welche sind laut Aufgaben/Karten erreicht, welche stehen noch aus) und, falls vorhanden, das 4DX-Hauptziel samt Wochenreviews.
+6. "## Umsetzung & Meilensteine" – FLIESSTEXT (ganze Sätze, keine Aufzählung) über die wichtigsten Entwicklungen – stütze dich dabei zuerst auf die Chronik (sie gibt die zeitliche Abfolge vor, Daten als Monat/Jahr nennen) und ergänze aus Chat, Ideen und Bewertungen sowie die bereits ERLEDIGTEN Aufgaben und die Karten in den späteren Spalten des Steuerboards (z. B. erledigt/in Arbeit): erzähle, was gemacht wurde und was dabei herauskam, statt es aufzuzählen. Beziehe die im Fragebogen genannten Meilensteine ein (welche sind laut Aufgaben/Karten erreicht, welche stehen noch aus) und, falls vorhanden, das 4DX-Hauptziel samt Wochenreviews.
 7. "## Chancen & Risiken" – aus den Quellen erkennbare Chancen und Risiken/Bremsen, sachlich und konkret statt allgemein.
 8. "## Finanzplanung" – gib NUR wieder, was im Projektstart-Fragebogen (Umsatzziel, Liquiditätslage) oder in Chat, Karten und Kommentaren ausdrücklich zu Geld, Preisen, Kosten oder Investition steht, möglichst wörtlich mit den dort genannten Zahlen. Vermerke ehrlich, welche Teile (Kapitalbedarf, Kostenplanung, Rentabilitäts- und Liquiditätsvorschau) noch nicht erfasst sind und vom Team nachgetragen werden müssen. ERFINDE UNTER KEINEN UMSTÄNDEN Beträge, Prozentzahlen oder Zeiträume, die nicht in den Quellen stehen. Liegt gar nichts vor, ist der Abschnitt ein kurzer Platzhalter mit genau diesem Hinweis.
 9. "## Nächste Schritte" – ausschließlich eine kurze, klare Liste der noch offenen bzw. als Nächstes anstehenden Aufgaben, pro Zeile nur die Aufgabe und ihre Zuständigkeit, sonst nichts, z. B. "- „Titel" – zuständig: Name". Ist niemand zugeordnet, übernimm das wörtlich so ("noch niemandem zugeordnet"). Führe sowohl die offenen Aufgaben als auch die offenen Karten des Steuerboards (Spalten, die noch nicht „erledigt" bedeuten) auf, ohne Doppelnennung gleicher Themen. Erledigte Aufgaben tauchen hier nicht auf.
