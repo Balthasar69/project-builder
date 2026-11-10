@@ -599,13 +599,14 @@ export default async function ProjectCockpit({
               </div>
               <p className="mb-1 text-sm text-ink-muted">
                 Richtet die eigenständige Steuerboard-App für dieses Vorhaben
-                ein – für den Alltag ab der Projektfreigabe, jederzeit von
-                Kernteam oder Admins auslösbar.
+                ein – für den Alltag ab der Projektfreigabe. Den Wechsel gibt
+                nur Balthasar frei; das Kernteam kann ihn anfragen.
               </p>
               <SteuerboardLink
                 slug={project.slug}
                 steuerboard={project.steuerboard}
                 darfAusloesen={istKernteamStrikt(session, project)}
+                istAdmin={session.isAdmin}
                 darfLoeschen={istBalthasar(session.email)}
               />
             </div>

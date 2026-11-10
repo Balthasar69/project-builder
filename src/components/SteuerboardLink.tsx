@@ -22,16 +22,20 @@ export default function SteuerboardLink({
   steuerboard,
   darfAusloesen,
   darfLoeschen,
+  istAdmin = false,
 }: {
   slug: string;
   steuerboard?: SteuerboardInfo;
   darfAusloesen: boolean;
   darfLoeschen?: boolean;
+  /** Nur Balthasar (Admin) legt an; Kernteam fragt die Freigabe nur an. */
+  istAdmin?: boolean;
 }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bestaetigen, setBestaetigen] = useState(false);
+  const [angefragt, setAngefragt] = useState(false);
   const [loeschenBestaetigen, setLoeschenBestaetigen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -127,9 +131,12 @@ export default function SteuerboardLink({
     try {
       const res = await fetch(`/api/projects/${slug}/steuerboard`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(istAdmin ? {} : { anfrage: true }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Steuerboard-Kopie konnte nicht angelegt werden");
+      if (data.angefragt) setAngefragt(true);
       setBestaetigen(false);
       router.refresh();
     } catch (err) {
@@ -147,14 +154,14 @@ export default function SteuerboardLink({
           onClick={() => setBestaetigen(true)}
           className="self-start rounded-md border border-line px-4 py-2 text-sm font-medium text-ink transition hover:border-accent hover:text-accent"
         >
-          Steuerboard-Kopie erstellen
+          {istAdmin ? "Steuerboard-Kopie erstellen" : "Wechsel ins Steuerboard anfragen"}
         </button>
       ) : (
         <div className="flex flex-wrap items-center gap-3 rounded-md border border-line bg-surface-2 px-4 py-3">
           <span className="text-sm text-ink-muted">
-            Legt jetzt eine eigene, laufende Steuerboard-Kopie für dieses
-            Projekt an (eigenes Vercel-Projekt, eigene Datenbank). Das lässt
-            sich nicht rückgängig machen und passiert nur einmal pro Projekt.
+            {istAdmin
+              ? "Legt jetzt eine eigene, laufende Steuerboard-Kopie für dieses Projekt an (eigenes Vercel-Projekt, eigene Datenbank). Das lässt sich nicht rückgängig machen und passiert nur einmal pro Projekt."
+              : "Schickt Balthasar eine Anfrage. Das Steuerboard wird erst nach seiner Freigabe angelegt."}
           </span>
           <div className="flex items-center gap-3">
             <button
@@ -163,7 +170,7 @@ export default function SteuerboardLink({
               disabled={saving}
               className="whitespace-nowrap rounded-md bg-accent px-4 py-2 text-sm font-medium text-surface transition hover:bg-accent-ink disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {saving ? "Wird eingerichtet…" : "Ja, jetzt anlegen"}
+              {saving ? "Wird gesendet…" : istAdmin ? "Ja, jetzt anlegen" : "Ja, Freigabe anfragen"}
             </button>
             <button
               type="button"
@@ -177,6 +184,11 @@ export default function SteuerboardLink({
         </div>
       )}
       {error && <span className="text-sm text-bad">{error}</span>}
+      {angefragt && (
+        <span className="text-sm text-ink-muted">
+          Anfrage ist bei Balthasar. Das Steuerboard wird nach seiner Freigabe angelegt.
+        </span>
+      )}
     </div>
   );
 }

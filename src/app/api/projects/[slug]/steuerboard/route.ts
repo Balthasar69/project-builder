@@ -4,6 +4,7 @@ import { getSession, istKernteamStrikt, istBalthasar } from "@/lib/auth";
 import { erstelleSteuerboardKopie, loescheSteuerboardKopie } from "@/lib/steuerboardFactory";
 import { buildeProjektKontext } from "@/lib/projektKontext";
 import { benachrichtigeKernteam } from "@/lib/notify";
+import { sendeFreigabeAnfrage } from "@/lib/freigabe";
 
 // Ruft extern die Vercel-/Neon-APIs auf (siehe steuerboardFactory.ts) – das
 // kann spürbar länger als die Vercel-Standardzeitgrenze dauern.
@@ -75,6 +76,33 @@ export async function POST(
       },
       { status: 409 }
     );
+  }
+
+  // Freigabe durch Balthasar: Kernteam darf das Anlegen nur anfragen.
+  if (!session.isAdmin) {
+    const body = (await req.json().catch(() => ({}))) as { anfrage?: boolean };
+    if (!body.anfrage) {
+      return NextResponse.json(
+        {
+          error:
+            "Den Wechsel ins Steuerboard gibt nur Balthasar frei. Bitte „Freigabe anfragen“ nutzen.",
+        },
+        { status: 403 }
+      );
+    }
+    const gesendet = await sendeFreigabeAnfrage({
+      project,
+      was: "Wechsel ins Steuerboard (Steuerboard-Kopie anlegen)",
+      vonName: session.name,
+      vonEmail: session.email,
+    });
+    if (!gesendet) {
+      return NextResponse.json(
+        { error: "Die Anfrage konnte nicht per E-Mail verschickt werden. Bitte Balthasar direkt informieren." },
+        { status: 502 }
+      );
+    }
+    return NextResponse.json({ angefragt: true });
   }
 
   // Dieselbe Bitrix24-Arbeitsgruppe, die dieses Projekt schon fuer seine

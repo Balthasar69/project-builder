@@ -28,6 +28,7 @@ export default function PhaseAdvance({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [angefragt, setAngefragt] = useState(false);
   const [zielPhase, setZielPhase] = useState<PhaseCode>(aktuell);
   const [resetSaving, setResetSaving] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
@@ -41,9 +42,14 @@ export default function PhaseAdvance({
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`/api/projects/${slug}/phase`, { method: "POST" });
+      const res = await fetch(`/api/projects/${slug}/phase`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(istAdmin ? {} : { anfrage: true }),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Phasenwechsel fehlgeschlagen");
+      if (data.angefragt) setAngefragt(true);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unbekannter Fehler");
@@ -83,9 +89,20 @@ export default function PhaseAdvance({
             disabled={saving}
             className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-surface transition hover:bg-accent-ink disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {saving ? "Wechselt…" : `Weiter zu: ${naechsteName}`}
+            {istAdmin
+              ? saving
+                ? "Wechselt…"
+                : `Weiter zu: ${naechsteName}`
+              : saving
+                ? "Wird angefragt…"
+                : `Freigabe anfragen: ${naechsteName}`}
           </button>
           {error && <span className="text-sm text-bad">{error}</span>}
+          {angefragt && (
+            <span className="text-sm text-ink-muted">
+              Anfrage ist bei Balthasar. Die Phase wechselt nach seiner Freigabe.
+            </span>
+          )}
         </div>
       )}
 

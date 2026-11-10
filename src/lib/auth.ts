@@ -27,7 +27,7 @@ export async function verifyPassword(
 // angewendet (siehe login/route.ts, register/route.ts); passend dazu
 // ergänzt `normalizeProject` in data.ts dieselben Adressen automatisch im
 // Kernteam jedes Projekts.
-const STANDARD_ADMIN_EMAILS = [
+export const STANDARD_ADMIN_EMAILS = [
   "management@balthasar-fleischmann.de",
   "balthasar@balthasar-fleischmann.de",
 ];

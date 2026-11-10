@@ -3,6 +3,7 @@ import { getProject, setPhase } from "@/lib/data";
 import { getSession, istKernteam } from "@/lib/auth";
 import { naechstePhase, PHASES, PhaseCode, Project } from "@/lib/types";
 import { benachrichtigeKernteam } from "@/lib/notify";
+import { sendeFreigabeAnfrage } from "@/lib/freigabe";
 
 // Kann jetzt zusätzlich mehrere Benachrichtigungs-E-Mails ans Kernteam
 // verschicken – zusammen mit dem Phasenwechsel etwas mehr Zeit als die
@@ -58,7 +59,10 @@ export async function POST(
     return NextResponse.json({ error: "Projekt nicht gefunden" }, { status: 404 });
   }
 
-  const body = (await req.json().catch(() => ({}))) as { phase?: PhaseCode };
+  const body = (await req.json().catch(() => ({}))) as {
+    phase?: PhaseCode;
+    anfrage?: boolean;
+  };
 
   if (body.phase) {
     // Direktes Setzen einer beliebigen Phase – bewusst nur für Admins, da
@@ -95,6 +99,32 @@ export async function POST(
       { error: "Es gibt keine nächste Phase mehr (letzte Stufe erreicht)." },
       { status: 400 }
     );
+  }
+
+  // Freigabe durch Balthasar: Kernteam darf den Wechsel nur anfragen.
+  if (!session.isAdmin) {
+    if (!body.anfrage) {
+      return NextResponse.json(
+        {
+          error:
+            "Den Phasenwechsel gibt nur Balthasar frei. Bitte „Freigabe anfragen“ nutzen.",
+        },
+        { status: 403 }
+      );
+    }
+    const gesendet = await sendeFreigabeAnfrage({
+      project,
+      was: `Wechsel in die Phase „${phasenName(naechste)}“`,
+      vonName: session.name,
+      vonEmail: session.email,
+    });
+    if (!gesendet) {
+      return NextResponse.json(
+        { error: "Die Anfrage konnte nicht per E-Mail verschickt werden. Bitte Balthasar direkt informieren." },
+        { status: 502 }
+      );
+    }
+    return NextResponse.json({ angefragt: true });
   }
 
   const updated = await setPhase(params.slug, naechste);
