@@ -124,6 +124,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
   // Aufgabenansicht (siehe tasks/route.ts), plus Gruppierung der Notizen je
   // Aufgabe.
   let aufgaben: ZusammenfassungAufgabe[] = [];
+  let aufgabenHinweis = "";
   try {
     const { project: verbundenesProjekt, groupId } = await ensureBitrixGroupId(project);
     const [tasks, notizen] = await Promise.all([
@@ -157,10 +158,14 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
           )?.name
         : undefined,
     }));
-  } catch {
+  } catch (err) {
     // Bitrix24 gerade nicht erreichbar o. ae. – die Zusammenfassung soll
-    // trotzdem entstehen, nur eben ohne den Aufgaben-Teil.
+    // trotzdem entstehen, nur eben ohne den Aufgaben-Teil. Die Person
+    // bekommt einen Hinweis, damit fehlende Zuständigkeiten nicht
+    // stillschweigend als "niemandem zugeordnet" erscheinen.
     aufgaben = [];
+    const grund = err instanceof Error ? err.message.slice(0, 120) : "unbekannter Fehler";
+    aufgabenHinweis = `Achtung: Die Aufgaben aus Bitrix24 konnten nicht geladen werden (${grund}) – Zuständigkeiten in „Nächste Schritte“ fehlen deshalb. Bitte später noch einmal neu erstellen.`;
   }
 
   // Steuerboard (Boards, Karten, Kommentare, Coach, 4DX) – nie fatal.
@@ -262,6 +267,12 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     erstelltVonEmail: session.email,
     quellen: drive.dokumente
       .filter((d) => d.link)
+      // Doppelte Dateien (z. B. "Tobias - X.pdf" und "X.pdf" in zwei Ordnern) nur einmal listen.
+      .filter((d, i, alle) => {
+        const n = d.name.toLowerCase();
+        const nach = n.includes(" - ") ? n.slice(n.indexOf(" - ") + 3) : "";
+        return !(nach && alle.some((o, j) => j !== i && o.name.toLowerCase() === nach && o.typ === d.typ));
+      })
       .map((d) => ({
         name: d.name,
         pfad: d.pfad,
@@ -283,7 +294,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
   // Hinweise (z. B. Drive-Ordner nicht lesbar) werden der Person unter dem
   // Knopf angezeigt, damit nicht stillschweigend Quellen fehlen.
-  const hinweise = [speicherHinweis, drive.hinweis].filter(Boolean).join(" ");
+  const hinweise = [speicherHinweis, aufgabenHinweis, drive.hinweis].filter(Boolean).join(" ");
   return NextResponse.json({
     zusammenfassung,
     ...(hinweise ? { speicherHinweis: hinweise } : {}),
