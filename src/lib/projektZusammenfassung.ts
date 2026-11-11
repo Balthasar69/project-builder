@@ -370,8 +370,19 @@ function buildPrompt(params: ZusammenfassungParams): string {
   const dokListe = params.dokumente ?? [];
   const dokGesamt = Math.max(1500, Math.round(80000 * SKALA));
   const dokMax = Math.round(6000 * SKALA);
-  const dokWunsch = dokListe.map((d) =>
-    d.inhalt ? Math.min(dokMax, d.inhalt.replace(/\s+/g, " ").trim().length) : 0
+  // Konzeptpapiere zu Marketing/Vertrieb/Teilnehmergewinnung (Dateiname) haben
+  // Vorrang und bekommen auch bei der knappen kostenlosen Stufe (kleines SKALA)
+  // mindestens 3500 Zeichen – sonst gehen z. B. Kandidatenquellen-Konzepte
+  // unter, weil das Minutenlimit alle Dokumente auf wenige hundert Zeichen kuerzt.
+  const PRIO = /konzept|quellen|marketing|vertrieb|kampagne|zielgruppe|teilnehmergewinnung|akquise|angebot|preis|strategie/i;
+  const prioIdx = dokListe.map((d, i) => (d.inhalt && PRIO.test(d.pfad) ? i : -1)).filter((i) => i >= 0);
+  const dokWunsch = dokListe.map((d, i) =>
+    d.inhalt
+      ? Math.min(
+          prioIdx.includes(i) ? Math.max(dokMax, 3500) : dokMax,
+          d.inhalt.replace(/\s+/g, " ").trim().length
+        )
+      : 0
   );
   const dokZuteilung: number[] = dokListe.map(() => 0);
   {
@@ -395,10 +406,12 @@ function buildPrompt(params: ZusammenfassungParams): string {
       }
       return budget - rest;
     };
-    const neuIdx = dokListe.map((d, i) => (d.neu ? i : -1)).filter((i) => i >= 0);
-    const altIdx = dokListe.map((d, i) => (d.neu ? -1 : i)).filter((i) => i >= 0);
-    const verbraucht = verteile(neuIdx, Math.round(dokGesamt * 0.7));
-    verteile(altIdx, dokGesamt - verbraucht);
+    const neuIdx = dokListe.map((d, i) => (d.neu && !prioIdx.includes(i) ? i : -1)).filter((i) => i >= 0);
+    const altIdx = dokListe.map((d, i) => (d.neu || prioIdx.includes(i) ? -1 : i)).filter((i) => i >= 0);
+    // Zuerst Konzeptpapiere (bis 50 % bzw. mind. 7000 Zeichen), dann neue, dann der Rest.
+    const v0 = verteile(prioIdx, Math.max(Math.round(dokGesamt * 0.5), Math.min(7000, dokGesamt)));
+    const v1 = verteile(neuIdx, Math.round((dokGesamt - v0) * 0.7));
+    verteile(altIdx, dokGesamt - v0 - v1);
   }
   const dokumenteText = dokListe.length
     ? dokListe
