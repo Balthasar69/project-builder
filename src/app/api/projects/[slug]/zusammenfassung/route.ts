@@ -260,6 +260,15 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     erstelltAm: new Date().toISOString(),
     erstelltVonName: session.name,
     erstelltVonEmail: session.email,
+    quellen: drive.dokumente
+      .filter((d) => d.link)
+      .map((d) => ({
+        name: d.name,
+        pfad: d.pfad,
+        typ: d.typ,
+        link: d.link as string,
+        geaendertAm: d.geaendertAm,
+      })),
   };
 
   // Speichern ist ein "Nice-to-have": schlaegt es fehl, bekommt die Person

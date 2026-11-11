@@ -541,6 +541,8 @@ export interface ProjektZusammenfassung {
   erstelltAm: string; // ISO-Datum
   erstelltVonName: string;
   erstelltVonEmail: string;
+  /** Quellendokumente (Links zu Google Drive), die in diesen Businessplan eingeflossen sind. */
+  quellen?: { name: string; pfad: string; typ: string; link: string; geaendertAm?: string }[];
 }
 
 /** Ob ein Projekt geschäftlich oder privat/persönlich ist – entscheidet über

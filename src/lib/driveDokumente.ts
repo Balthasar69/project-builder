@@ -18,6 +18,8 @@ export interface DriveDokument {
   typ: string; // lesbare Typbezeichnung
   geaendertAm?: string;
   inhalt?: string; // gekuerzter Text, fehlt wenn nicht auslesbar
+  /** Link zum Oeffnen der Datei in Google Drive (fuer die Quellenliste im Businessplan). */
+  link?: string;
   /** Seit dem letzten Businessplan neu oder geaendert (wird in der Route gesetzt). */
   neu?: boolean;
 }
@@ -50,6 +52,7 @@ interface DriveDatei {
   mimeType: string;
   modifiedTime?: string;
   size?: string;
+  webViewLink?: string;
 }
 
 export function ordnerIdAusLink(link: string | undefined): string | null {
@@ -221,7 +224,7 @@ async function listeOrdner(
   let pageToken = "";
   do {
     const q = encodeURIComponent(`'${ordnerId}' in parents and trashed = false`);
-    const fields = encodeURIComponent("nextPageToken,files(id,name,mimeType,modifiedTime,size)");
+    const fields = encodeURIComponent("nextPageToken,files(id,name,mimeType,modifiedTime,size,webViewLink)");
     const url =
       `${API}/files?q=${q}&fields=${fields}&pageSize=100&orderBy=modifiedTime desc` +
       `&supportsAllDrives=true&includeItemsFromAllDrives=true&key=${encodeURIComponent(key)}` +
@@ -329,6 +332,7 @@ export async function ladeDriveDokumente(
           pfad: g.pfad,
           typ: l.typ,
           geaendertAm: g.datei.modifiedTime,
+          link: g.datei.webViewLink || `https://drive.google.com/file/d/${g.datei.id}/view`,
           inhalt,
         });
       });

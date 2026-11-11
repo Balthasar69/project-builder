@@ -290,6 +290,39 @@ export default async function BusinessplanVorzeigefassung({
             )}
             <li>die Aufgaben samt Notizen aus der Aufgabenverwaltung (Bitrix24)</li>
           </ul>
+          {(zus.quellen ?? []).length > 0 && (
+            <div className="mt-6">
+              <h3 className="mb-2 font-display text-base font-semibold text-ink">
+                Quellendokumente
+              </h3>
+              <p className="mb-2 text-[13px] leading-relaxed text-ink-muted">
+                Diese Dokumente aus dem Projektordner (Google Drive) sind in den
+                Businessplan eingeflossen. Das Original öffnet sich per Klick.
+              </p>
+              <ul className="list-disc space-y-1 pl-5 text-[13px] leading-relaxed text-ink">
+                {(zus.quellen ?? []).map((q, i) => (
+                  <li key={i}>
+                    <a
+                      href={q.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-accent-ink underline decoration-dotted hover:text-accent"
+                    >
+                      {q.pfad || q.name}
+                    </a>
+                    <span className="text-ink-faint">
+                      {" "}
+                      ({q.typ}
+                      {q.geaendertAm
+                        ? `, ${new Date(q.geaendertAm).toLocaleDateString("de-DE")}`
+                        : ""}
+                      )
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <p className="mt-4 text-xs leading-relaxed text-ink-faint">
             Aussagen, zu denen im Projekt keine Angaben vorliegen, sind als
             solche gekennzeichnet und wurden nicht ergänzt. Zahlen der
