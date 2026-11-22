@@ -19,7 +19,7 @@ import {
   PHASES,
   User,
 } from "./types";
-import { randomUUID } from "crypto";
+import { createHash, randomBytes, randomUUID } from "crypto";
 import {
   addWorkgroupMembers,
   createWorkgroup,
@@ -1011,6 +1011,63 @@ export async function setUserPassword(email: string, passwordHash: string): Prom
   const sql = getSql();
   await ensureUsersTableMigriert(sql);
   await sql`UPDATE users SET password_hash = ${passwordHash} WHERE email = ${email.trim().toLowerCase()}`;
+}
+
+// "Passwort vergessen": Einmal-Link per E-Mail. In der Datenbank liegt nur der
+// SHA-256-Hash des Tokens (wer die Datenbank liest, kann damit nichts anfangen).
+// Der Link gilt 1 Stunde und nur einmal.
+let passwortResetTabelle = false;
+async function ensurePasswortResetTabelle(sql: ReturnType<typeof getSql>) {
+  if (passwortResetTabelle) return;
+  await sql`
+    CREATE TABLE IF NOT EXISTS passwort_reset (
+      token_hash TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      expires_at TIMESTAMPTZ NOT NULL,
+      used_at TIMESTAMPTZ
+    )
+  `;
+  passwortResetTabelle = true;
+}
+
+function tokenHash(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+/**
+ * Legt einen Einmal-Token für ein bestehendes Konto an und gibt ihn zurück.
+ * Gibt null zurück, wenn es das Konto nicht gibt oder in der letzten Minute
+ * schon ein Link angefordert wurde (Schutz vor Mail-Spam).
+ */
+export async function createPasswordResetToken(email: string): Promise<string | null> {
+  const sql = getSql();
+  const mail = email.trim().toLowerCase();
+  if (!(await getUserByEmail(mail))) return null;
+  await ensurePasswortResetTabelle(sql);
+  await sql`DELETE FROM passwort_reset WHERE expires_at < NOW() - INTERVAL '1 day'`;
+  const kuerzlich = (await sql`
+    SELECT 1 FROM passwort_reset WHERE email = ${mail} AND created_at > NOW() - INTERVAL '60 seconds' LIMIT 1
+  `) as unknown[];
+  if (kuerzlich.length > 0) return null;
+  const token = randomBytes(32).toString("hex");
+  await sql`
+    INSERT INTO passwort_reset (token_hash, email, expires_at)
+    VALUES (${tokenHash(token)}, ${mail}, NOW() + INTERVAL '1 hour')
+  `;
+  return token;
+}
+
+/** Löst den Token ein (nur einmal, nur 1 Stunde). Gibt die E-Mail zurück oder null. */
+export async function consumePasswordResetToken(token: string): Promise<string | null> {
+  const sql = getSql();
+  await ensurePasswortResetTabelle(sql);
+  const rows = (await sql`
+    UPDATE passwort_reset SET used_at = NOW()
+    WHERE token_hash = ${tokenHash(token)} AND used_at IS NULL AND expires_at > NOW()
+    RETURNING email
+  `) as { email: string }[];
+  return rows[0]?.email ?? null;
 }
 
 /** Erste registrierte Person wird automatisch Admin (sieht/verwaltet alle Projekte). */

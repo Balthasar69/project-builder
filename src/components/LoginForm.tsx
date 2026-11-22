@@ -65,6 +65,11 @@ export default function LoginForm({ from }: { from?: string }) {
         {saving ? "Meldet an…" : "Anmelden"}
       </button>
       <p className="text-sm text-ink-muted">
+        <Link href="/passwort-vergessen" className="font-medium text-accent hover:text-accent-ink">
+          Passwort vergessen?
+        </Link>
+      </p>
+      <p className="text-sm text-ink-muted">
         Noch kein Konto?{" "}
         <Link href="/register" className="font-medium text-accent hover:text-accent-ink">
           Registrieren

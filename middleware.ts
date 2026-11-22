@@ -6,7 +6,7 @@ import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
 // jedes Projekt zeigt nur die eigenen Mitglieder. Läuft auf der Edge
 // Runtime – deshalb signiert `src/lib/session.ts` das Session-Cookie mit
 // der Web Crypto API statt Node-`crypto`.
-const PUBLIC_PATHS = new Set(["/login", "/register"]);
+const PUBLIC_PATHS = new Set(["/login", "/register", "/passwort-vergessen", "/passwort-zuruecksetzen"]);
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
